@@ -1,0 +1,793 @@
+
+=encoding utf8
+
+=head1 文档
+
+Mojolicious::Guides::Routing - Routing
+
+=head1 综述
+
+本文件包含一个简单而有趣的介绍 Mojolicious 路径选择和它的基本概念。
+
+
+=head1 概念
+
+基本每个  L<Mojolicious> 的开发者都知道.
+
+=head2 Dispatcher
+
+每一个 Web 框架的基础都是一个很小的黑盒子，连接传入的请求的代码生成适当的响应内容。
+
+  GET /user/show/1 -> $self->render(text => 'Sebastian');
+
+这个黑盒子通常被称为调度。有不同的策略来对应建立这些连接，但几乎都是基于映射请求的路径到某个响应生成器。
+
+  /user/show/1 -> $self->render(text => 'Sebastian');
+  /user/show/2 -> $self->render(text => 'Sara');
+  /user/show/3 -> $self->render(text => 'Baerbel');
+  /user/show/4 -> $self->render(text => 'Wolfgang');
+
+虽然这也可能所有的请求都是静态文件，这样就会变得非常的低效。所以大多的调度过程使用的都是正则的原因。
+
+  qr!/user/show/(\d+)! -> $self->render(text => $users{$1});
+
+现代的调度器变得比以前更加复杂，因为不但有 HTTP 请求的路径后，还有请求方法中 header 中一些参数会影响调度，如  C<Host>, C<User-Age    nt> and C<Accept>.
+
+  GET /user/show/23 HTTP/1.1
+  Host: mojolicio.us
+  User-Agent: Mozilla/5.0 (compatible; Mojolicious; Perl)
+  Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+
+=head2 Routes
+
+虽然正则表达式是非常强大的，他们也往往是令人不爽的地方，比如常常对于普通的路径匹配有点大材小用。
+
+  qr!/user/show/(\d+)! -> $self->render(text => $users{$1});
+
+这时路径选择开始发挥作用，它低层设计可以取路径的占位符。
+
+  /user/show/:id -> $self->render(text => $users{$id});
+
+不同的是静态路径和和路由的时候可以取到  C<:id> 的占位符。路径选择可以取任何路径位置中的占位符.
+
+  /user/:action/:id
+
+L<Mojolicious> 路径选择的默认是会给提取到的占位符都转换成一个 hash.
+
+  /user/show/23 -> /user/:action/:id -> {action => 'show', id => 23}
+
+在 L<Mojolicious> 的应用中最重要的就是这个 hash 的使用了。你后面可能会了解更多有关这个。在路径选择基本在内部是编译正则表达式，实现如下。
+
+  /user/show/:id -> qr/(?-xism:^\/user\/show/([^\/\.]+))/
+
+斜线是可选的.
+
+  /user/show/23/ -> /user/:action/:id -> {action => 'show', id => 23}
+
+=head2 可逆性
+
+One more huge advantage routes have over regular expressions is that they are easily reversible, extracted placeholders can be turned back into a path at any time.
+
+  /sebastian -> /:name -> {name => 'sebastian'}
+  {name => 'sebastian'} -> /:name -> /sebastian
+
+=head2 通用占位符
+
+通用占位符是最简单的占位符和匹配所有字符，除了 C</> 和 C<.>.
+
+  /hello              -> /:name/hello -> undef
+  /sebastian/23/hello -> /:name/hello -> undef
+  /sebastian.23/hello -> /:name/hello -> undef
+  /sebastian/hello    -> /:name/hello -> {name => 'sebastian'}
+  /sebastian23/hello  -> /:name/hello -> {name => 'sebastian23'}
+  /sebastian 23/hello -> /:name/hello -> {name => 'sebastian 23'}
+
+括号占位符，可以包起四周，用来环绕和周围的文本区分开。
+
+  /hello             -> /(:name)hello -> undef
+  /sebastian/23hello -> /(:name)hello -> undef
+  /sebastian.23hello -> /(:name)hello -> undef
+  /sebastianhello    -> /(:name)hello -> {name => 'sebastian'}
+  /sebastian23hello  -> /(:name)hello -> {name => 'sebastian23'}
+  /sebastian 23hello -> /(:name)hello -> {name => 'sebastian 23'}
+
+=head2 宽松的占位符 
+
+宽松的占位符很象通用位符，但它会匹配全部的字符.
+
+  /hello              -> /#name/hello -> undef
+  /sebastian/23/hello -> /#name/hello -> undef
+  /sebastian.23/hello -> /#name/hello -> {name => 'sebastian.23'}
+  /sebastian/hello    -> /#name/hello -> {name => 'sebastian'}
+  /sebastian23/hello  -> /#name/hello -> {name => 'sebastian23'}
+  /sebastian 23/hello -> /#name/hello -> {name => 'sebastian 23'}
+
+=head2 通配符占位符
+
+配符占位符象上面二个位符，但配所有的东西包含 C</> 和 C<.>.
+
+  /hello              -> /*name/hello -> undef
+  /sebastian/23/hello -> /*name/hello -> {name => 'sebastian/23'}
+  /sebastian.23/hello -> /*name/hello -> {name => 'sebastian.23'}
+  /sebastian/hello    -> /*name/hello -> {name => 'sebastian'}
+  /sebastian23/hello  -> /*name/hello -> {name => 'sebastian23'}
+  /sebastian 23/hello -> /*name/hello -> {name => 'sebastian 23'}
+
+=head1 基础
+
+这是 L<Mojolicious> 的通用特性，每个开发者都需要知道。
+
+=head2 Minimal route
+
+每个 L<Mojolicious> 应用程序中有一个路径选择的对象，你可以用它来生成路由结构。
+
+  # Application
+  package MyApp;
+  use Mojo::Base 'Mojolicious';
+
+  sub startup {
+    my $self = shift;
+
+    # Router
+    my $r = $self->routes;
+
+    # Route
+    $r->route('/welcome')->to(controller => 'foo', action => 'welcome');
+  }
+
+  1;
+
+这个小的静态路径选择会加载并实例化类 C<MyApp::Foo> 和调用 C<welcome> 的方法.
+
+  # Controller
+  package MyApp::Foo;
+  use Mojo::Base 'Mojolicious::Controller';
+
+  # Action
+  sub welcome {
+    my $self = shift;
+
+    # Render response
+    $self->render(text => 'Hello there.');
+  }
+
+  1;
+
+路径选择通常是配置在你应用的类中  C<startup> 的方法中。但路径选择可以从任何地方访问.
+
+=head2 Routing  目标
+
+在你使用 L<Mojolicious::Routes/"route"> 中的方法开始一个新的路径选择，你可以给一个目标参数关联到路径选择上，可以是一个  L<Mojolicious::Routes::Route/"to"> 的链方法指向一个 hash。
+
+  # /welcome -> {controller => 'foo', action => 'welcome'}
+  $r->route('/welcome')->to(controller => 'foo', action => 'welcome');
+
+现在如果路径匹配到进入的请求时会调用这个 hash 中的目标尝试这些使用代码来生成响应。
+
+=head2 Stash
+
+这个生成的 hash 是为匹配到的路径选择，这个在整个 L<Mojolicious> 请求的周期都有效, 我们可以一直调用 stash ，直到返回了响应给客户端后。
+
+  # /bye -> {controller => 'foo', action => 'bye', mymessage => 'Bye'}
+  $r->route('/bye')
+    ->to(controller => 'foo', action => 'bye', mymessage => 'Bye');
+
+在这个中 stash 中的值有几个特别的。比如 C<controller> 和 C<action>, 但在普通情况下，你可以写任何的数据来给生成响应的程序。这个 stash 的内容可以在调度中任何时候被修改.
+
+  sub bye {
+    my $self = shift;
+
+    # Get message from stash
+    my $msg = $self->stash('mymessage');
+
+    # Change message in stash
+    $self->stash(mymessage => 'Welcome');
+  }
+
+全部的保留值的列表可以看  L<Mojolicious::Controller/"stash">.
+
+=head2 Nested routes
+
+为路径选择来构建树结构，给相同的功能放在一起以消除重复的代码，象下面第一层为 $foo 后，接下来都很直接接着调用就好了.
+
+  # /foo     -> undef
+  # /foo/bar -> {controller => 'foo', action => 'bar'}
+  my $foo = $r->route('/foo')->to(controller => 'foo');
+  $foo->route('/bar')->to(action => 'bar');
+
+stash 的信息会从路径选择中继承来新的路径选择中覆盖掉旧的
+
+  # /foo     -> undef
+  # /foo/abc -> undef
+  # /foo/bar -> {controller => 'foo', action => 'bar'}
+  # /foo/baz -> {controller => 'foo', action => 'baz'}
+  # /foo/cde -> {controller => 'foo', action => 'abc'}
+  my $foo = $r->route('/foo')->to(controller => 'foo', action => 'abc');
+  $foo->route('/bar')->to(action => 'bar');
+  $foo->route('/baz')->to(action => 'baz');
+  $foo->route('/cde');
+
+=head2 特别的 stash 值
+
+当调度中见到了  C<controller> 和 C<action> 的值在 stash 中时，总是尝试着指到相应指定的类和方法。
+在 C<controller> 给定的值是使用  L<Mojo::Util/"camelize">  提供一个 C<namespace> 的前缀，所以首字母会变大写.(默认是应用的类)
+但 action 的值并不改变，是区分大小写的，相当于调用指定的方法. 
+
+  # Application
+  package MyApp;
+  use Mojo::Base 'Mojolicious';
+
+  sub startup {
+    my $self = shift;
+
+    # /bye -> {controller => 'foo', action => 'bye'} -> MyApp::Foo->bye
+    $self->routes->route('/bye')->to(controller => 'foo', action => 'bye');
+  }
+
+  1;
+
+  # Controller
+  package MyApp::Foo;
+  use Mojo::Base 'Mojolicious::Controller';
+
+  # Action
+  sub bye {
+    my $self = shift;
+
+    # Render response
+    $self->render(text => 'Good bye.');
+  }
+
+  1;
+
+设计的这个 Controller 的类，在大型项目中组织代码非常完美。我们来看看更多的调度策略的用法，因为控制器非常常用，所以有个特别的快捷方式 C<controller#action> 来表示。
+
+  # /bye -> {controller => 'foo', action => 'bye', mymessage => 'Bye'}
+  $r->route('/bye')->to('foo#bye', mymessage => 'Bye');
+
+在出现 C<-> 时会替换成 C<::>, 这可以让你做多级的 C<controller> 分层。
+
+  # / -> {controller => 'foo-bar', action => 'hi'} -> MyApp::Foo::Bar->hi
+  $r->route('/')->to('foo-bar#hi');
+
+如果 C<controller> 是一个 L<Mojolicious::Controller> 或  L<Mojo> 的子类，在调度之前,为了安全调度器总是会检查上面这个。
+
+=head2 Route 到指定的类 
+
+你可以使用 stash 中的 C<namespace> 的值来改变整个整体和所有的路径选择的命名的空间。
+
+  # /bye -> MyApp::Controller::Foo->bye
+  $r->route('/bye')
+    ->to(namespace => 'MyApp::Controller::Foo::Bar', action => 'bye');
+
+这个 C<controller> 会加到 C<namespace> 的上面。
+
+  # /bye -> MyApp::Controller::Foo::Bar->bye
+  $r->route('/bye')->to('foo-bar#bye', namespace => 'MyApp::Controller');
+
+  # /hey -> MyApp::Controller::Foo::Bar->hey
+  $r->route('/hey')->to('Foo::Bar#hey', namespace => 'MyApp::Controller');
+
+你也可以修改你的应用中全部的路径选择中默认的命名空间。只需要使用  L<Mojolicious::Routes/"namespace">.
+
+  $r->namespace('MyApp::Controller');
+
+=head2 Route 到回调 
+
+在 stash 的 C<cb> 的值，如果想继承到嵌套的路由，可以直接传给控制器执行回调来替代.
+
+  $r->route('/bye')->to(cb => sub {
+    my $self = shift;
+    $self->render(text => 'Good bye.');
+  });
+
+这个技术是 L<Mojolicious::Lite> 上的，你可以看看相关的教程学习更多...
+
+=head2 占位符和目标 
+
+提取的占位符的值，如果你象下面一样, 它会简单地重新定义 stash 的值。
+
+  # /bye -> {controller => 'foo', action => 'bar', mymessage => 'bye'}
+  # /hey -> {controller => 'foo', action => 'bar', mymessage => 'hey'}
+  $r->route('/:mymessage')
+    ->to(controller => 'foo', action => 'bar', mymessage => 'hi');
+
+一个有意思的效果，就是当占位符结束路径选择时已经存在相同的名字的 stash 的值时，会自动的变成可选的。
+
+  # / -> {controller => 'foo', action => 'bar', mymessage => 'hi'}
+  $r->route('/:mymessage')
+    ->to(controller => 'foo', action => 'bar', mymessage => 'hi');
+
+有时有这样的情况，没有使用 C</> 分隔其它的字符之前使用了多个占位符。
+
+  # /           -> {controller => 'foo',   action => 'bar'}
+  # /users      -> {controller => 'users', action => 'bar'}
+  # /users/list -> {controller => 'users', action => 'list'}
+  $r->route('/:controller/:action')
+    ->to(controller => 'foo', action => 'bar');
+
+指定 stash 的值象 C<controller> 和 C<action> 也可以是占位符。
+
+=head2 更严格的占位符 
+
+一个非常简单的方法来占位符更严格的替代品，您只需写一个可能值的列表。
+
+  # /bender -> {controller => 'foo', action => 'bar', name => 'bender'}
+  # /leela  -> {controller => 'foo', action => 'bar', name => 'leela'}
+  # /fry    -> undef
+  $r->route('/:name', name => [qw(bender leela)])
+    ->to(controller => 'foo', action => 'bar');
+
+您还可以调整的正则表达式后面的占位符，以更好地满足您的需求.只要确保不使用 C<^> 和 C<$> 或捕获组 C<(...)>，因为占位符，会变成一个较大的正则表达式内部。
+
+  # /23   -> {controller => 'foo', action => 'bar', number => 23}
+  # /test -> undef
+  $r->route('/:number', number => qr/\d+/)
+    ->to(controller => 'foo', action => 'bar');
+
+  # /23   -> undef
+  # /test -> {controller => 'foo', action => 'bar', name => 'test'}
+  $r->route('/:name', name => qr/[a-zA-Z]+/)
+    ->to(controller => 'foo', action => 'bar');
+
+这样你直接写易于阅读的路径选择和直接使用原生的正则表达式。
+
+=head2 Formats
+
+象普通的文件扩展名 C<.html> 和 C<.txt> 之类在路径选择结束时会自动的存到 stash 的值  C<format> 中. 
+
+  # /foo      -> {controller => 'foo', action => 'bar'}
+  # /foo.html -> {controller => 'foo', action => 'bar', format => 'html'}
+  # /foo.txt  -> {controller => 'foo', action => 'bar', format => 'txt'}
+  $r->route('/foo')->to(controller => 'foo', action => 'bar');
+
+所以你可以使用相同的代码来处理不同的模板.
+
+  # /foo      -> {controller => 'foo', action => 'bar'}
+  # /foo.html -> {controller => 'foo', action => 'bar', format => 'html'}
+  $r->route('/foo')->to(controller => 'foo', action => 'bar');
+
+严格的占位符也可以使用
+
+  # /foo.rss -> {controller => 'foo', action => 'bar', format => 'rss'}
+  # /foo.xml -> {controller => 'foo', action => 'bar', format => 'xml'}
+  # /foo.txt -> undef
+  $r->route('/foo', format => [qw(rss xml)])
+    ->to(controller => 'foo', action => 'bar');
+
+或你可以只选择性重新启用禁用格式检测，在被嵌套的路径中，并允许继承。
+
+  # /foo      -> {controller => 'foo', action => 'bar'}
+  # /foo.html -> undef
+  $r->route('/foo', format => 0)->to('foo#bar');
+
+  # /foo      -> {controller => 'foo', action => 'bar'}
+  # /foo.html -> undef
+  # /baz      -> undef
+  # /baz.txt  -> {controller => 'bar', action => 'baz', format => 'txt'}
+  # /baz.html -> {controller => 'bar', action => 'baz', format => 'html'}
+  # /baz.xml  -> undef
+  my $inactive = $r->route(format => 0);
+  $inactive->route('/foo')->to('foo#none');
+  $inactive->route('/baz', format => [qw(txt html)])->to('bar#baz');
+
+=head2 Named routes
+
+给你的路径取一个名字，可以让你逆向引用，在整个框架中的许多方法和  helpers 可以通过 L<Mojolicious::Controller/"url_for"> 来使用它.
+
+  # /foo/abc -> {controller => 'foo', action => 'bar', name => 'abc'}
+  $r->route('/foo/:name')->name('test')
+    ->to(controller => 'foo', action => 'bar');
+
+  # Generate URL "/foo/abc" for route "test"
+  my $url = $self->url_for('test');
+
+  # Generate URL "/foo/sebastian" for route "test"
+  my $url = $self->url_for('test', name => 'sebastian');
+
+没有名字的路径会自动分配一个名字，就是等于本身的没有非单词的字符.
+
+  # /foo/bar ("foobar")
+  $r->route('/foo/bar')->to('test#stuff');
+
+  # Generate URL "/foo/bar"
+  my $url = $self->url_for('foobar');
+
+指到当前的路径，可以不加名字，也可以加一个名为 C<current> 的名字.
+
+  # Generate URL for current route
+  my $url = $self->url_for('current');
+  my $url = $self->url_for;
+
+你需要检查当前的路径名字，可以使用 helper  L<Mojolicious::Plugin::DefaultHelpers/"current_route">.
+
+  # Name for current route
+  my $name = $self->current_route;
+
+  # Check route name in code shared by multiple routes
+  $self->stash(button => 'green') if $self->current_route('login');
+
+=head2 HTTP methods
+
+在  L<Mojolicious::Routes::Route/"via"> 的方法可以让你指定可以通过的 HTTP 的方法.
+
+  # GET /bye    -> {controller => 'foo', action => 'bye'}
+  # POST /bye   -> undef
+  # DELETE /bye -> undef
+  $r->route('/bye')->via('GET')->to(controller => 'foo', action => 'bye');
+
+  # GET /bye    -> {controller => 'foo', action => 'bye'}
+  # POST /bye   -> {controller => 'foo', action => 'bye'}
+  # DELETE /bye -> undef
+  $r->route('/bye')->via('GET', 'POST')
+    ->to(controller => 'foo', action => 'bye');
+
+=head2 WebSockets
+
+在  L<Mojolicious::Routes::Route/"websocket"> 的方法可以限定握手，这是标准的  C<GET> 请求加一些额外的信息。
+
+  # /echo (WebSocket handshake)
+  $r->websocket('/echo')->to(controller => 'foo', action => 'echo');
+
+  # Controller
+  package MyApp::Foo;
+  use Mojo::Base 'Mojolicious::Controller';
+
+  # Action
+  sub echo {
+    my $self = shift;
+    $self->on(message => sub {
+      my ($self, $msg) = @_;
+      $self->send("echo: $msg");
+    });
+  }
+
+  1;
+
+=head2 Bridges
+
+桥接的路线可以用于多个嵌套的路线，共享代码因为不同于正常嵌套的路线，他们总是匹配，并导致额外的调度周期。
+
+  # /foo     -> undef
+  # /foo/bar -> {controller => 'foo', action => 'baz'}
+  #             {controller => 'foo', action => 'bar'}
+  my $foo = $r->bridge('/foo')->to(controller => 'foo', action => 'baz');
+  $foo->route('/bar')->to(action => 'bar');
+
+实际的桥接代码必须返回一个 true 的值或调度的链必须打破，使用桥接最强大的地方是用做认证.
+
+  # /foo     -> undef
+  # /foo/bar -> {cb => sub {...}}
+  #             {controller => 'foo', action => 'bar'}
+  my $foo = $r->bridge('/foo')->to(cb => sub {
+    my $self = shift;
+
+    # Authenticated
+    return 1 if $self->req->headers->header('X-Bender');
+
+    # Not authenticated
+    $self->render(text => "You're not Bender.");
+    return undef;
+  });
+  $foo->route('/bar')->to(controller => 'foo', action => 'bar');
+
+=head2 更加方便的路径选择 
+
+在本教程中，您应该已经知道了 L<Mojolicious::Lite> 的路径选择，这其实是所有的一切只是为了便利
+
+  # POST /foo -> {controller => 'foo', action => 'abc'}
+  $r->post('/foo')->to(controller => 'foo', action => 'abc');
+
+  # PATCH /bar -> {controller => 'foo', action => 'bar', test => 23}
+  $r->patch('/bar')->to('foo#bar', test => 23);
+
+  # GET /baz -> {template => 'foo/bar'}
+  $r->get('/baz')->to(template => 'foo/bar');
+
+  # * /yada.txt  -> {controller => 'foo', action => 'yada', format => 'txt'}
+  # * /yada.json -> {controller => 'foo', action => 'yada', format => 'json'}
+  $r->any('/yada' => [format => [qw(txt json)]])->to('foo#yada');
+
+  # GET /foo/bar  -> {controller => 'foo', action => 'bar'}
+  # PUT /foo/baz  -> {controller => 'foo', action => 'baz'}
+  my $foo = $r->any('/foo')->to('foo#');
+  $foo->get('/bar')->to('#bar');
+  $foo->put('/baz')->to('#baz');
+
+如果你从  L<Mojolicious::Lite> 的原型转换过来到全功能的 L<Mojolicious> 应用非常简单，如下.
+
+  # POST /bar
+  $r->post('/bar' => sub {
+    my $self = shift;
+    $self->render(text => 'Just like a Mojolicious::Lite action.');
+  });
+
+即使是比较抽象的概念。
+
+  # GET  /yada
+  # POST /yada
+  my $yada = $r->under('/yada');
+  $yada->get(sub {
+    my $self = shift;
+    $self->render(text => 'Hello.');
+  });
+  $yada->post(sub {
+    my $self = shift;
+    $self->render(text => 'Go away.');
+  });
+
+=head2 Hooks
+
+Hooks 操作是主要用来扩展和共享你的代码，使它更为强大，让你可以方便的扩展 L<Mojolicious>。
+
+  # Application
+  package MyApp;
+  use Mojo::Base 'Mojolicious';
+
+  sub startup {
+    my $self = shift;
+
+    # Check all requests for a "/test" prefix
+    $self->hook(before_dispatch => sub {
+      my $self = shift;
+      $self->render(text => 'This request did not reach the router.')
+        if $self->req->url->path->contains('/test');
+    });
+
+    # These will not be reached if the hook above renders a response
+    my $r = $self->routes;
+    $r->get('/welcome')->to('foo#welcome');
+    $r->post('/bye')->to('foo#bye');
+  }
+
+  1;
+
+Post-processing tasks such as setting additional response headers are a very
+common use.
+
+  # Make sure static files are cached
+  $self->hook(after_static_dispatch => sub {
+    my $self = shift;
+    $self->res->headers->cache_control('max-age=3600, must-revalidate')
+      if $self->res->code;
+  });
+
+Same for monitoring tasks.
+
+  # Forward exceptions to a web service
+  $self->hook(after_dispatch => sub {
+    my $self = shift;
+    return unless my $e = $self->stash('exception');
+    $self->ua->post_form('https://kraih.com/bugs' => {exception => $e});
+  });
+
+For a full list of available hooks see L<Mojolicious/"hook">.
+
+=head2 捷径
+
+您还可以添加自己的快捷方式，使路径选择更富有表现。
+
+  # Simple "resource" shortcut
+  $r->add_shortcut(resource => sub {
+    my ($r, $name) = @_;
+
+    # Generate "/$name" route
+    my $resource = $r->route("/$name")->to("$name#");
+
+    # Handle POST requests
+    $resource->post->to('#create')->name("create_$name");
+
+    # Handle GET requests
+    $resource->get->to('#show')->name("show_$name");
+
+    return $resource;
+  });
+
+  # POST /user -> {controller => 'user', action => 'create'}
+  # GET  /user -> {controller => 'user', action => 'show'}
+  $r->resource('user');
+
+
+=head2 自省
+
+在 C<routes> 的命令中，你可以使用下面的方法来查看自己的设置是否对.
+
+  $ ./myapp.pl routes -v
+  /foo/:name  GET   fooname  ^/foo/([^/\.]+))(?:\.([^/]+)$)?
+  /bar        POST  bar      ^/bar(?:\.([^/]+)$)?
+
+=head1 高级的
+
+比较不常用的功能，但非常强大的功能.
+
+=head2 IRIs
+
+IRIs are handled transparently, that means paths are guaranteed to be unescaped and decoded to Perl characters.
+
+  use utf8;
+
+  # GET /☃ (unicode snowman) -> {controller => 'foo', action => 'snowman'}
+  $r->get('/☃')->to('foo#snowman');
+
+Just don't forget to use the L<utf8> pragma or you'll make the Unicode snowman very sad.
+
+=head2 重排 routes
+
+就算第一个请求已经开始处理了，全部的路径选择还是可以移动和删除的，特别是通过插件需要重新排列的时候，这个有时非常有用.
+
+  # GET /example/show -> {controller => 'example', action => 'show'}
+  my $show = $r->get('/show')->to('example#show');
+  $r->any('/example')->add_child($show);
+
+  # Nothing
+  $r->get('/secrets/show')->to('secrets#show')->name('show_secrets');
+  $r->find('show_secrets')->remove;
+
+=head2 Conditions
+
+有时候，你可能更加强大的能力，例如: 在多个路径选择前检查 C<User-Agent> 的头。这是 Conditions 开始发挥作用的最好地方.
+
+  # Simple "User-Agent" condition
+  $r->add_condition(
+    agent => sub {
+      my ($route, $c, $captures, $pattern) = @_;
+
+      # User supplied regular expression
+      return undef unless $pattern && ref $pattern eq 'Regexp';
+
+      # Match "User-Agent" header and return true on success
+      my $agent = $c->req->headers->user_agent;
+      return 1 if $agent && $agent =~ $pattern;
+
+      # No success
+      return undef;
+    }
+  );
+
+  # /firefox_only (Firefox) -> {controller => 'foo', action => 'bar'}
+  $r->get('/firefox_only')->over(agent => qr/Firefox/)->to('foo#bar');
+
+这个方法 L<Mojolicious::Routes/"add_condition"> 为路径选择时加了一个条件，当 L<Mojolicious::Routes::Route/"over"> 这个通过时才进入到这个子函数.
+
+=head2 条件 plugins
+
+你可以根据你的条件加复用你的插件.
+
+  # Plugin
+  package Mojolicious::Plugin::WerewolfCondition;
+  use Mojo::Base 'Mojolicious::Plugin';
+
+  use Astro::MoonPhase;
+
+  sub register {
+    my ($self, $app) = @_;
+
+    # Add "werewolf" condition
+    $app->routes->add_condition(
+      werewolf => sub {
+        my ($route, $c, $captures, $days) = @_;
+
+        # Keep the werewolfs out!
+        return undef if abs(14 - (phase(time))[2]) > ($days / 2);
+
+        # It's ok, no werewolf
+        return 1;
+      }
+    );
+  }
+
+  1;
+
+如果你的应用中使用条件插件，你只需要加载就可以直接使用了.
+
+  # Application
+  package MyApp;
+  use Mojo::Base 'Mojolicious';
+
+  sub startup {
+    my $self = shift;
+
+    # Plugin
+    $self->plugin('WerewolfCondition');
+
+    # /hideout (keep them out for 4 days after full moon)
+    $self->routes->get('/hideout')->over(werewolf => 4)
+      ->to(controller => 'foo', action => 'bar');
+  }
+
+  1;
+
+=head2 嵌入 
+
+您可以方便地给程序嵌入整个应用程序，如果你只想简单地使用他们，而想使用控制器。这允许例如使用的 L<Mojolicious::Lite> 域的 DSL 语言来替换 L<Mojolicious> 的控制器的行。
+
+  # Controller
+  package MyApp::Bar;
+  use Mojolicious::Lite;
+
+  # /hello
+  get '/hello' => sub {
+    my $self = shift;
+    my $name = $self->param('name');
+    $self->render(text => "Hello $name.");
+  };
+
+  1;
+
+你可以使用 L<Mojolicious::Routes::Route/"detour"> 它是模拟 L<Mojolicious::Routes::Route/"to">, 
+你可以使用部分匹配用在这种应用程序的其它路径，将前面的基本路径放到  C<path>  的 stash  值中.
+
+  # /foo/*
+  $r->any('/foo')->detour('bar#', name => 'Mojo');
+
+一个最简单的应用无非就是 L<Mojo> 的子类，从 L<Mojolicious::Controller> 的对象中包含 C<handler> 的方法.
+
+  package MyApp::Bar;
+  use Mojo::Base 'Mojo';
+
+  sub handler {
+    my ($self, $c) = @_;
+    $c->res->code(200);
+    my $name = $c->param('name');
+    $c->res->body("Hello $name.");
+  }
+
+  1;
+
+您也可以只使用 L<Mojolicious::Plugin::Mount> 来安装个全独立的应用程序前缀。
+
+  use Mojolicious::Lite;
+
+  # Whole application mounted under "/prefix"
+  plugin Mount => {'/prefix' => '/home/sri/myapp.pl'};
+
+  # Normal route
+  get '/' => sub { shift->render_text('Hello World!') };
+
+  app->start;
+
+=head2 应用的 plugins
+
+增强 L<Mojolicious> 应用程序是很容易的，只要作为一个自包含的可重复使用的插件。
+
+  # Plugin
+  package Mojolicious::Plugin::MyEmbeddedApp;
+  use Mojo::Base 'Mojolicious::Plugin';
+
+  sub register {
+    my ($self, $app) = @_;
+
+    # Automatically add route
+    $app->routes->any('/foo')->detour(app => EmbeddedApp::app());
+  }
+
+  package EmbeddedApp;
+  use Mojolicious::Lite;
+
+  get '/bar' => 'bar';
+
+  1;
+  __DATA__
+  @@ bar.html.ep
+  Hello World!
+
+这个  C<app> 中的 stash 的值，并不会继承到嵌套的路径中去。所以你可以用于实例化的应用程序中，你只需要加载插件就好了。
+
+  # Application
+  package MyApp;
+  use Mojo::Base 'Mojolicious';
+
+  sub startup {
+    my $self = shift;
+
+    # Plugin
+    $self->plugin('MyEmbeddedApp');
+  }
+
+  1;
+
+=head1 更多
+
+你可以看看 L<Mojolicious::Guides> 有更多的 L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>, 它包含大量的文档和例子。
+
+=cut

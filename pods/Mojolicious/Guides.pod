@@ -1,0 +1,116 @@
+=pod
+
+=encoding utf-8
+
+=head1 文档
+
+Mojolicious::Guides - Mojolicious 指南 
+
+=head1 不要害怕!
+
+我们在不断更新我们的文档，请看
+L<Twitter|http://twitter.com/kraih>, L<GitHub|http://github.com/kraih/mojo> 也可以加入官方的 IRC channel C<#mojo> 在 C<irc.perl.org> 来取得最新的更新.
+
+=head1 学习 PERL
+
+如果你从没用过 Perl, 推荐你看看 L<Learn Perl in 2 hours 30 minutes|http://qntm.org/files/perl/perl.html> 这个快速了解的教程, 或者
+L<Modern Perl book|http://modernperlbooks.com/books/modern_perl/>, 这个免费提供多种格式可以选择。前面二个都是优秀的介文档.想看更多就看 L<learn.perl.org|http://learn.perl.org/>.
+
+=head1 教程
+
+=over 2
+
+=item L<Mojolicious::Lite>
+
+要想快速的开发和入门可以先看 Mojolicious 中 L<Mojolicious::Lite> 的教程。你学习的所有的东西都可以用在标准的  L<Mojolicious>. 学习这个是先决条件。你必须先看看。这个很象 Dancer ,是基于单文件原型开发使用.
+
+=back
+
+=head1 指南
+
+=over 2
+
+=item L<Mojolicious::Guides::Growing>
+
+使用 L<Mojolicious::Lite> 创建一个原型的应用, 可以让其然后成长成一个结构良好的 L<Mojolicious> 的全功能应用.
+
+=item L<Mojolicious::Guides::Routing>
+
+简单而有趣的介绍 L<Mojolicious> 路径映射到指定的子函数和方法.
+
+=item L<Mojolicious::Guides::Rendering>
+
+生成 L<Mojolicious> 的内容并渲染成显示的 HTML 和其它结构。
+
+=item L<Mojolicious::Guides::Cookbook>
+
+L<Mojolicious> 的 Cookbook, 其中有各种小例子的指南.
+
+=item L<Mojolicious::Guides::Contributing>
+
+做成  L<Mojolicious> 开发者中的一部分
+
+=item L<Mojolicious::Guides::FAQ>
+
+常问的问题的答案
+
+=back
+
+=head1 摘要
+
+L<Mojolicious> 和 L<Mojolicious::Lite> 有很多相同的部分.这些东西象积木一样可以整合，也可以独立使用。 
+
+=over 2
+
+=item L<Mojo::UserAgent>
+
+功能齐全的非阻塞 I/O HTTP 和 WebSocket 的 user agent.
+
+=item L<Mojo::DOM>
+
+迷你 HTML/XML 的 DOM 解析支持使用 CSS 选择器。
+
+=item L<Mojo::JSON>
+
+迷你 JSON 的实现.
+
+=item L<Mojo::Server::Daemon>
+
+功能齐全，高度可移植的非阻塞 I/O HTTP 和 WebSocket 服务器，自重启的功能支持在 L<Mojo::Server::Morbo> 中调用，适合用于开发和测试。
+
+=item L<Mojo::Server::Hypnotoad>
+
+功能齐全，为 UNIX 优化过，preforking 的非阻塞 I/O HTTP服务器和 WebSocket 服务器. 支持可以零停机的软件升级方式（热部署）。
+
+=item L<Mojo::Server::CGI>, L<Mojo::Server::PSGI>
+
+Transparent CGI and L<PSGI> support out of the box.
+
+=item L<Mojo::Template>
+
+全部由 Perl 实现的模板系统.
+
+=item L<Mojo::ByteStream>
+
+Countless portable and very convenient bytestream manipulation methods.
+
+=item L<Mojolicious::Commands>
+
+L<mojo> script 相关的命令行.
+
+=item L<Test::Mojo>
+
+Test driven development toolkit for web applications.
+
+=item L<ojo>
+
+Fun oneliners using everything above.
+
+=back
+
+=head1 MORE
+
+A lot more documentation and examples by many different authors can be found
+in the L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>.
+
+=cut

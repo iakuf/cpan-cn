@@ -1,0 +1,942 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+AnyEvent::Intro - AnyEvent 入门教程 
+
+=head1 简介 
+
+这是一个向您介绍 AnyEvent 功能的教程.
+
+第一部分介绍 AnyEvent 的核心模块,这可能已经提供所有你需要的: 如果你只对 AnyEvent 的事件处理能力感兴趣,就没有再念下去.
+
+第二部分侧重于网络编程,使用套接字,其中 AnyEvent 提供了很多你可以使用的一些功能的支持和有关可移植性之类.
+
+=head1 什么是 AnyEvent?
+
+如果你想了解这个希望直接看代码,跳过这一节！
+
+AnyEvent 是首先都只是一个基于事件的编程的框架.通常,这种框架本身是一个可有或可无的东西：如果你使用了一种框架,你并不能（容易,或者甚至根本）在同一程序中使用另一个.
+
+在这 AnyEvent 是不同于其它的 - 它是一个对其他事件循环的上层的薄的抽象层,就像 DBI 是一个抽象的许多不同的数据库 API.其主要原因是当程序作者可能想给底层框架的选择为（事件循环）当前最流行的.
+
+这意味着您可以编写代码,使用事件来控制它做什么,不强制在同一程序中的其他代码使用相同的基本框架,为你做 - 即你可以创建一个Perl模块,是基于事件的使用AnyEvent,和用户该模块还可以选择使用大号<Gtk2>,L<Tk>,大号<Event>（或运行里面的irssi或与rxvt-unicode）或任何其他支持的事件循环. AnyEvent甚至带有其自己的纯perl的事件循环执行,所以不管你的代码可能会或可能不会安装其他模块.后者是重要的,作为AnyEvent不会有任何硬依赖其他模块,这使得它易于安装,例如,当你缺少一个C编译器.无论什么样的环境,AnyEvent将只是应付.
+
+首先 AnyEvent 只是一个基于事件的编程的框架.通常,这种框架要么全使用这种框架要么不使用它,你不能在同一程序中同时使用另一个框架.
+
+AnyEvent 是不同的 -  它是其它事件循环上的最高的抽象层,就象 DBI 是所有不同数据库的抽象的 API.他是程序的作者可以选择的在他的模块中使用的低层事件循环框架.
+
+这意味着您可以编写代码,考虑使用什么事件来控制它,可以在同一程序中的其他代码使用相同的基本框架 - 即你可以创建一个 Perl 模块,是基于 AnyEvent 事件,这个用户的模块还可以选择使用大号 L<Gtk2>,L<Tk>, L<Event>（或 irssi ,rxvt-unicode）或任何其他支持的事件循环. AnyEvent 甚至带有其自己的纯 perl 的事件循环执行,所以不管你的是否可能会或可能不会安装其他模块.AnyEvent 本身不会有任何硬依赖其他模块,这使得它易于安装,例如,当你缺少一个C编译器.
+
+象现存的 Perl modules 的限制是,例如 L<Net::IRC> 它本身如果已有自己的循环: 在 L<Net::IRC> 中,它必须启动自己的循环.在  L<Gtk2> 的 GUI 中也强制使用自己的循环 L<Glib>.
+
+另一个例子是  L<LWP>: 它提供的全是非事件的接口.它是一个阻塞的 HTTP (FTP) 的客户端. 如果你想一边等待请求下载,一边还做一些别的事情.这通常意味着,你要么开始另一个进程或
+有 fork 一个 HTTP 请求,或使用线程（如L<Coro::LWP>）.
+
+之所以这样设计背后,往往是模块并不希望依赖一些复杂的 XS 模块(Net::IRC),另外它并不想强迫用户使用指定的事件循环(LWP),这会限制模块的使用: 如果你的模块是需要 Glib .它就不能使用 Tk .
+
+L<AnyEvent> 是用来解决这些麻烦,但并不强行要求使用使用这个:
+
+=over 4
+
+=item - 写自己的事件循环 （确保事件循环的可用性,因为它到处都是 -即使在Windows没有安装额外的模块）. 
+
+=item - choose one specific event loop (because AnyEvent works with most event loops available for Perl).
+
+=back
+
+如果模块作者使用 AnyEvent 为他（或她）的来做事件循环（IO 事件 timers 信号,...） 那么所有其他模块可以使用自己的模块,并不必选择事件循环或适配他的事件循环.
+事件循环的选择最终方案是由作者写到他的主程序来选择的.如果没有选择, AnyEvent 会自动帮你选择系统上最有效的事件循环.
+
+=head1 基于事件的编程简介 
+
+那么究竟什么是使用事件编程吗? 它很简单,只是在你的代码中并不会主动的等待一些事情发生,例如用户在输入一些东西:
+
+   $| = 1; print "enter your name> ";
+
+   my $name = <STDIN>;
+
+在基于事件的编程中,代替上面的方式是会通知你的事件告诉你 STDIN 上有内容输入,使用回调的机制:
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name;
+
+   my $wait_for_input = AnyEvent->io (
+      fh   => \*STDIN, # which file handle to check
+      poll => "r",     # which event to wait for ("r"ead data)
+      cb   => sub {    # what callback to execute
+         $name = <STDIN>; # read it
+      }
+   );
+
+   # do something else here
+
+看起来更复杂,确实是,但使用事件的好处是,你的程序可以做其他的东西,而不是等待输入(比旭在 AnyEvent 中给合 Coro 同时取得一些东西非常的简单.就象同时工作在二个美好的世界上一样);
+
+第一个等待的例子叫 "阻塞" 程序.因为你阻塞/保持你的程序在这个执行的过程中,不能做其它别的事情.
+
+第二个例子中避免阻塞,仅对"你有兴趣的东西"注册了一个事件-只读的事件,这是非常快速的,因为并不会阻止你的进程的进度.只要当数据是可用的就可以不阻塞读取,这个过程将被称为回调.
+
+这个"你有兴趣的东西"是使用一个 C<< AnyEvent->io >> 中叫  "watcher" 的对象 - 从这名字就能看出它会监控你的文件句柄( 也可能是其它的事件源 ).
+
+在上面的例子中使用的是 C<< AnyEvent->io >>  的方法创建了一个 I/O 的监控者.当我们不想监控时,我们可以直接使用 C<undef> 来存到这个变量上.AnyEvent 会自动的清掉监控者.就像Perl中关闭文件句柄当你不再使用它们的时候.
+
+=head3 回调的简短说明 
+
+一个共同的问题是参数是怎么传递给回调.当程序员使用 C 或 C++ 中经常使用的风格是,其中一个传递函数的地址（函数的引用）和一些数据值,例如：
+
+   sub callback {
+      my ($arg) = @_;
+
+      $arg->method;
+   }
+
+   my $arg = ...;
+
+   call_me_back_later \&callback, $arg;
+
+这是一个很笨的方式,在这个功能指定的地方(注册的回调) 通常是在远离这个地方执行.它不会使用 Perl 的语法来调用代码.它使用了一个抽象的方式,使用一个有名字的回调.这个名字并没有必要,也没有用处,还很重复.
+
+在 Perl 中,我们会直接使用闭包. 闭包是在一个封闭范围内创建的代码块的引用.
+
+这意味着在词法变量能在创建闭包后,还可以用于在内部闭包范围使用： 
+
+   my $arg = ...;
+
+   call_me_back_later sub { $arg->method };
+
+在大多的时候,闭包速度更快,相比传统的方法,这会占用更少的资源和结果并有着更加清晰的代码.更快,是因为参数通传递和存储在局部变量中比较慢.更少的资源,是因为闭包使用的是现有变量的引用,并不需要新创建新的.更加清晰的代码,这是显而易见的,看看第二个例子调用 C<method> 的方法时被调用的回调.
+
+除了这些,对使用与AnyEvent的闭包最强的论据是,AnyEvent不允许参数传递给回调,因此闭包,在大多数情况下是唯一的方式来实现： - >
+
+=head3 捕捉错误的提示 
+
+AnyEvent 默认并不检查你传递的参数,如果你想要检查,只需要简单写上 C<AE_STRICT=1> 在你的程序的环境中,或将 C<use AnyEvent::Strict> 写在你的程序的最上面：
+
+   AE_STRICT=1 perl myprogram
+
+你可以从后面的介绍中找到更多信息和额外的调试工具.
+
+=head2 条件变量(Condition Variables)
+
+我们看看上面 I/O watcher 例子: 上面的代码是并不是一个完整的程序,并不会正常工作.原因是您的回调将不会被调用,你必须先运行事件循环.此外,基于事件的程序有时会阻塞,比如,需要等待一些事情到达,要么直到所有的等待的事件都完成.
+
+在 AnyEvent,是使用条件变量 ("condition variables") 来实现的.条件变量之所以被命名为"条件变量",因为它们代表示初始假为的和必须达成的条件,才会退出事件的阻塞.
+
+你也可以叫条件变量为"合并点","同步点","集合点"港口或和许多其他的名字（他们通常在其他框架被称为这些名字在名字）.重要的一点是,你可以自由地创建条件变量和后面等待他们成为真的值变成真.
+
+条件变量有两个方面 - 一方面是"生产者"的条件（任何代码检测和标志的条件）,另一边则是"消费者"（等待该条件的代码）.
+
+我们在上一节的例子中,生产者是事件回调,有没有消费者 - 现在让我们来修改一下：
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name;
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh   => \*STDIN,
+      poll => "r",
+      cb   => sub {
+         $name = <STDIN>;
+         $name_ready->send;
+      }
+   );
+
+   # do something else here
+
+   # now wait until the name is available:
+   $name_ready->recv;
+
+   undef $wait_for_input; # watcher no longer needed
+
+   print "your name is $name\n";
+
+这个程序使用 C<< AnyEvent->condvar >> 方法创建一个 AnyEvent 的条件.然后,它像往常一样创建了一个 watcher,在 watcher 内部回调通过 C<$name_ready> 的 C<send> 条件变量,
+这时只有当一些人输入什么它才能继续.
+
+当有人输入一些内容后,接下来会调用  C<< $name_ready->recv >>: 生产者会调用 C<send>, 消费者调 C<recv>.
+
+如果 C<$name> 中还没值的时候,这时会调用 C<< $name_ready->recv >> ,这时将暂停你的程序,直到条件变为真.
+
+由名字 C<send> 和 C<recv> 你就可以知道,他们表示可以发送和接收使用这个数据,例如,上面的代码也可以这样写,不使用额外的变量来存储名称：
+
+   use AnyEvent;
+
+   $| = 1; print "enter your name> ";
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh => \*STDIN, poll => "r",
+      cb => sub { $name_ready->send (scalar <STDIN>) }
+   );
+
+   # do something else here
+
+   # now wait and fetch the name
+   my $name = $name_ready->recv;
+
+   undef $wait_for_input; # watcher no longer needed
+
+   print "your name is $name\n";
+
+您可以传任意数量的参数到C<send>,后续调用到C<recv>将返回他们.
+
+=head2 主循环 "main loop"
+
+很多的基于事件处理的框架都有一个叫  "main loop"  和 "event loop run function"  之类的功能.
+
+这和 AnyEvent 的  C<recv> 一样.
+Just like in C<recv> AnyEvent, these functions need to be called eventually so that your event loop has a chance of actually looking for the events you are interested in.
+
+例如,在下面这个  L<Gtk2> 的程序中,上面的例子也可以这样写：
+
+   use Gtk2 -init;
+   use AnyEvent;
+
+   ############################################
+   # create a window and some label
+
+   my $window = new Gtk2::Window "toplevel";
+   $window->add (my $label = new Gtk2::Label "soon replaced by name");
+
+   $window->show_all;
+
+   ############################################
+   # do our AnyEvent stuff
+
+   $| = 1; print "enter your name> ";
+
+   my $name_ready = AnyEvent->condvar;
+
+   my $wait_for_input = AnyEvent->io (
+      fh => \*STDIN, poll => "r",
+      cb => sub {
+         # set the label
+         $label->set_text (scalar <STDIN>);
+         print "enter another name> ";
+      }
+   );
+
+   ############################################
+   # Now enter Gtk2's event loop
+
+   main Gtk2;
+
+在我们见得到的地方,者没见到条件变量 － 相反,我们只需要读标准输入然后替换那个文件输入的标签.In fact, since nobody C<undef> s C<$wait_for_input> you can enter multiple lines.
+
+替代等待的条件变量的,在程序中的 Gtk2 的主循环,是使用C<< Gtk2->main >> 来调用的.这会 block 住程序,直接到程序等待的事件到达.
+
+这显示了 AnyEvent 是非常灵活的,你需要使用任何 AnyEvent 的 watcher ,只要使用 Gtk2(实际是 Glib).
+
+诚然,这个例子是有点傻 - 谁愿意在GTK +应用程序的标准输入读取名称？但是想象一下,如果你在后台使用 http 的请求并显示结果这样事件.你只要是基于事件,你能在你的程序中一次发出很多请求并行的处理并给结果返回回来.
+
+在接下来的部分,你将看到如何做到这一点 - 实现一个HTTP请求,我们自己的.
+
+然而,在这之前,让我们简要地看,你将如何仅 AnyEvent 编写程序使用, 没有调用其他一些事件循环时.
+
+在使用条件变量的例子,我们所使用的启动等待事件,就象下面:
+
+   my $quit_program = AnyEvent->condvar;
+
+   # create AnyEvent watchers (or not) here
+
+   $quit_program->recv;
+
+如果你的任何 watcher 回调决定退出事件 or 程序（这通常在其它框架中被称为一个"unloop"）,他们可以直接调用 C<<  $quit_program->send >>.当然,他们也可以使用C<exit>代替.
+
+如果你并不需要一些清理退出功能,只是要运行事件循环,你可以这样做：
+
+   AnyEvent->condvar->recv;
+
+这是 AnyEvent 提供的最建议的退出事件循环的方式.
+
+=head2 timers 和其他事件源 
+
+到现在,我们只使用了 I/O watchers 这个事件源.主要用来是了解一个套接字是否有数据可以读取或是否可以写更多的数据.在健全的操作系统上,主要是指控制台窗口/终端（通常是在标准输入）,串口线和其他各种设备.基本上,几乎所有的东西,有只要有一个文件描述符,但不是文件本身.(通常,健全是排除 windows 的－ 在该平台上,你会需要所有这些不同的功能,也需要非常复杂的代码 - 所以在 windows 上只认为" socket" 才能用).
+
+然而,I/O 是不是万能的 - 第二个最重要的事件源是时钟.例如做一个HTTP请求时,你可能在当服务器一些预定义的时间内没有回答时超时.
+
+在 AnyEvent, timer 的事件 watchers 是由  C<< AnyEvent->timer >> 的方法创建的.
+
+   use AnyEvent;
+
+   my $cv = AnyEvent->condvar;
+
+   my $wait_one_and_a_half_seconds = AnyEvent->timer (
+      after => 1.5,  # after how many seconds to invoke the cb?
+      cb    => sub { # the callback to invoke
+         $cv->send;
+      },
+   );
+
+   # can do something else here
+
+   # now wait till our time has come
+   $cv->recv;
+
+相比起 I/O watchers, timers只对等待几秒的时间感兴趣.当等待的时间到了后,AnyEvent将调用你的回调.
+
+不同于 I/O watchers,在 I/O 的 watchers 中会多次调用你的回调,只要有可用数据.定时器通常只工作一次性,然后"炒它鱿鱼".只调用你的回调一次,然后就死掉,不在做任何事情.
+
+为了实现一个重复的 timer,我们可以设置每多少秒后执行,你只需要指定 C<interval> 的参数:
+
+   my $once_per_second = AnyEvent->timer (
+      after => 0,    # first invoke ASAP
+      interval => 1, # then invoke every second
+      cb    => sub { # the callback to invoke
+         $cv->send;
+      },
+   );
+
+=head3 更多的事件源 
+
+AnyEvent 也有很多其它的事件源,象  signal, child 和  idle watchers.
+
+Signal watchers 是用在等待信号的事件,当你的程序发送一些信息时执行(such as C<SIGTERM> or C<SIGUSR1>).
+
+Child-process watchers 用来监控子进程的退出.当你派生一个单独的进程和需要知道什么时候退出,但你不想block 的等待.
+
+Idle watchers 是用在所有事件循环都没有需要做时回调,也就是当你的进程闲置时.这主要用来处理一些大的数据,当你的程序闲置时.
+
+所有的 watcher 类型和描述主要在 L<AnyEvent> 的手册中.
+
+有时你还需要知道当前时间是： C<< AnyEvent->now >> 返回事件的工具包中的相对定时器的时间,通常是你想要的时间.它往往是缓存的（这意味着它可能是有点过时）.在这种情况下,可以使用较昂贵的 C<< AnyEvent－>time >> 的方法,它会取得您的操作系统为当前的时间,这是会慢些, 但也更加及时.
+
+
+=head1 Network 程序和 AnyEvent
+
+到目前为止,你已经看到如何注册 event watchers 和处理事件.
+
+这是对于编写网络客户端和服务器是很好的的基础, 可能会对所有模块（或程序）要求, 但自己编写 I/O 缓冲的处理很单调乏味, 更何况,它引起错误.
+
+这个 L<AnyEvent> 的模块功能少,但发行中包含了一些非常有用的模块,象 L<AnyEvent::Handle>, L<AnyEvent::DNS> and L<AnyEvent::Socket>. 这会让你这个写非阻塞的网络程序员的生活轻松许多.
+
+下面我们来快速的看看这些模块:
+
+=head2 L<AnyEvent::DNS>
+
+这个模块实现了全异步的 DNS 解析.它使用 L<AnyEvent::Socket> 来解析主机名和服务器端口.最强大的是做一些其它的 DNS 解析的任务,象解析日志文件中的 IP 来源地区.
+
+=head2 L<AnyEvent::Handle>
+
+这个模块在 socket 和 pipe 上实现了非阻塞 IO.文件处理是使用的基于事件的方式.它提供了有关你对文件处理相关的队列和 buffer .
+
+它也实现了一些通用的数据格式,象文本行,和非常方便的取一个有换行的数据块.
+
+=head2 L<AnyEvent::Socket>
+
+这个模块的功能是处理有关 socket 的创建和 IP 地址相关的操作.有二个主要的功能 C<tcp_connect>  和 C<tcp_server>.前者将"流"插的 socket 接到你的 internet 的主机,以后会为你做一个服务器套接字,接受连连接.
+
+此模块还带有透明的IPv6支持,这意味着：如果你写你的程序用此模块,支持 IPv6 时不用做任何特别的准备.
+
+它还能很方便的解决很多古怪的问题（尤其是在Windows平台上）,这使得它更容易在一个可移植的方式写你的程序（你可知道,Windows 使用不同的错误代码为所有套接字的功能和但 Perl 不知道这些)
+
+=head2 实现无阻塞并行 finger 客户端连接和 AnyEvent::Socket
+
+finger 协议是在互联网上使用最简单的协议之一.
+
+它通过连接到另一台主机上的 finger 端口,写一行一个用户名,然后读取由该用户指定的 finger 的响应,RFC1288指定了一个更为复杂的协议,但它基本上归结为：
+
+   # telnet kernel.org finger
+   Trying 204.152.191.37...
+   Connected to kernel.org (204.152.191.37).
+   Escape character is '^]'.
+   
+   The latest stable version of the Linux kernel is: [...]
+   Connection closed by foreign host.
+
+因此,让我们写一个小AnyEvent功能,使finger请求：
+
+   use AnyEvent;
+   use AnyEvent::Socket;
+
+   sub finger($$) {
+      my ($user, $host) = @_;
+
+      # use a condvar to return results
+      my $cv = AnyEvent->condvar;
+
+      # first, connect to the host
+      tcp_connect $host, "finger", sub {
+         # the callback receives the socket handle - or nothing
+         my ($fh) = @_
+            or return $cv->send;
+
+         # now write the username
+         syswrite $fh, "$user\015\012";
+
+         my $response;
+
+         # register a read watcher
+         my $read_watcher; $read_watcher = AnyEvent->io (
+            fh   => $fh,
+            poll => "r",
+            cb   => sub {
+               my $len = sysread $fh, $response, 1024, length $response;
+
+               if ($len <= 0) {
+                  # we are done, or an error occured, lets ignore the latter
+                  undef $read_watcher; # no longer interested
+                  $cv->send ($response); # send results
+               }
+            },
+         );
+      };
+
+      # pass $cv to the caller
+      $cv
+   }
+
+我们来对此功能的剖析了一下,首先是整体功能和执行流程：
+
+   sub finger($$) {
+      my ($user, $host) = @_;
+
+      # use a condvar to return results
+      my $cv = AnyEvent->condvar;
+
+      # first, connect to the host
+      tcp_connect $host, "finger", sub {
+         ...
+      };
+
+      $cv
+   }
+
+这是不是太复杂,只是带有两个参数的函数,创建一个条件变量 C<$cv>,发起个TCP连接到 C<$host>,并返回 C<$cv>.调用者能够使用返回的 C<$cv> 接收finger的响应,但同样可以通过第三个参数回调函数.
+
+由于我们是事件编程,我们不要等待的连接完成 - 它会阻塞这个程序一分钟或更长的时间！
+
+这时,我们通过 C<tcp_connect> 在连接完成时调用回调.如果连接成功,回调使用 socket 句柄作为第一个参数,否则没有参数, 最重要的一点是,它总是只要已知 TCP 连接的结果时被调用,无论好坏.
+
+这种编程风格也被称"continuation style": 这个 "continuation" 指程序接下来持续执行的方式,通常是指某些语句下一行怎么做(除开循环和C<return>).当我们是使用事件编程时.我们需要指出我们的的 "continuation" 是通过一个闭包.这使得该闭包会接着执行中指定的事件,形式上就是在函数的最后调用 callback,这样就好象给函数的执行结果交给回调继续执行.
+
+这C<tcp_connect>调用就像是说："现在返回, 当连接建立或尝试失败,执行那里"的调用.
+
+现在让我们看看回调/闭包的更详细的内容
+
+         # the callback receives the socket handle - or nothing
+         my ($fh) = @_
+            or return $cv->send;
+
+回调做首先会给 socket 句柄保存在 C<$fh>.当有错误时（没有参数）,那么我们作为的专业的 Perl 程序员会本能的想到使用 C<die> 的函数,象下面一样：
+
+         my ($fh) = @_
+            or die "$host: $!";
+
+虽然这会提供良好的反馈给用户（如果他恰好看到标准错误）,但我们的程序可能会停止在这,后面就不会调用方我们C<finger>函数和 C<die> 之后的其它的的事件循环,就退出了.
+这就是为什么我们要代替掉 C<return> ,只使用 C<< $cv->send >> 来发送信号给 condvar 消费者,以不带任何参数的形式告诉它发生了一件坏事,  C<< $cv->send >> 给的返回值是不恰当,这时我们的回调就能接收到这个没有参数的内容 .这时使用标准的 C<return> 语句会有的副作用,它会立即从回调中返回.在程序中错误检查和处理在事情中这样处理是很常见的.
+
+在 finger 协议的下一步,我们要给 finger 守护进程发送用户名（kernel.org finger 的服务实际上并不等待用户名);
+
+         syswrite $fh, "$user\015\012";
+
+请注意,这不是 100％ 干净的 socket 编程 - 在真实的网络套接字中,常常会由于一些原因,不接受我们的数据.
+在这个例子中,我们只写入时小量的数据,仅仅是一个"用户名",  这时套接字缓冲区一定是足够大,但现实世界的情况下,您可能需要执行一些缓冲写入 -  或使用L<AnyEvent::Handle>,为您处理这些问题,在下一节所示
+
+现在我们来实现我们自己的读 buffer. - 接收到的响应的数据会分成多个块来取出,这时我们不能光等待(基于事件的程序,你知道的...).
+
+要做到这,我们在套接字上注册 read_watcher 来等待数据读取：
+
+         my $read_watcher; $read_watcher = AnyEvent->io (
+            fh   => $fh,
+            poll => "r",
+
+read_watcher 并是不存储在全局变量,是一个局部变量 - 如果回调返回,它通常会破坏变量和内容,这又会将我们的 watcher 注销,使用了 use strict 也会报错.
+
+为了避免这种情况,我们是引用在回调上面的 watcher 变量.这意味着,当 C<tcp_connect> 的回调返回时,Perl 不会报错,会认为正确,读的 watcher 仍然在代码内部的回调还在使用
+- 从而保持它活着,即使没有别的程序是引用它
+
+所以下面的这个代码,需要被替换:
+
+   my $read_watcher = AnyEvent->io (...
+
+替换成:
+
+   my $read_watcher; $read_watcher = AnyEvent->io (...
+
+这样做的原因由于 Perl 的工作的方式的怪异：声明的变量名只有在接下来后面的的语句中才可见.如果整个  C<< AnyEvent->io >> 调用,包括回调在一个单一的语句中,回调可能不是引用
+C<$read_watcher> 成 C<undef> ,所以需要写成两个语句.
+
+当然你是否愿意这样格式化是个风格问题. 但这强调在三是因为,声明和分配确实是一个逻辑语句.
+
+回调本身需要多次调用 C<sysread>,直到 C<sysread> 返回一个错误或文件结束：
+
+    cb   => sub {
+        my $len = sysread $fh, $response, 1024, length $response;
+    if ($len <= 0) {
+
+注意,如果我们指定偏移的 C<sysread> 可以实现追加读取的数据到一个标量,就象我们使用这个例子.
+
+当 C<sysread> 的工作完成后,回调会 C<undef> 掉 Watcher 并 C<send> 的响应数据完成条件变量.这一切都具有以下效果：\
+
+取消 watcher 的定义并销毁它,由于我们的回调是唯一一个仍然有它自己的引用. 当 watcher 被销毁时,它摧毁回调,这又意味着在 C<$FH> 中的句柄不再使用的,
+这样也被销毁.其结果是所有资源将被很好释放.
+
+=head3 使用 finger client
+
+现在,我们可能可以使用  C<IO::Socket::INET> 之类的多种方法更加简单的来实现 finger ,但这有个主要的好处,我们现在运行 finger 的功能到后台,是多个会话并行的,象下面这样:
+
+   my $f1 = finger "trouble", "noc.dfn.de"; # check for trouble tickets
+   my $f2 = finger "1736"   , "noc.dfn.de"; # fetch ticket 1736
+   my $f3 = finger "hpa"    , "kernel.org"; # finger hpa
+
+   print "trouble tickets:\n"     , $f1->recv, "\n";
+   print "trouble ticket #1736:\n", $f2->recv, "\n";
+   print "kernel release info: "  , $f3->recv, "\n";
+
+它看起来并不像它一样,但实际上所有三个请求并行运行. 这代码首先等待第一个 finger 的 request 完成, 但这并不阻止并行执行它们：
+首个C<recv>调用时看到的请求的数据还没有准备好(响应没有回来), 它自动服务所有其它请求的事件, 直到第一次请求已经完成.
+
+第二个 C<recv> 调用任何回来并可以操作的存在的数据,或将继续连接到事件处理直到是这样.
+
+通过有效利用网络延迟的时间, 这使我们能够服务其他请求和事件,当我们需要等待 socket 事件时非常有用.  做这三个请求的总时间将大大减少, 通常所有三个都在最慢的那个请求到达时完成.
+
+顺便说一下,你可以不用等待一个 AnyEvent 条件变量的C<recv>方法 - 毕竟,等待是邪恶的 - 你也可以注册一个回调：
+
+   $f1->cb (sub {
+      my $response = shift->recv;
+      # ...
+   });
+
+只被调用 C<send> 时,将调用回调.事实上,你可以通过 finger 功能第三个参数来替换条件变量的返回,调用响应的回调
+
+   sub finger($$$) {
+      my ($user, $host, $cb) = @_;
+
+你如何实现它,只是一个偏爱的问题了 - 如果你希望你的函数主要用于基于事件的程序,你通常会更喜欢直接传递一个回调.如果你写一个模块,并期待您的用户使用它的"同步"经例如,一个简单的HTTP-GET脚本不会真正关心的事件）,那么你会使用一个条件变量,并告诉他们只要简单的 C<< ->recv >> 这些数据.
+
+=head3 实现存在的问题及如何解决这些问题 
+
+为了让这个例子多为真实情况的准备,我们将实现一些写缓冲,不过我也可能还需要处理超时和可能的协议错误.
+
+这样做,程序本身很快就会非常臃肿, 这就是为什么我们在下一节介绍 L<AnyEvent::Handle> 的原因,它可以帮你处理你的所有这些细节,让你专注于实际的协议.
+
+=head2 使用 AnyEvent::Handle 来实现简单的 HTTP 和 HTTPS 的 GET 请求
+
+我们一直在本文档中宣传 L<AnyEvent::Handle> 模块,让我们看看它真正提供什么.
+
+由于finger是非常简单的协议,让我们尝试一些稍微复杂的 HTTP/1.0 协议.
+
+这个 HTTP GET 的请求是发送单个请求,给你所指定的服务器做,并发送一个  URI 来告诉你想做什么操作,随后是许多的 HTTP 的 "header" 行 (C<Header: data> 象你的邮件的头部),其次是一个空行.
+
+响应是和上面非常相似,第一个响应是状态行,然后是 许多必须的 header.接着一个空行,空行下面是服务器发送数据.
+
+这次,一样我们使用 C<telnet>  来测试（这的输出非常简明 - 如果你想看到完整的响应,自己做一下）.
+
+   # telnet www.google.com 80
+   Trying 209.85.135.99...
+   Connected to www.google.com (209.85.135.99).
+   Escape character is '^]'.
+   GET /test HTTP/1.0
+
+   HTTP/1.0 404 Not Found
+   Date: Mon, 02 Jun 2008 07:05:54 GMT
+   Content-Type: text/html; charset=UTF-8
+
+   <html><head>
+   [...]
+   Connection closed by foreign host.
+
+手动输入的 C<GET...> 和空行,其余的 telnet 输出是 googee 的响应,在这个例子中,是一个 C<404> 的响应.
+
+下面看看怎么使用 C<AnyEvent::Handle>:
+
+   sub http_get {
+      my ($host, $uri, $cb) = @_;
+
+      # store results here
+      my ($response, $header, $body);
+
+      my $handle; $handle = new AnyEvent::Handle
+         connect  => [$host => 'http'],
+         on_error => sub {
+            $cb->("HTTP/1.0 500 $!");
+            $handle->destroy; # explicitly destroy handle
+         },
+         on_eof   => sub {
+            $cb->($response, $header, $body);
+            $handle->destroy; # explicitly destroy handle
+         };
+
+      $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+
+      # now fetch response status line
+      $handle->push_read (line => sub {
+         my ($handle, $line) = @_;
+         $response = $line;
+      });
+
+      # then the headers
+      $handle->push_read (line => "\015\012\015\012", sub {
+         my ($handle, $line) = @_;
+         $header = $line;
+      });
+
+      # and finally handle any remaining data as body
+      $handle->on_read (sub {
+         $body .= $_[0]->rbuf;
+         $_[0]->rbuf = "";
+      });
+   }
+
+现在象通常一样,我们来一步步讲解.首先,像往常一样,整体 C<http_get> 功能结构框架：
+
+   sub http_get {
+      my ($host, $uri, $cb) = @_;
+
+      # store results here
+      my ($response, $header, $body);
+
+      my $handle; $handle = new AnyEvent::Handle
+         ... create handle object
+
+      ... push data to write
+
+      ... push what to expect to read queue
+   }
+
+与 finger 的例子不同的是,这一次调用者传递了回调给 C<http_get> 函数.此外,有关 URI - 通常你会使用的 C<URI> 模块解析 URL 来得到,这些部分,但留给读者:)
+
+因为有回调,我们  C<http_get> 只需要创建使用 AnyEvent::Handle 对象来创建连接(它会调用 C<tcp_connect> ),然后退出给回调.
+
+句柄对象的创建,勿庸置疑,是通过调用 L<AnyEvent::Handle> 的 C<new> 方法:
+
+      my $handle; $handle = new AnyEvent::Handle
+         connect  => [$host => 'http'],
+         on_error => sub {
+            $cb->("HTTP/1.0 500 $!");
+            $handle->destroy; # explicitly destroy handle
+         },
+         on_eof   => sub {
+            $cb->($response, $header, $body);
+            $handle->destroy; # explicitly destroy handle
+         };
+
+这个 C<connect> 的参数是告诉 AnyEvent::Handle  通过指定的主机和端口调用  C<tcp_connect>.
+
+这的 C<on_error> 回调,会在任何意外的错误,如拒绝连接,或意外结束文件时调用.而无需额外的信号错误的机制,当连接错误时,通过一个特殊的"响应状态行",像这样：
+
+   HTTP/1.0 500 Connection refused
+
+这意味着不能区分是本地还是远程服务器的错误,但这简化了调用者的一些错误处理
+
+这个错误的回调,显式地也破坏了句柄的引用,因为我们后面没有任何感兴趣的错误了.
+
+最后但同样重要的,我们设置  C<on_eof> 的加回调,来向对方表示已经停止写入数据, 我们也要正常显示关闭句柄,并回调报告结果.这个回调只有在读取队列为空时才调 -
+如果读取队列预计得到的是一些数据但句柄从对方得到一个 EOF,这将报一个错误 - 毕竟,你希望有更多的数据.
+
+如果你想使用 AnyEvent::Handle 写一个服务器的应用,你需要使用 C<tcp_accept> 和通过 C<fh> 的参数来创建 AnyEvent::Handle . 
+
+=head3 写队列 
+
+下一行发送的实际 HTTP 请求：
+
+   $handle->push_write ("GET $uri HTTP/1.0\015\012\015\012");
+
+我们没有写其它 HTTP 头部 （这只是简单的请求）, 所以整个请求仅仅是单行,发送给服务器并告诉它请求结束.
+
+你要注意,这时使用的方法是 C<push_write> 并只是 write.这是因为你可以总是可以以不阻塞的方法增加数据.,这时 AnyEvent::Handle 需要一些内部的写队列 - and C<push_write> 推一些数据到这个队列的最后面.这很象 Perl 中的 C<push> 的这个推数据到数组中一样.
+
+更深层次的原因是,在将来的某些时间,有可能会用到 C<unshift_write> ,我们会在短期内用到 C<push_read> 和 C<unshift_read> 的功能, 它通常很容易记住这些函数,找一些在 Perl 中其名称中的对称的功能.  所以作为 C<push> 相反的 C<unshift> 也存在 AnyEvent::Handle,而并不是相反的 C<pull> 的 - 就像在Perl.
+
+请注意,我们调用 C<push_write> 是在创建的 AnyEvent::Handle 对象之后,在连接服务器之前.当连接建立时,就会推读写请求的对象
+
+如果 C<push_write> 调用的参数超过一个时.你可以使用 I<formatted> 格式化 I/O. 例如,你可以在推入写队列之前使用  JSON-encode 的数据
+
+   $handle->push_write (json => [1, 2, 3]);
+
+这几乎概括写队列的所有东西,和少量其它的东西.
+
+读取响应会更加有意思,因为调用了更加强大和复杂的 I<读队列>
+
+=head3 读队列 
+
+HTTP 的响应包括三个部分：第一行响应状态,第二行到一个空行结束是 header 的内容,在这用空行来区分 header 和 body 的内容,下面是连接上的剩余数据.
+
+对于前两个部分,我们建二个读取请求的函数来使用只读队列：
+
+   # 取得响应的状态行 
+   $handle->push_read (line => sub {
+      my ($handle, $line) = @_;
+      $response = $line;
+   });
+
+   # 取得 header 的内容 
+   $handle->push_read (line => "\015\012\015\012", sub {
+      my ($handle, $line) = @_;
+      $header = $line;
+   });
+
+虽然可以推送所有队列上的数据给一个回调来解析就好了,但我们还是建议使用内置的格式化 I/O 来读取, 因为有现成的 "read line" 读类型.如果希望一次读一行,以结束 C<\015\012> 来做操作就行了（互联网协议标准的行结束标记）.
+
+内容的第二个 push_read 中的 "line" 中实际上是一个段落 - 而不是真的按行读取行, 所以我们告诉 push_read 以 \015\012\015\012 来做行结束标记, 这个标记的意思是读到一个空行. 得到的结果是整个 Header 部分,这将被视为单个行并读取. 在这的 "line" 这个关键字的解释你可以自由定制, 它和 Perl 本身的其它功能很像.
+
+注意,当创建句柄对象后立即会推送读取请求 - 在 AnyEvent::Handle  中提供了队列可以推很多的请求,并会按顺序来处理它们.
+
+呵呵,下面并没有"剩余的数据"读的读类型.为此,我们安装我们自己的的 C<on_read>回调：
+
+   # 读取其它的数据 
+   $handle->on_read (sub {
+      $body .= $_[0]->rbuf;
+      $_[0]->rbuf = "";
+   });
+
+此回调在每一次数据到达时并且读取队列是空的时候被调用,也就是没有 push_read 的时候 - 在这个例子将只响应和 Http 头可以读的时候. C<on_read> 回调实际是在构造对象时指定的,它会保留存起来内容的逻辑顺序.
+
+所以要记住 on_read 是在所有的 push_read 队列都调完时，最后调用的一个方法.
+
+这个 on_read 的回调会给每次有 read buffer 进来时，给内容加到 $body 变量上.需要注意,我们每次都使用空字符串来清空了这个 rbuf.
+
+总的来讲 AnyEvent::Handle 会帮助你更加容易的处理传入的数据, 当有数据进入句柄时, response 的发过来的数据会引起这些回调.
+
+在一般情况下,我们如果想实现管道(流水线处理)（许多协议需要这种特性）,使用 AnyEvent::Handle 非常的容易.如果我们有一个自己的协议,有请求/响应的结构,
+
+您的请求方法/函数看起来就像这样（简化了一点 ^_^）
+
+   sub request {
+
+      # 发送一些请求到服务器 
+      $handle->push_write (...);
+
+      # 给响应推到处理的回调 
+      $handle->push_read (...);
+   }
+
+这意味着你可以放很多的请求放入队列中,只要你想,而 AnyEvent::Handle 通过其读队列去处理响应数据 - 整个队列相当于是给一些数据写入队列中并有读取时调用后面的处理程序.
+
+你也许想知道怎么先处理后到达的数据，这个答案就是使用 unshift_read. 以后会有例子介绍到.
+
+=head3 使用 C<http_get>
+
+最后,这里教你会如何使用 C<http_get>:
+
+   http_get "www.google.com", "/", sub {
+      my ($response, $header, $body) = @_;
+      print $response, "\n", $body;
+   };
+
+当然,你可以并行运行这些请求,只要你想（和你的内存还有就行）.
+
+=head3 HTTPS
+
+现在, 作为前面的承诺, 让我们实现 HTTPS 所做的事,让我们来修改 C<http_get> 的功能来使用 HTTPS .
+
+HTTPS 是一个标准的 TLS 连接（大多数人的认为的传输层安全性是指 C<SSL> ）,它包含标准的 HTTP 协议交换.和 HTTP 唯一的区别是,默认情况下,它使用 C<433> 端口,而不是端口 C<80>.
+
+要实现这个,有二个不同的地方需要修改,首先,在  C<connect> 连接的参数中,需要给 http 替换成 https .来连接 https 的端口:
+
+         connect  => [$host => 'https'],
+
+其它的修改是使用 TLS, 有一样非常好的事情就是  L<Net::SSLeay> 可以直接在 L<AnyEvent::Handle> 中使用,这是透明的.只要在 L<AnyEvent::Handle> 中打开 TLS 的支持,我们在 C<AnyEvent::Handle::new> 中通过 C<tls>  的参数来调用.
+
+         tls => "connect",
+
+通过 C<tls> 来打开 TLS ,这个参数会指定让 AnyEvent::Handle 在服务器端的 ("accept") 和客户端的 ("connect") 使用 TLS 的连接.不同于前面的普通 tcp ,这明确的指定了使用 TLS 来进行服务器和客户端的通信.
+
+这就是全部了.
+
+通常,全部的处理就只有在  C<http_get> 传送的时候做就好了,其它透明.
+
+=head3 在次看看读队列
+
+HTTP 在响应中永远使用相同的结构,但许多协议需要根据不同的响应本身来处理不同的东西.
+
+例如,在 SMTP 中,你标准的 get 单个响应行是:
+
+   220 mail.example.net Neverusesendmail 8.8.8 <mailme@example.net>
+
+但是 SMTP  也支持多行的响应
+
+   220-mail.example.net Neverusesendmail 8.8.8 <mailme@example.net>
+   220-hey guys
+   220 my response is longer than yours
+
+在处理这个时,我们必须使用 C<unshift_read>.象这个名字所表示的一样.C<unshift_read> 并不会追加读请求到读队列的最后面.而是放在队列之前.
+
+在上述情况下,这是非常有用的：只要把你的回应行发送SMTP命令时读请求,处理它的时候,你看行看到,如果更多的是来的,和C<unshift_read>另一个读的回调,如果需要,像这样：
+
+   my $response; # response lines end up in here
+
+   my $read_response; $read_response = sub {
+      my ($handle, $line) = @_;
+
+      $response .= "$line\n";
+
+      # check for continuation lines ("-" as 4th character")
+      if ($line =~ /^...-/) {
+         # if yes, then unshift another line read
+         $handle->unshift_read (line => $read_response);
+
+      } else {
+         # otherwise we are done
+
+         # free callback
+         undef $read_response;
+         
+         print "we are don reading: $response\n";
+      }
+   };
+
+   $handle->push_read (line => $read_response);
+
+这个指向可以用于所有类似的解析问题,例如NNTP中,一些命令的响应代码表明将发送更多的数据：
+
+   $handle->push_write ("article 42");
+
+   # read response line
+   $handle->push_read (line => sub {
+      my ($handle, $status) = @_;
+
+      # article data following?
+      if ($status =~ /^2/) {
+         # yes, read article body
+         
+         $handle->unshift_read (line => "\012.\015\012", sub {
+            my ($handle, $body) = @_;
+
+            $finish->($status, $body);
+         });
+
+      } else {
+         # some error occured, no article data
+         
+         $finish->($status);
+      }
+   }
+         
+=head3 自己的读队列处理程序 
+
+在 AnyEvent::Handle 的代码块取 buffer 时, 内置的方式对一些行或块的数据不能很好的格式化来取得, 这时普通协议并不能合适使用时. 在这种情况下, 你需要实现自己的读分析器.
+
+现在我们做例子(虽然不太合适这个主题), 假设你正在找个一个字符,是在偶数后面跟一个冒号(:),也假设象这种 AnyEvent::Handle 并没有 C<regex> 的读类型可用于处理(虽然我们知道有),所以你不得不做手工.
+
+为了实现这个读的处理程序,你需要 C<push_read>（或 C<unshift_read>的）做个单个代码引用.
+
+这段代码引用,将会在每次有（新）读取到缓冲区中的可用数据时调用, 并有望成功找到/替换一些数据（返回true）或返回 false 来表示,它希望下次在被再次调用.
+
+代码引用,如果返回true,那么它将会从读队列中删除（因为它会替换）,否则保持原样.
+
+上面的例子可以这样写:
+
+   $handle->push_read (sub {
+      my ($handle) = @_;
+
+      # check for even number of characters + ":"
+      # and remove the data if a match is found.
+      # if not, return false (actually nothing)
+
+      $handle->{rbuf} =~ s/^( (?:..)* ) ://x
+         or return;
+
+      # we got some data in $1, pass it to whoever wants it
+      $finish->($1);
+
+      # and return true to indicate we are done
+      1
+   });
+
+=head1 调试工具 
+
+现在你已经看到如何使用 AnyEvent 的,和有什么用,当你不正确的使用时,使用它出现了 BUG 的时候,我们需要调试：
+
+=over 4
+
+=item  启用严格的参数检查,在你的开发过程中
+
+AnyEvent 默认情况下,不会做任何参数检查.这可能会导致奇怪和不可预料的结果.
+
+AnyEvent 支持 strict 模式 - 默认关闭 - 这确实是非常严格的参数检查,会有让你的程序变慢的可能的.然而,在开发过程中,这种模式是非常有用的,因为它迅速捕捉很多常见的错误.
+
+你只要简单的在你的环境中使用 C<AE_STRICT> 的环境变量,让他变成真就行了.
+
+   AE_STRICT=1 perl myprog
+
+当然,你也可以使用 C<use AnyEvent::Strict> 写上这个在你的程序中,一样有效,但一定要注意不要在你的生产环境中使用这个.
+
+=item 配置日志记录和信息显示级别 
+
+AnyEvent,默认情况下,只记录 critical 级别的重要消息.如果不能有些不能正常工作的东西,也许只是显示成一个警告,你没看见,所在可能需要调整.
+
+因此,在开发过程中,它建议设置更加高的日志记录级别至少警告水平（<5>）：
+
+   AE_VERBOSE=5 perl myprog
+
+其它的可能有用的级别是  debug (C<8>) 和 trace (C<9>). 
+
+有关 AnyEvent 的日志 - 请看 L<AnyEvent::Log>  有详细的信息.
+
+=item Watcher wrapping, tracing, the shell
+
+如果你想更加详细的 debug 信息,你可以打开 watcher wrapping:
+
+  AE_DEBUG_WRAP=2 perl myprog
+
+这将会在 watcher 被创建时包装成一个特殊的对象存储, 在 watcher执行过程中发生异常, 保存回溯, 并存储了很多的其他信息. 如果引起你的程序非常慢, 使用 C<AE_DEBUG_WRAP=1> 可能会好点. 
+
+下面是存的这个 watcher 的一个例子:
+
+   59148536 DC::DB:472(Server::run)>io>DC::DB::Server::fh_read
+   type:    io watcher
+   args:    poll r fh GLOB(0x35283f0)
+   created: 2011-09-01 23:13:46.597336 +0200 (1314911626.59734)
+   file:    ./blib/lib/Deliantra/Client/private/DC/DB.pm
+   line:    472
+   subname: DC::DB::Server::run
+   context: 
+   tracing: enabled
+   cb:      CODE(0x2d1fb98) (DC::DB::Server::fh_read)
+   invoked: 0 times
+   created
+   (eval 25) line 6        AnyEvent::Debug::Wrap::__ANON__('AnyEvent','fh',GLOB(0x35283f0),'poll','r','cb',CODE(0x2d1fb98)=DC::DB::Server::fh_read)
+   DC::DB line 472         AE::io(GLOB(0x35283f0),'0',CODE(0x2d1fb98)=DC::DB::Server::fh_read)
+   bin/deliantra line 2776 DC::DB::Server::run()
+   bin/deliantra line 2941 main::main()
+
+有许多方法来获得这个数据 - 可以看 L<AnyEvent::Debug> 和  L<AnyEvent::Log> 有更多详细内容
+
+有很多有趣和交互方式是设置创建一个调试 shell,例如设置 C<AE_DEBUG_SHELL>：
+
+  AE_DEBUG_WRAP=2 AE_DEBUG_SHELL=$HOME/myshell ./myprog
+
+  # while myprog is running:
+  socat readline $HOME/myshell
+
+请注意,任何人都可以访问 F<$HOME/ myshell> 他或她可以使你的程序做任何他想要的,所以如果你不是你的机器上的唯一用户,更好地放到一个安全的位置（F<$HOME>可能没有足够安全）.
+
+如果你不具有C<socat>（一种耻辱！）更关心安全, 你也可以使用TCP和 C<telnet>：
+
+  AE_DEBUG_WRAP=2 AE_DEBUG_SHELL=127.0.0.1:1234 ./myprog
+
+  telnet 127.0.0.1 1234
+
+调试 shell,可以启用和禁用跟踪 watcher 调用,可以显示跟踪输出,给您的 watcher 的列表, 并让您详细探讨的watcher .
+
+=back
+
+这就结束了我们的小教程.
+
+=head1 接下来我们要做什么?
+
+在 L<AnyEvent> 中会介绍相关的一些概念,象 watchers 和条件变量. L<AnyEvent::Socket> - 是基本的网络工具,和L<AnyEvent::Handle> 是一个封装得非常好的有关 socket 的应用.
+
+你可以开始编写应用之前,建议你看看细节的手册页和其他AnyEvent模块（如 L<AnyEvent::IRC> 或 L<AnyEvent::HTTP>）的CPAN上看到更多的代码示例（或简单地使用他们）.
+
+如果你需要一个协议没有使用 AnyEvent 实现,记住,你可以混合与其他事件的框架,如 L<POE>,所以你可以随时使用自己的任务,加上另一事件模块AnyEvent框架,以填补空缺.
+
+最后并非最不重要的是,你可以也看看在L<Coro>,特别是L<Coro::AnyEvent> 就看你怎么可以把回调风格转向基于事件的编程,这通常势在必行 （也称为"反向控制" - AnyEvent调用给你,但 Coro让您调用AnyEvent）.
+
+=head1 Authors
+
+Robin Redeker C<< <elmex at ta-sa.org> >>, Marc Lehmann <schmorp@schmorp.de>.
+
