@@ -96,7 +96,7 @@ Countless portable and very convenient bytestream manipulation methods.
 
 =item L<Mojolicious::Commands>
 
-L<mojo> script 相关的命令行.
+L<mojo> script 相关的命令行, 如果你想使用 Dancer 样的功能 $ mojo generate app MojoMvcTutorial 功能时，就去看这个.
 
 =item L<Test::Mojo>
 

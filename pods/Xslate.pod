@@ -1,0 +1,543 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Text::Xslate::Syntax::Kolon - 默认的模板语法
+
+=head1 概要
+
+    use Text::Xslate;
+    my $tx = Text::Xslate->new(
+        syntax => 'Kolon', # optional
+    );
+
+    print $tx->render_string(
+        'Hello, <: $dialect :> world!',
+        { dialect => 'Kolon' }
+    );
+
+=head1 描述
+
+Kolon 是 默认的模板语法, 使用 C<< <: ... :> >> 标签和 C<< : ... >> 行代码.这些语法的所有特性在 Xslate 中目前都实现并可用.
+
+=head1 语法
+
+=head2 变量访问
+
+变量访问:
+
+    <: $var :>
+
+字段访问:
+
+    <: $var.0 :>
+    <: $var.field :>
+    <: $var.accessor :>
+
+    <: $var["field"] :>
+    <: $var[0] :>
+
+变量有可能是 HASH 的引用, 数组引用和对象,所以 C<$var.field> and C<$var["field"]> 在 Perl 中的意思是一样的.C<< $obj["accessor"] >> 语法会调用对象的方法.
+
+=head2 常量
+
+特殊的:
+
+    : nil   # 是 undef, 指出什么都没有
+    : true  # 和整数 1 的意思一样
+    : false # 和整数 0 的意思一样
+
+字符:
+
+    : "foo\n" # 和 Perl 中相同
+    : 'foo\n' # 和 Perl 中相同
+
+数字:
+
+    : 42
+    : 3.14
+    : 0xFF   # hex
+    : 0777   # octal
+    : 0b1010 # binary
+
+数组:
+
+    : for [1, 2, 3] -> $i { ... }
+
+Hash:
+
+    : foo({ foo => "bar" })
+
+注意这的 C<{ ... }> 是可以解析成 hash 的.所以你不需要使用前缀,不过,你有可能需要使用  <+> 做为 Perl 的前缀:
+
+    :  {}.kv(); # ok
+    : +{}.kv(); # also ok
+
+=head2 表达式
+
+条件运算符 (C<< ?: >>):
+
+    : $var.value == nil ? "nil" : $var.value
+
+关系运算符 (C<< == != < <= > >= >>):
+
+    : $var == 10 ? "10"     : "not 10"
+    : $var != 10 ? "not 10" : "10"
+
+注重这个 C<==> 和 C<!=> 很象 Perl 中的 C<eq> 和 C<ne> 除了
+
+C<$var == nil> 会认为是真 B<iff> I<$var> 是未初始化的, 其它都是数值的关系运算符.
+
+算术运算符 (C<< + - * / % min max >>):
+
+    : $var * 10_000
+    : ($var % 10) == 0
+    : 10 min 20 min 30 # 10
+    : 10 max 20 max 30 # 30
+
+位操作符 (C<< prefix:<+^> +& +| +^ >>)
+
+    : 0x1010 +| 0x3200 # bitwise or:  0x3210
+    : 0x1010 +& 0x3200 # bitwise and: 0x1000
+    : 0x1010 +^ 0x3200 # bitwise xor: 0x0210
+    : +^0x1010         # bitwise neg: 0xFFFFEFEF (on 32 bit system)
+
+逻辑运算符 (C<< ! && || // not and or >>)
+
+    : $var >= 0 && $var <= 10 ? "ok" : "too smaller or too larger"
+    : $var // "foo" # as a default value
+
+字符运算符 (C<< ~ >>)
+
+    : "[" ~ $var ~ "]" # concatination
+
+运算符的优先级是象 Perl 的:
+
+    . () []
+    prefix:<!> prefix:<+> prefix:<-> prefix:<+^>
+    * / % x +&
+    + - ~ +| +^
+    prefix:<defined>
+    < <= > >=
+    == !=
+    |
+    &&
+    || // min max
+    ?:
+    not
+    and
+    or
+
+=head2 常量 (or binding)
+
+你可以定义一个词法常量通过  C<constant>, 这需要一个裸字. C<my>,这个需要一个变量的名字.
+
+    : constant FOO = 42;
+    : my      $foo = 42;
+
+这两个语句具有相同的语义，所以你不能修改 C<$foo>.
+
+    : my $foo = 42; $foo = 3.14; # compile error!
+
+=head2 循环
+
+这个 C<for> 的循环就和 Perl 中的 C<foreach> 是一样.
+
+    : # iterate over an ARRAY reference
+    : for $data -> $item {
+        [<: $item.field :>]
+    : }
+
+    : # iterate over a HASH reference
+    : # You must specify how to iterate it (.keys(), .values() or .kv())
+    : for $data.keys() -> $key {
+        <: $key :>=<: $data[$key] :>
+    : }
+
+另外这个 C<for> 声明也可以使用 C<else>:
+
+    : for $data -> $item {
+        [<: $item.field :>]
+    : }
+    : else {
+        Nothing in data
+    : }
+
+这个 C<else> 的块是在 I<$data> 是一个空数组或零块时被执行.您可以在 C<for> 的块中得到迭代器的索引  C<$~ITERATOR_VAR>:
+
+    : for $data -> $item {
+        : if ($~item % 2) == 0 {
+            Even (0, 2, 4, ...)
+        : }
+        : else {
+            Odd (1, 3, 5, ...)
+        : }
+    : }
+
+C<$~ITERATOR_VAR> 是一个伪对象, 所以你可以通过 .name 这种语法来访问元素的信息如 index 和 count.
+
+    : for $data -> $i {
+        : $~i       # 0-origin iterator index (0, 1, 2, ...)
+        : $~i.index # the same as $~i
+        : $~i.count # the same as $~i + 1
+
+        : if ($~i.index % 2) == 0 {
+            even
+        : }
+        : else {
+            odd
+        : }
+        : $i~.cycle("even", "odd") # => "even" -> "odd" -> "even" -> "odd" ...
+    : }
+
+迭代器的元素支持下面这些  C<index :Int>, C<count :Int>, C<body : ArrayRef>, C<size : Int>, C<max_index :Int>, C<is_first :Bool>, C<is_last :Bool>, C<peek_next :Any>, C<peek_prev :Any>, C<cycle(...) :Any>.
+
+C<while> 循环也是支持的,功能和 Perl 的一样:
+
+    : # $obj might be an iteratable object
+    : while $dbh.fetch() -> $item {
+        [<: $item.field :>]
+    : }
+
+C<< while defined expr -> $item >> 被解释为 C<< while defined(my $item = expr) >>.
+
+    : while defined $dbh.fetch() -> $item {
+        [<: $item # $item can be false-but-defined :>]
+    : }
+
+循环控制语句也就是 C<next> 和 C<last>, 它们可以用在 C<for> 和 C<while> 的循环中.
+
+    : for $data -> $item {
+        : last if $item == 42
+        ...
+    : }
+
+=head2 条件控制
+
+在这有 C<if-else> 和 C<given-when> 条件控制.
+
+C<if-else>:
+
+    : if $var == nil {
+        $var is nil.
+    : }
+    : else if $var != "foo" { # elsif is okay
+        $var is not nil nor "foo".
+    : }
+    : else {
+        $var is "foo".
+    : }
+
+    : if( $var >= 1 && $var <= 10 ) {
+        $var is 1 .. 10
+    : }
+
+注意这个地方 C<if> 是不需要括号的.所以下面的代码也是 OK 的:
+
+    : if ($var + 10) == 20 { } # OK
+
+C<given-when>(也被称为 B<switch statement>):
+
+    : given $var {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when ["bar", "baz" ] {
+            it is either bar or baz.
+    :   }
+    :   default {
+            it is not foo nor bar.
+        }
+    : }
+
+您可以指定  topic 变量.
+
+    : given $var -> $it {
+    :   when "foo" {
+            it is foo.
+    :   }
+    :   when $it == "bar" or $it == "baz" {
+            it is either bar or baz.
+    :   }
+    : }
+
+=head2 功能方法和过滤
+
+可以通过  C<< Text::Xslate->new() >> 中的  C<function> 和 C<module> 的选项来注册一些自定的功能.
+
+一旦你注册了新的功能, 就可以通过加上 C<()> 的操作符来调用. 还支持 C<< infix:<|> >> 这样一个 C<()> 的语法糖.
+
+    : f()        # without args
+    : f(1, 2, 3) # with args
+    : 42 | f     # the same as f(42)
+
+功能的调用就象 Perl 的子函数,所以你可以定义动态的 functions
+
+(a.k.a. dynamic filters),这是一个子程序，返回另一个子程序：:
+
+    # code
+    sub mk_indent {
+        my($prefix) = @_;
+        return sub {
+            my($str) = @_;
+            $str =~ s/^/$prefix/xmsg;
+            return $str;
+        }
+    }
+    my $tx = Text::Xslate->new(
+        function => {
+            indent => \&mk_indent,
+        },
+    );
+
+    :# template
+    : $value | indent("> ") # Template-Toolkit like
+    : indent("> ")($value)  # This is also valid
+
+有几个内建的函数，你不能重新定义：
+
+    : $var | mark_raw   # marks it as a raw string
+    : $var | raw        # synonym to mark_raw
+    : $var | unmark_raw # removes "raw" marker from it
+    : $var | html       # does html-escape to it and marks it as raw
+    : $var | dump       # dumps it with Data::Dumper
+
+需要注意的是，你不应该在模板中使用 C<mark_raw> 因为它容易有安全漏洞，就象 C 的类型转换.如果你想动态生成 HTML 组件，例如通过HTML表单的建计者，应用程序代码应该是负责使字符串标着 C<raw>.
+
+=head2 方法
+
+当 $var 是一个对象的实例时,你可以可以调用它的方法通过"."这个操作符.
+
+    <: $var.method() :>
+    <: $var.method(1, 2, 3) :>
+    <: $var.method( foo => [ 1, 2, 3 ] ) :>
+
+这会自动加载相应的方法,用来提供基本类型的内置方法调用.可以看 L<Text::Xslate::Manual::Builtin> 中有更详细的信息.
+
+你还可以使用更加原始的 C<function> 的选项.看  L<Text::Xslate>.
+
+=head2 模板的导入
+
+板的导入是传统的扩展模板的方式.
+
+    : include "foo.tx";
+    : include "foo.tx" { var1 => value1, var2 => value2, ... };
+
+新的功能是象 C<cascade> , 当然 C<include> 也支持相应的层级.
+
+    : include foo      # the same as 'foo.tx'
+    : include foo::bar # the same as 'foo/bar.tx'
+
+xslate 模板可以递归地引入，但包括深度限制为100.
+
+=head2 Template cascading 模板层叠
+
+模板层叠是除了导入外的另一种方式来扩展模板.
+
+首先, 我们建一个基础的模板 F<myapp/base.tx>:
+
+    : block title -> { # 包含的块内部有默认数据 
+        [My Template!]
+    : }
+
+    : block body -> { } # 没有默认数据
+
+我们使用下面的方式来包含其它的模板到当前的中:
+
+    : cascade myapp::base
+    : cascade myapp::base { var1 => value1, var2 => value2, ...}
+    : cascade myapp::base with myapp::role1, myapp::role2
+    : cascade with myapp::role1, myapp::role2
+
+在派生模板中你可以扩展自己的模板, 例如我们使用 F<myapp/foo.tx> 通过块修饰方法 (block modifiers).
+
+    : # 给 "myapp/base.tx" 级联进来
+    : cascade myapp::base
+    : # 使用默认的标题，所以 title 块不能写出来，只修改 body 块. 
+    : around body -> {
+        My template body!
+    : }
+
+然后, 你还可以修改你的模板 F<myapp/bar.tx> ,这次我们显示的使用 title 并使用默认值:
+
+    : cascade myapp::foo
+    : around title -> {
+        --------------
+        : super
+        --------------
+    : }
+    : before body -> {
+        Before body!
+    : }
+    : after body -> {
+        After body!
+    : }
+
+接下来.
+
+    my $tx = Text::Xslate->new( file => 'myapp/bar.tx' );
+    $tx->render({});
+
+输出的结果会象下面这个样子:
+
+        --------------
+        [My Template!]
+        --------------
+
+        Before body!
+        My template tody!
+        After body!
+
+你也可以象 Moose 的角色一样层叠.
+
+    : cascade myapp::base with myapp::role1, myapp::role2
+
+你可以替换掉基础模板, 如下新的例子中只要在你的文件中 F<myapp/hello.tx> 来做基础模块: 
+
+    : around hello -> {
+        --------------
+        : super
+        --------------
+    : }
+
+主模板:
+
+    : cascade with myapp::hello
+
+    : block hello -> {
+        Hello, world!
+    : }
+
+输出:
+
+        --------------
+        Hello, world!
+        --------------
+
+另外组件可以包括任何宏.  下面的文件 F<common.tx>
+
+    : macro hello -> $lang {
+        Hello, <: $lang :> world!
+    : }
+
+    : around title -> {
+        --------------
+        : super
+        --------------
+    : }
+
+主模板:
+
+    : cascade with common
+
+    : block title -> {
+        Hello, world!
+    : }
+    : hello("Xslate")
+
+输出:
+
+        --------------
+        Hello, world!
+        --------------
+    Hello, Xslate world!
+
+有一个限制，你不能变量传递给的 C<cascade> 关键字中，因为模板的级联是静态处理.
+
+=head2  宏块
+
+宏是支持的,当使用功能调用的方式来调用, 返回 C(raw) 字符. 宏返回什么就会显示什么, 所以不能返回引用和对象包括其他的宏.
+
+    : macro add ->($x, $y) {
+    :   $x + $y;
+    : }
+    : add(10, 20)
+
+    : macro signeture -> {
+        This is foo version <: $VERSION :>
+    : }
+    : signeture()
+
+    : macro factorial -> $x {
+    :   $x == 0 ? 1 : $x * factorial($x-1)
+    : }
+    : factorial(1)  # as a function
+    : 1 | factorial # as a filter
+
+如果你想 HTML 转义宏的返回值，你可以使用 C<unmark_raw>, 来删除 C<raw-ness>从这些值.
+
+    : macro em -> $s {
+    <em><: $s :></em>
+    : }
+    : em("foo")               # renders "<em>foo</em>"
+    : em("foo") | unmark_raw  # renders "&lt;em&gt;foo&lt;em&gt;"
+
+因为宏是对象，你可以将它们绑定到 symbols.
+
+    <: macro foo -> { "foo" }
+       macro bar -> { "bar" }
+       my $dispatcher = {
+           foo => foo,
+           bar => bar,
+       }; -:>
+    : $dispatcher{$key}()
+
+在这也支持匿名宏，但它们只唯一返回字符串.这个可能是有用的，高层次的回调函数或方法的时候.
+
+    <: -> $x, $y { $x + $y }(1, 2) # => 3 :>
+
+这个  C<block> 的关键字是使用模板代码中的 make 组,你可以使用过滤功能在 block 中通过  C<< infix:<|> >>.下面是一个例子嵌入到HTML源代码转换成模板。
+
+模板:
+
+    : block source | unmark_raw -> {
+        <em>Hello, world!</em>
+    : }
+
+输出:
+
+    &lt;em&gt;Hello, world!&lt;/em&gt;
+
+你可以看看 L<Text::Xslate::Manual::Cookbook/"Using FillInForm"> 中有一些 block 过滤语法的例子.
+
+=head2 特殊关键字
+
+有一些特殊的关键字：
+
+=over
+
+=item __FILE__
+
+表示当前文件名
+
+=item __LINE__
+
+表示当前行号
+
+=item __ROOT__
+
+指 root 的参数.
+
+=back
+
+=head2 备注
+
+备注从 C<#> 到一个新行或分号
+
+    :# this is a comment
+    <:
+      # this is also a comment
+      $foo # $foo is rendered
+    :>
+
+    <: $bar # this is ok :>
+    <: # this is comment; $baz # $baz is rendered :>
+
+=head1 SEE ALSO
+
+L<Text::Xslate>
+
+=cut
+

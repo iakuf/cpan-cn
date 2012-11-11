@@ -1,0 +1,17 @@
+
+=head1 NAME
+
+DBIx::Class::Tutorial
+
+=head1 CONTENTS
+
+L<Part1|DBIx::Class::Tutorial::Part1>
+
+L<Part2|DBIx::Class::Tutorial::Part2>
+
+L<Part3|DBIx::Class::Tutorial::Part3>
+
+=head1 AUTHOR
+
+Jess Robinson <cpan@desert-island.me.uk>
+

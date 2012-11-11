@@ -1,0 +1,51 @@
+=pod
+
+=encoding utf-8
+
+=head1 中文 CPAN 文档
+
+这是一个中文 CPAN 文档收藏网站
+
+=head1 简介!
+
+我们会不断更新和增加我们的文档，欢迎你也加入，有什么信息可以加入到 L<test|http://github.com/kraih/mojo> .
+
+=head1 学习 PERL
+
+如果你从没用过 Perl, 推荐你看看 L<Learn Perl in 2 hours 30 minutes|http://qntm.org/files/perl/perl.html> 这个快速了解的教程, 或者
+L<Modern Perl book|http://modernperlbooks.com/books/modern_perl/>, 这个免费提供多种格式可以选择。前面二个都是优秀的介文档.想看更多就看 L<learn.perl.org|http://learn.perl.org/>.
+
+=head1 网站开发教程
+
+=over 2
+
+=item 使用 L<Mojolicious::Lite> 进行网站开发
+
+要想快速的开发和入门使用 Perl 做网站，可以先看 Mojolicious 中 L<Mojolicious::Lite> 的教程。全部的相关教程  L<Mojolicious::Guides>. 
+
+=item 网站开发的模板 L<Xslate> 技术
+
+使用 Perl 扩展的 C ，来进行开发的模板技术。有着超好的性能。优美的类似于 Perl 6 的语法.
+
+=item 数据库操作技术 
+
+DBIx::Class 就最好的 ORM 的类，这有一本 L<DBIx::Cookbook> 可以提前看看. 相关的 L<DBIx::Class::Tutorial> .
+
+=back
+
+=head1 事件编程
+
+=over 2
+
+=item L<AnyEvent>
+
+使用 AnyEvent
+
+=back
+
+
+=head1 更多 
+
+有关本网站联系人网站: L<扶凯|http://www.php-oa.com>
+
+=cut

@@ -452,9 +452,9 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   @@ groovy.txt.ep
   My name is <%= $name %>.
 
-=head2 Restrictive placeholders
+=head2 限制性占位符 
 
-The easiest way to make placeholders more restrictive are alternatives, you just make a list of possible values.
+有个最简单的方法，让你的占位符有严格的范围，您只需写出可能值的列表。
 
   use Mojolicious::Lite;
 
@@ -468,8 +468,7 @@ The easiest way to make placeholders more restrictive are alternatives, you just
 
   app->start;
 
-All placeholders get compiled to a regular expression internally, this process
-can also be easily customized.
+所有的占位符被编译到成正则表达式，所以在这也可以很容易地定制你的这个。
 
   use Mojolicious::Lite;
 
@@ -483,9 +482,7 @@ can also be easily customized.
 
   app->start;
 
-Just make sure not to use C<^> and C<$> or capturing groups C<(...)>, because
-placeholders become part of a larger regular expression internally, C<(?:...)>
-is fine though.
+只要确保不使用  C<^> 和 C<$> 还有捕获组  C<(...)>, 因为这些占位符会和内置的组成一个更大的正则表达式.
 
 =head2 Under
 
@@ -783,14 +780,11 @@ WebSocket的应用程序从未如此简单。
 
   app->start;
 
-The event L<Mojo::Transaction::WebSocket/"message">, which you can subscribe
-to with L<Mojolicious::Controller/"on">, will be emitted for every new
-WebSocket message that is received.
+在 L<Mojo::Transaction::WebSocket/"message"> 的事件中，我们可以对  L<Mojolicious::Controller/"on"> 的回调进行订阅，当每次有 WebSocket 的信息时会接收到。
 
-=head2 External templates
+=head2 外部模板 
 
-External templates will be searched by the renderer in a C<templates>
-directory.
+外部模板会从你的应用目录中的  C<templates> 目录中来查找.
 
   use Mojolicious::Lite;
 
@@ -804,10 +798,9 @@ directory.
 
   app->start;
 
-=head2 Static files
+=head2 静态文件 
 
-Static files will be automatically served from the C<DATA> section (even
-Base64 encoded) or a C<public> directory if it exists.
+静态文件可以从 C<DATA> 的部分(可以是 Base64 的编码)或 C<public> 的目录查找.
 
   @@ something.js
   alert('hello!');
@@ -820,8 +813,7 @@ Base64 encoded) or a C<public> directory if it exists.
 
 =head2 Testing
 
-Testing your application is as easy as creating a C<t> directory and filling
-it with normal Perl unit tests.
+创建一个 C<t> 目录和进行 Perl 的单元测试，测试您的应用程序在这也一样简单。
 
   use Test::More;
   use Test::Mojo;
@@ -834,34 +826,29 @@ it with normal Perl unit tests.
 
   done_testing();
 
-Run all unit tests with the C<test> command.
+使用  C<test> 命令运行全部的单元测试.
 
   $ ./myapp.pl test
 
-To make your tests more noisy and show you all log messages you can also
-change the application log level directly in your test files.
+如果你想你的测试报告更加多的信息，你也可以直接在您的测试文件中更改该应用程序的日志级别。
 
   $t->app->log->level('debug');
 
-=head2 Mode
+=head2 模式
 
-To disable debug messages later in a production setup, you can change the
-L<Mojolicious> operating mode with command line options or the C<MOJO_MODE>
-environment variable, the default will usually be C<development>.
+在生产环境我们想要禁用 debug 的信息，可以直接通过 L<Mojolicious> 操作的命令行选项和修改 C<MOJO_MODE> 这个环境变量，默认是使用的 C<development>.
 
   $ ./myapp.pl daemon -m production
 
-This also affects many other aspects of the framework, such as mode specific
-C<exception> and C<not_found> templates.
+这也影响到模板其它的地方，如 C<exception>  和 C<not_found> 的模板.
 
 =head2 Logging
 
-L<Mojo::Log> messages will be automatically written to C<STDERR> or a
-C<log/$mode.log> file if a C<log> directory exists.
+使用 L<Mojo::Log> 时信息会自动的写到标准错误输入和 C<log/$mode.log> 的文件中，当然必须 C<log> 目录存在.
 
   $ mkdir log
 
-For more control the L<Mojolicious> object can be accessed directly.
+更多的控制可以直接访问 L<Mojolicious>  的对象.
 
   use Mojolicious::Lite;
 
@@ -874,49 +861,44 @@ For more control the L<Mojolicious> object can be accessed directly.
 
   app->start;
 
-=head2 More
+=head2 更多
 
-You can continue with L<Mojolicious::Guides> now, and don't forget to have
-fun!
+你接下来可以看 L<Mojolicious::Guides> .
 
-=head1 FUNCTIONS
+=head1 功能
 
-L<Mojolicious::Lite> implements the following functions.
+L<Mojolicious::Lite> 实现了下列的功能.
 
 =head2 C<any>
 
   my $route = any '/:foo' => sub {...};
   my $route = any [qw(GET POST)] => '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"any">, matching any of the
-listed HTTP request methods or all. See also the tutorial above for more
-argument variations.
+生成  L<Mojolicious::Routes::Route/"delete"> 的 route ， 对所有的 HTTP 的请求方法都接收.
 
 =head2 C<app>
 
   my $app = app;
 
-The L<Mojolicious::Lite> application.
+这是 L<Mojolicious::Lite> 的应用.
 
 =head2 C<del>
 
   my $route = del '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"delete">, matching only
-C<DELETE> requests. See also the tutorial above for more argument variations.
+生成 L<Mojolicious::Routes::Route/"delete">  route ， 只对  C<DELETE>  的请求有效, 以看详细教程的参数.
 
 =head2 C<get>
 
   my $route = get '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"get">, matching only C<GET>
-requests. See also the tutorial above for more argument variations.
+生成 L<Mojolicious::Routes::Route/"get"> 的 route ， 只对 C<GET>  的请求有效, 以看详细教程的参数.
 
 =head2 C<group>
 
   group {...};
 
-Start a new route group.
+创建一个新的 route 组.
 
 =head2 C<helper>
 
@@ -934,59 +916,50 @@ Start a new route group.
 
   my $route = options '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"options">, matching only
-C<OPTIONS> requests. See also the tutorial above for more argument
-variations.
+生成 L<Mojolicious::Routes::Route/"options"> 的 route ， 只对 C<OPTIONS> 的请求有效, 以看详细教程的参数.
 
 =head2 C<patch>
 
   my $route = patch '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"patch">, matching only
-C<PATCH> requests. See also the tutorial above for more argument variations.
+生成  L<Mojolicious::Routes::Route/"patch"> 的路径， 只对 C<PATCH> 的请求有效, 以看详细教程的参数.
 
 =head2 C<plugin>
 
   plugin SomePlugin => {foo => 23};
 
-Load a plugin with L<Mojolicious/"plugin">.
+加载插件 L<Mojolicious/"plugin">.
 
 =head2 C<post>
 
   my $route = post '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"post">, matching only
-C<POST> requests. See also the tutorial above for more argument variations.
+生成 L<Mojolicious::Routes::Route/"post"> 的 route， 只对 C<POST> 的请求有效，可以看详细教程的参数. 
 
 =head2 C<put>
 
   my $route = put '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"put">, matching only C<PUT>
-requests. See also the tutorial above for more argument variations.
+生成 L<Mojolicious::Routes::Route/"put"> 的 route ，只对  C<PUT> 的请求有效，可以看详细教程的参数.
 
 =head2 C<under>
 
   my $route = under sub {...};
   my $route = under '/:foo';
 
-Generate bridge route with L<Mojolicious::Routes::Route/"under">, to which all
-following routes are automatically appended. See also the tutorial above for
-more argument variations.
+通过 L<Mojolicious::Routes::Route/"under"> 生成桥接的路由，主要用来转发路径选择并自动的附加上前面的，用于前缀选择之类.
 
 =head2 C<websocket>
 
   my $route = websocket '/:foo' => sub {...};
 
-Generate route with L<Mojolicious::Routes::Route/"websocket">, matching only
-C<WebSocket> handshakes. See also the tutorial above for more argument
-variations.
+通过 L<Mojolicious::Routes::Route/"websocket"> 来生成路径选择，只匹配 C<WebSocket> 的握手。
 
-=head1 ATTRIBUTES
+=head1 属性
 
 L<Mojolicious::Lite> 继承全部的属性从 L<Mojolicious>.
 
-=head1 METHODS
+=head1 方法
 
 L<Mojolicious::Lite> 继承全部的方法从 L<Mojolicious>.
 

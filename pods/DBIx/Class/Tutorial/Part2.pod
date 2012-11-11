@@ -1,0 +1,392 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+DBIx::Class::Tutorial::Part2
+
+=head1 DESCRIPTION
+
+This is part two of the tutorial. See L<DBIx::Class::Tutorial::Part1>
+if you haven't already.
+
+In which we discuss more about resultsets and rows, and do some
+funky related data dealing.
+
+=head1 GLOSSARY
+
+=over
+
+=item Relationship(s)
+
+In case you didn't catch this in Part1.
+
+Relationships definitions are what DBIx::Class uses to C<JOIN> tables
+in the SQL queries it produces.
+
+You can define relationships in your
+L<Result class|DBIx::Class::Tutorial::Part1/Result class>es. Even
+relationships that your database does not know about.
+
+To access a relationship from both ends, you need to define it
+twice, once at each Result class end.
+
+=item Accessors
+
+An accessor is a method for getting/setting some data on an object.
+
+DBIx::Class defines accessors for all of the columns defined in your
+Result classes. It also defines an accessor for each
+relationship you define.
+
+In fact, it creates two accessors for C<has_many> relationships. 
+
+  __PACKAGE__->has_many('names', 'Breadcrumbs::Schema::Name', 'PathID');
+
+Here, the C<names> accessor will return a list of Row objects in list
+context, and a L</ResultSet> in scalar context.
+
+Another accessor named C<names_rs> is added, which will always return
+a ResultSet, no matter which context it is called in. This is useful
+for templating with L<Template::Toolkit>.
+
+When doing complex searches and naming fake-columns such as a
+C<COUNT(*)> column, no accessor is created. This is intentional, as it
+may override methods you have written yourself. Examples of this
+later.
+
+=item Unique constraints
+
+If your database has unique indexes defined that are not the primary
+key, then L<DBIx::Class::Schema::Loader> should export them into your
+Result classes for you.
+
+You can create your own, independent of the database indexes, for
+DBIx::Class to use, just add a C<add_unique_constraint> call to your
+Result class.
+
+  Breadcrumbs::Schema::Path->add_unique_constraint('pathconst' => [qw/path/]);
+
+This is the name of the constraint, followed by a list of columns that
+are unique.
+
+=back
+
+
+=head1 More about ResultSets
+
+A Hint:
+
+Set C<DBIC_TRACE=1> in your environment, or call C<<
+$schema->storage->debug(1); >> to make L<DBIx::Class> dump all the SQL
+it is producing to STDERR.
+
+=head2 Creating ResultSets
+
+The simplest resultset just represents a query that would return an
+entire table full of data.
+
+  ## ResultSet for the Breadcrumbs::Schema::Name class
+  my $name_rs = $schema->resultset('Name')
+
+Every C<search> in scalar context also returns a resultset. I also
+snuck in an ordering example here.
+
+  ## Just the names beginning with a:
+  my $anames_rs = $schema->resultset('Name')->search(
+    { 'me.name' => { 'like' => 'a%' } },      ## WHERE 
+    { order_by  => [ 'me.name' ] }            ## ORDER BY
+  );
+
+We can add to the query conditions of an existing resultset:
+
+  ## Names beginning with a, in path '/support':
+  my $anames_short_rs = $anames_rs->search(
+    { 'path.path' => { like => '/support/%' } }, ## WHERE
+    { join        => [ 'path' ] },               ## JOIN
+  );
+
+When this query runs it will produce SQL something like:
+
+SELECT me.id, me.name FROM Name me
+JOIN Path path ON path.ID = me.PathID
+WHERE me.name LIKE 'a%'
+AND path.path LIKE '/support/%'
+ORDER BY me.name
+
+If we already have a row object, then we can easily fetch resultsets
+of data related to it, via the L</Relationships>. For example starting
+at a Path object, fetching a resultset of all the related names can be
+done by calling the accessor C<names>.
+
+  ## Get Path object for '/support':
+  my $support = $schema->resultset('Path')->find({ path => '/support' });
+
+  ## Resultset of all the names for this path:
+  my $supportnames_rs = $support->names;
+
+The resultset returned from the relationship accessor contains the
+query conditions for only fetching the C<Name> rows for the C<Path>
+object we started out with, the SQL will look something like:
+
+SELECT me.id, me.name FROM Name
+WHERE me.PathID = 10;
+
+=head2 Fetching data from ResultSets
+
+Calling any of these methods will cause DBIx::Class to actually run
+the query represented by the resultset. All the searching above did
+not run any queries.
+
+As we saw in Part1, we can fetch a single Row using C<find>. This is
+just for fetching a row based on a known unique value, often the
+primary key.
+
+  ## Name row with PK 1:
+  my $name1 = $schema->resultset('Name')->find({ id => 1 });
+
+If L</Unique constraints> have been defined, we can also C<find> a Row
+based on those, we can force C<find> to use a unique constraint instead
+of the primary key, which is set up internally as a constraint named
+C<primary>.
+
+  ## Find path '/support', use pathconst index:
+  my $supppath = $schema->resultset('Path')->find(
+    { path => '/support' },
+    { key => 'pathconst' }
+  );
+
+To fetch multiple rows from a resultset, we can simply turn it into an
+array of Row objects. If your resultset is large, this may take a
+while and use some memory.
+
+  ## All results in an array:
+  my @anames = $anames_rs->all;
+
+  foreach my $name (@anames)
+  {
+     print $name->id;
+  }
+
+To fetch the rows one at a time, we can treat the resultset like an
+iterator. This only uses memory for one object at a time.
+
+  ## One at a time.
+  while (my $aname = $anames_rs->next)
+  {
+     print $name->id;
+  }
+
+If we only ever wanted the first result of a search, we can also call
+C<first> to get the first row in the result. This is probably only
+useful if we searched using ordering to sort the results.
+
+  ## First A-name:
+  my $aname = $aname_rs->first;
+  print $aname->id;
+
+We can also get columns of data from a resultset, rather than
+rows. This is a handy way to fetch all the IDs of a search. 
+
+  ## IDs of all Names beginning with A:
+  my @aids = $aname_rs->get_column('id')->all;
+
+Or a sum across all the rows in our resultset.
+
+  ## Sum of all the IDs, for no useful reason:
+  my $sumids = $aname_rs->get_column('id')->sum;
+
+Or an arbitrary function, like the lengths of all the names.
+
+  ## Slightly less contrived:
+  my @lengths = $aname_rs->get_column('name')->func('LENGTH');
+
+For more of these see L<DBIx::Class::ResultSetColumn>.
+
+=head1 相关连数据 
+
+从一个主表查找，并批出它您任何相关的行或数据。
+
+=head2 Simple relations
+
+你只需要调用  relationship 的访问器, 例如, C<path> 字段的关联是从 Name 表关联到 Path 表(用 Name 表中的 C<PathID> 列关联).
+
+  ## Get Name object for 'Support' in english:
+  my $support_rs = $schema->resultset('Name')->find(
+    { name => 'Support',
+      lang => 1,
+    });
+
+SELECT me.id, me.name FROM Name WHERE name = 'Support' AND lang = 1
+
+  ## Get the path object for a name result:
+  my $supportname = $support_rs->first;
+  my $supportpath = $supportname->path;
+
+SELECT me.id, me.path FROM Path = WHERE PathID = ?
+
+Or use C<prefetch> to get them both in the same query. Call the
+accessor on the result as above to retrieve the prefetched data.
+
+  ## Get Name for Support and its Path:
+  my $support_rs = $schema->resultset('Name')->search(
+   { name => 'Support',
+     lang => 1,
+   }, 
+   { prefetch => [ 'path' ],          ## JOIN/SELECT
+   });
+
+  my $supportpath = $support_rs->first->path;
+
+SELECT me.id, me.name, path.id, path.path FROM Name me 
+JOIN Path path ON ( path.id = me.PathID )
+
+=head2 Advanced joins
+
+The C<join> and C<prefetch> attributes can also be used to join across
+more than one level of related tables.
+
+To join across multiple relationships from the same table, supply an
+array of relation names to the attribute.
+
+  ## Prefetch both Path and Lang data from Name:
+  my $support_rs = $schema->resultset('Name')->search(
+   { name => 'Support',
+     lang => 1,
+   }, 
+   { prefetch => [ 'path', lang' ],          ## JOIN/SELECT
+   });
+  
+
+To create a join that drills down into relations of related tables,
+use a hashref.
+
+  ## Fetch all names for Path '/support', plus the language object of
+  ## each Name.
+  my $path_rs = $schema->resultset('Path')->search(
+    { path => '/support' },
+    { prefetch => { names => 'lang' } }
+  );
+
+Be aware that this cannot prefetch to multiple has_many relationships
+on the same level. The data fetching code cannot untangle the result
+into objects.
+
+=head2 Restrict search based on related data
+
+We can just use the related tables to join to without actually
+retrieving their data, for that we use the search attribute C<join>.
+
+  ## Find all names for path '/support':
+  my $supportnames = $schema->resultset('Name')->search(
+    { 'path.path' => '/support' },        ## WHERE
+    { join        => [ 'path' ] }         ## JOIN
+  );
+
+In the SQL produced, the names of the relations are used as aliases
+for the related tables. Thus you can use constructs like C<path.path>
+in your search condition to refer to a column on the related table.
+
+The default alias for the main table in the query is C<me>.
+
+=head2 Fetch extra values from related data
+
+Instead of prefetching an entire related object, we can just add a
+needed column to our query.
+
+  ## Get Name for Support and its Path:
+  my $support_rs = $schema->resultset('Name')->search(
+   { name => 'Support',
+     lang => 1,
+   }, 
+   {  '+select'  => [ 'path.path ' ],
+      '+as'      => [ 'path' ],
+      join       => [ 'path' ],
+   });
+
+SELECT me.id, me.path, path.path FROM Path me
+LEFT JOIN Name names ON ( names.PathID = me.id )
+
+The C<Result> of this is an object of class
+C<Breadcrumbs::Schema::Path>, but it will have an extra data item,
+called C<path>. Since this is not a predefined column in the Path
+result class, it will not have an accessor. We can retrieve it's
+contents using C<get_column>.
+
+  my $path = $support_rs->first->get_column('path');
+
+The C<+select> and C<+as> search attributes are used to include extra
+columns or expressions in the query. The names supplied for these
+using C<+as> are just for DBIx::Class' benefit, no C<AS> is added to
+the query.
+
+=head2 Aggregate functions
+
+We can also make up data using aggregate functions, for example, how
+many C<Name> entries does each C<Path> row have?
+
+  ## Count names per path:
+  my $namecounts_rs = $schema->resultset('Path')->search(
+    { },
+    { '+select'   => [ { count => '*' } ],
+      '+as'       => [ 'namecount' ],
+      'join'      => [ 'names' ],
+      'group_by'  => [ 'me.id', 'me.path' ],
+    }
+  );
+
+SELECT me.id, me.path, COUNT( * ) FROM Path me
+LEFT JOIN Name names ON ( names.PathID = me.id )
+GROUP BY me.id, me.path
+
+C<group_by> is another search attribute that adds the obvious clause
+to the SQL query. To get a count of names per path, we must add a
+grouping to force a count per group entry.
+
+  ## Output results:
+  while (my $result = $namecounts_rs->next) {
+    print "Path ", $result->path, " has ", 
+      $result->get_column('namecount'), " names.\n";
+    
+  }
+
+=head1 CONCLUSIONS
+
+Now you should understand:
+
+=over
+
+=item *
+
+How to create a resultset containing one or many rows from one or many
+related tables.
+
+=item *
+
+How to retrieve the data from a resultset for both the main table and
+related tables.
+
+=item *
+
+How to use aggregate functions in a search or on an entire row.
+
+=back
+
+=head1 EXERCISES
+
+=head1 WHERE TO GO NEXT
+
+L<Part 3 of the tutorial|DBIx::Class::Tutorial::Part3>
+
+L<More about searching|DBIx::Class::ResultSet/search>
+
+L<Search attributes|DBIx::Class::ResultSet/ATTRIBUTES>
+
+L<Column objects|DBIx::Class::ResultSetColumn>
+
+L<Search query format|SQL::Abstract>
+
+=head1 AUTHOR
+
+Jess Robinson <castaway@desert-island.me.uk>

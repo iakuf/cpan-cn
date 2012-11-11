@@ -9,10 +9,10 @@ app->secret('foo')->config(hypnotoad => {listen => ['http://*:80']});
 plugin 'PODRenderer';
 
 # Analytics
-hook after_static_dispatch => sub {
-  my $self = shift;
-  $self->content_for(perldoc => $self->render_partial('analytics'));
-};
+#hook after_static_dispatch => sub {
+#  my $self = shift;
+#  $self->content_for(perldoc => $self->render_partial('analytics'));
+#};
 
 # Redirect to main site
 hook before_dispatch => sub {

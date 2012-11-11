@@ -549,9 +549,9 @@ Template specific helper collection, loaded automatically.
 
 =over 2
 
-=item L<Mojolicious::Plugin::Xslate >
+=item L<Mojolicious::Plugin::Xslate>
 
-Xslate 的扩展插件
+Xslate 的扩展插件, 请直接看 L<Xslate> 的相关语法
 
 =back
 
