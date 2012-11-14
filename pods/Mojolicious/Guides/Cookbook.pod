@@ -647,24 +647,22 @@ Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<E
 
 =head1 USER AGENT
 
-When we say L<Mojolicious> is a web framework we actually mean it.
+这个 L<Mojolicious> 只是一个 web 框架.
 
-=head2 Web scraping
+=head2 Web 元素挖掘 (Web scraping)
 
-Scraping information from web sites has never been this much fun before. The
-built-in HTML/XML parser L<Mojo::DOM> supports all CSS selectors that make
-sense for a standalone parser.
+从网站找到你喜欢的信息出来是一个很有意思的事情。 你可以使用原生的 HTML/XML 的解析器 L<Mojo::DOM>， 这个支持全部的 CSS 的 selectors 。
 
   use Mojo::UserAgent;
 
-  # Fetch web site
+  # 打开 Web 站点 
   my $ua = Mojo::UserAgent->new;
   my $tx = $ua->get('mojolicio.us/perldoc');
 
-  # Extract title
+  # 取出 title
   say 'Title: ', $tx->res->dom->at('head > title')->text;
 
-  # Extract headings
+  # 取出 head 
   $tx->res->dom('h1, h2, h3')->each(sub {
     say 'Heading: ', shift->all_text;
   });
@@ -690,14 +688,11 @@ sense for a standalone parser.
   }
   text_and_images($tx->res->dom->children);
 
-Especially for unit testing your L<Mojolicious> applications this can be a
-very powerful tool.
+特别是对于 L<Mojolicious> 应用的单元测试来讲，这是一个非常强大的工具.
 
 =head2 JSON web services
 
-Most web services these days are based on the JSON data-interchange format.
-That's why L<Mojolicious> comes with the possibly fastest pure-Perl
-implementation L<Mojo::JSON> built right in.
+现在很多的 web 服务都是基于 JSON 的数据交换格式。 这也是为什么 L<Mojolicious> 中有一个可能是最快的纯 Perl 来实现的 L<Mojo::JSON> 的原因。
 
   use Mojo::UserAgent;
   use Mojo::Util 'encode';
@@ -719,9 +714,9 @@ implementation L<Mojo::JSON> built right in.
     say encode('UTF-8', "$text --$user");
   }
 
-=head2 Basic authentication
+=head2 基本的认证 
 
-You can just add username and password to the URL.
+你直接可以增加用户和密码到你的 URL 中就好了.
 
   use Mojo::UserAgent;
 
@@ -730,10 +725,8 @@ You can just add username and password to the URL.
 
 =head2 Decorating followup requests
 
-L<Mojo::UserAgent> can automatically follow redirects, the event
-L<Mojo::UserAgent/"start"> allows you direct access to each transaction right
-after they have been initialized and before a connection gets associated with
-them.
+L<Mojo::UserAgent> can automatically follow redirects, the event L<Mojo::UserAgent/"start"> allows you direct access to each transaction right after they have been initialized and before a connection gets associated with them.
+L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"start"> 的事件中你可以直接访问到每次初始化后的并在后端建立连接之前。
 
   use Mojo::UserAgent;
 
@@ -750,12 +743,11 @@ them.
   # Request that will most likely get redirected
   say 'Title: ', $ua->get('google.com')->res->dom->at('head > title')->text;
 
-This even works for proxy C<CONNECT> requests.
+这个也可以工作在代理服务时的 C<CONNECT> 的请求上。
 
-=head2 Streaming response
+=head2 流响应 
 
-Receiving a streaming response can be really tricky in most HTTP clients, but
-L<Mojo::UserAgent> makes it actually easy.
+大多的客户端浏览器都能接收流的响应，在 L<Mojo::UserAgent> 中也可以非常容易的使用它。
 
   use Mojo::UserAgent;
 
@@ -772,13 +764,11 @@ L<Mojo::UserAgent> makes it actually easy.
   # Process transaction
   $ua->start($tx);
 
-The event L<Mojo::Content/"read"> will be emitted for every chunk of data that
-is received, even C<chunked> encoding will be handled transparently if
-necessary.
+在 L<Mojo::Content/"read">  的事件会在每次 chunk 的数据到达时调用，每个 C<chunked> 的编码会被透明地处理，如果必要的话。
 
-=head2 Streaming request
+=head2 流请求 
 
-Sending a streaming request is almost just as easy.
+发送流式的请求也一样很容易.
 
   use Mojo::UserAgent;
 
@@ -803,14 +793,11 @@ Sending a streaming request is almost just as easy.
   # Process transaction
   $ua->start($tx);
 
-The drain callback passed to L<Mojo::Message/"write"> will be invoked whenever
-the entire previous chunk has actually been written.
+在前一个块写真的写完后，会调用在 drain 回调使用 L<Mojo::Message/"write"> 的方法。
 
-=head2 Large file downloads
+=head2 大文件下载 
 
-When downloading large files with L<Mojo::UserAgent> you don't have to worry
-about memory usage at all, because it will automatically stream everything
-above C<250KB> into a temporary file.
+当你使用 L<Mojo::UserAgent> 下载大文件时，你不需要担心内存的使用，因为它会自动的给每 C<250KB> 存成临时文件.
 
   use Mojo::UserAgent;
 
@@ -819,16 +806,14 @@ above C<250KB> into a temporary file.
   my $tx = $ua->get('latest.mojolicio.us');
   $tx->res->content->asset->move_to('mojo.tar.gz');
 
-To protect you from excessively large files there is also a limit of C<5MB> by
-default, which you can tweak with the C<MOJO_MAX_MESSAGE_SIZE> environment
-variable.
+为了保护避免过大的文件也有一个极限默认值 C<5MB>。你可以通过 C<MOJO_MAX_MESSAGE_SIZE> 的环境变量来调整。
 
   # Increase limit to 1GB
   $ENV{MOJO_MAX_MESSAGE_SIZE} = 1073741824;
 
-=head2 Large file upload
+=head2 大文件上传
 
-Uploading a large file is even easier.
+上传一个大文件更容易.
 
   use Mojo::UserAgent;
 
@@ -837,8 +822,7 @@ Uploading a large file is even easier.
   $ua->post_form('mojolicio.us/upload',
     {image => {file => '/home/sri/hello.png'}});
 
-And once again you don't have to worry about memory usage, all data will be
-streamed directly from the file.
+当然一样，你还是不必担心内存的使用，因为这个也是直接流式传送这个文件。
 
   use Mojo::UserAgent;
 
@@ -851,10 +835,7 @@ streamed directly from the file.
 
 =head2 Non-blocking
 
-L<Mojo::UserAgent> has been designed from the ground up to be non-blocking,
-the whole blocking API is just a simple convenience wrapper. Especially for
-high latency tasks like web crawling this can be extremely useful, because you
-can keep many parallel connections active at the same time.
+这个 L<Mojo::UserAgent> 从底层开始就是设计成非阻塞的，整个阻塞的 API 仅仅是一个简单方便的包装。特别是对于高延迟的任务，如网络抓取，这种功能非常有用，因为可以使你同时并行很多连接。
 
   use Mojo::UserAgent;
   use Mojo::IOLoop;
@@ -873,13 +854,11 @@ can keep many parallel connections active at the same time.
   # Start event loop if necessary
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-You can take full control of the L<Mojo::IOLoop> event loop.
+您可以完全控制的 L<Mojo::IOLoop> 的事件循环。
 
 =head2 Parallel blocking requests
 
-You can emulate blocking behavior by using a L<Mojo::IOLoop> delay to
-synchronize multiple non-blocking requests. Just be aware that the resulting
-transactions will be in random order.
+你可以模拟阻塞的行为使用 L<Mojo::IOLoop>  的 delay 来同步多个非阻塞的请求。不过你需要知道，多个任务结束的顺序是随机的.
 
   use Mojo::UserAgent;
   use Mojo::IOLoop;
@@ -891,8 +870,7 @@ transactions will be in random order.
   $ua->get('http://mojolicio.us/perldoc' => $delay->begin);
   my ($tx, $tx2) = $delay->wait;
 
-The event L<Mojo::IOLoop::Delay/"finish"> can be used for code that needs to
-be able to work standalone as well as inside L<Mojolicious> applications.
+这个 L<Mojo::IOLoop::Delay/"finish"> 的事件不但在  L<Mojolicious>  的应用内可以使用，也能够独立工作。
 
   use Mojo::UserAgent;
   use Mojo::IOLoop;
@@ -909,62 +887,56 @@ be able to work standalone as well as inside L<Mojolicious> applications.
 
 =head2 Command line
 
-Don't you hate checking huge HTML files from the command line? Thanks to the
-C<mojo get> command that is about to change. You can just pick the parts that
-actually matter with the CSS selectors from L<Mojo::DOM> and JSON Pointers
-from L<Mojo::JSON::Pointer>.
+在使用命令行检查时，不知道你们是不是很反感很大的 HTML 文件。得益于  C<mojo get> 这个命令可以帮助我们改变这些。你只需要随意的使用一下 CSS 的选择器  L<Mojo::DOM>  和 JOSNP 的  L<Mojo::JSON::Pointer> 就能搞定.
 
   $ mojo get http://mojolicio.us 'head > title'
 
-How about a list of all id attributes?
+怎么样列出全部属性的 id?
 
   $ mojo get http://mojolicio.us '*' attr id
 
-Or the text content of all heading tags?
+或文字标题标签的所有内容?
 
   $ mojo get http://mojolicio.us 'h1, h2, h3' text
 
-Maybe just the text of the third heading?
+也许只是文本的第三个标题?
 
   $ mojo get http://mojolicio.us 'h1, h2, h3' 3 text
 
-You can also extract all text from nested child elements.
+你还可以从嵌套的子元素提取所有的文字?
 
   $ mojo get http://mojolicio.us '#mojobar' all
 
-The request can be customized as well.
+发送定制的请求.
 
   $ mojo get -M POST -c 'Hello!' http://mojolicio.us
   $ mojo get -H 'X-Bender: Bite my shiny metal ass!' http://google.com
 
-You can follow redirects and view the headers for all messages.
+您可以跟随重定向和查看 header 的所有消息。
 
   $ mojo get -r -v http://reddit.com 'head > title'
 
-Extract just the information you really need from JSON data structures.
+从 JSON 的数据结构中提取信息.
 
   $ mojo get http://search.twitter.com/search.json /error
 
-This can be an invaluable tool for testing your applications.
+这可以是一个非常好的工具，用于测试您的应用程序
 
   $ ./myapp.pl get /welcome 'head > title'
 
 =head2 Oneliners
 
-For quick hacks and especially testing, L<ojo> oneliners are also a great
-choice.
+为了快速的 hacks 和测试， L<ojo> 的单行也是一个不错的选择.
 
   $ perl -Mojo -E 'say g("mojolicio.us")->dom->html->head->title->text'
 
 =head1 HACKS
 
-Fun hacks you might not use very often but that might come in handy some day.
+有一些不错的功能，虽然不一定经常使用，但可能用时会非常不错.
 
 =head2 Adding commands to Mojolicious
 
-By now you've propably used many of the built-in commands described in
-L<Mojolicious::Commands>, but did you know that you can just add new ones and
-that they will be picked up automatically by the command line interface?
+你现在可能使用了很多 L<Mojolicious::Commands> 原生的命令，对于新增加一个命令，也非常的方便.
 
   package Mojolicious::Command::spy;
   use Mojo::Base 'Mojolicious::Command';
@@ -984,8 +956,7 @@ that they will be picked up automatically by the command line interface?
 
   1;
 
-There are many more useful methods and attributes in L<Mojolicious::Command>
-that you can use or overload.
+在  L<Mojolicious::Command> 中有很多有用的方法和属性，当然你可以重载它们。
 
   $ mojo spy secret
   The secret of this application is "Mojolicious::Lite".
@@ -993,8 +964,7 @@ that you can use or overload.
   $ ./myapp.pl spy secret
   The secret of this application is "secr3t".
 
-And to make your commands application specific, just put them in a different
-namespace.
+在你的应用中加入新的特别的命令，你还可以指定不同的名字空间.
 
   # Application
   package MyApp;
@@ -1011,29 +981,25 @@ namespace.
 
 =head2 Running code against your application
 
-Ever thought about running a quick oneliner against your L<Mojolicious>
-application to test something? Thanks to the C<eval> command you can do just
-that, the application object itself can be accessed via C<app>.
+没有想过对 L<Mojolicious> 的应用程序使用一个快速的单行来测试? 得益于的 C<eval> 命令，你可以方便的做到这一点，直接通过 C<app> 来访问应用程序对象本身。
 
   $ mojo generate lite_app
   $ ./myapp.pl eval 'say for @{app->static->paths}'
 
-The C<verbose> option will automatically print the return value to C<STDOUT>.
+使用 C<verbose> 选择会让 print 和 return 的值直接打印到 C<STDOUT>.
 
   $ ./myapp.pl eval -v 'app->static->paths->[0]'
 
-=head2 Making your application installable
+=head2 应用程序安装 
 
-Ever thought about releasing your L<Mojolicious> application to CPAN? It's
-actually much easier than you might think.
+你有没有想过使用 CPAN 来安装你的  L<Mojolicious> 的应用，这个比实际的想象还要容易.
 
   $ mojo generate app
   $ cd my_mojolicious_app
   $ mv public lib/MyMojoliciousApp/
   $ mv templates lib/MyMojoliciousApp/
 
-The trick is to move the C<public> and C<templates> directories so they can
-get automatically installed with the modules.
+这个关键是要给 C<public>  和 C<templates> 的目录移到能够自动安装的模块的地方.
 
   # Application
   package MyMojoliciousApp;
@@ -1065,8 +1031,7 @@ get automatically installed with the modules.
 
   1;
 
-That's really everything, now you can package your application like any other
-CPAN module.
+这就是所有啦，你现在可以象任何其它的 CPAN 模块一样给你的程序打包.
 
   $ ./script/my_mojolicious_app generate makefile
   $ perl Makefile.PL
@@ -1074,40 +1039,32 @@ CPAN module.
   $ make manifest
   $ make dist
 
-And if you have a C<PAUSE> account (which can be requested at
-L<http://pause.perl.org>) even upload it.
+然后使用你的 C<PAUSE> 的帐号(通过 L<http://pause.perl.org> 注册)来上传.
 
   $ mojo cpanify -u USER -p PASS MyMojoliciousApp-0.01.tar.gz
 
 =head2 Hello World
 
-If every byte matters this is the smallest C<Hello World> application you can
-write with L<Mojolicious::Lite>.
+每个字都很重要，你可以使用最少的字来写一个基于 L<Mojolicious::Lite> 的 C<Hello World> 的应用.
 
   use Mojolicious::Lite;
   any {text => 'Hello World!'};
   app->start;
 
-It works because all routes without a pattern default to C</> and automatic
-rendering kicks in even if no actual code gets executed by the router. The
-renderer just picks up the C<text> value from the stash and generates a
-response.
+这个程序，没有模式路径选择，所以会使用默认的 C</> 然后自动的调用 stash 中的值来生成一个响应.
 
 =head2 Hello World oneliners
 
-The C<Hello World> example above can get even a little bit shorter in an
-L<ojo> oneliner.
+这个 C<Hello World>  的例子也可以使用 L<ojo> 的单行实现.
 
   $ perl -Mojo -E 'a({text => "Hello World!"})->start' daemon
 
-And you can use all the commands from L<Mojolicious::Commands>.
+这时你还是可以使用全部的 L<Mojolicious::Commands> 的命令的.
 
   $ perl -Mojo -E 'a({text => "Hello World!"})->start' get -v /
 
-=head1 MORE
+=head1 更多
 
-You can continue with L<Mojolicious::Guides> now or take a look at the
-L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>, which contains a lot
-more documentation and examples by many different authors.
+你可以看看 L<Mojolicious::Guides> 和 L<Mojolicious wiki|http://github.com/kraih/mojo/wiki> 来了解更多的东西.
 
 =cut
