@@ -336,7 +336,7 @@ sub _stop {
 
 1;
 
-=head1 NAME
+=head1 文档
 
 Mojo::Server::Hypnotoad - ALL GLORY TO THE HYPNOTOAD!
 
