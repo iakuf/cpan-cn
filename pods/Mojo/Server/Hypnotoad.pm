@@ -335,6 +335,9 @@ sub _stop {
 }
 
 1;
+=pod
+
+=encoding utf-8
 
 =head1 文档
 

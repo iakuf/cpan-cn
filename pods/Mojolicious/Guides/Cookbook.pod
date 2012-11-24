@@ -510,11 +510,9 @@ The event L<Mojo::Log/"message"> will be emitted for every new log message and
 the event L<Mojo::Transaction/"finish"> right after the transaction has been
 finished.
 
-=head2 Streaming multipart uploads
+=head2 流式多段上传 
 
-L<Mojolicious> contains a very sophisticated event system based on
-L<Mojo::EventEmitter>, with ready-to-use events on almost all layers, and
-which can be combined to solve some of hardest problems in web development.
+L<Mojolicious> 中包含了基于 L<Mojo::EventEmitter> 的一些非常复杂的事件系统，准备使用事件实现了几乎所有层的工作，可以用来结合处理 Web 开发中最麻烦的部分.
 
   use Mojolicious::Lite;
   use Scalar::Util 'weaken';
@@ -571,7 +569,7 @@ which can be combined to solve some of hardest problems in web development.
     </body>
   </html>
 
-=head2 Event loops
+=head2 事件循环 
 
 在内部的 L<Mojo::IOLoop> 的事件环可以使用多种不同的后端， 例如，安装了 L<EV>  就会自动的使用。也可以使用其它的也能正常工作.
 Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<EV> for example will be automatically used if installed. Which in turn allows other event loops like L<IO::Async> to just work.
@@ -690,7 +688,7 @@ Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<E
 
 特别是对于 L<Mojolicious> 应用的单元测试来讲，这是一个非常强大的工具.
 
-=head2 JSON web services
+=head2 JSON Web 服务 
 
 现在很多的 web 服务都是基于 JSON 的数据交换格式。 这也是为什么 L<Mojolicious> 中有一个可能是最快的纯 Perl 来实现的 L<Mojo::JSON> 的原因。
 
@@ -723,7 +721,7 @@ Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<E
   my $ua = Mojo::UserAgent->new;
   say $ua->get('https://sri:secret@mojolicio.us/hideout')->res->body;
 
-=head2 Decorating followup requests
+=head2 修饰后续请求 
 
 L<Mojo::UserAgent> can automatically follow redirects, the event L<Mojo::UserAgent/"start"> allows you direct access to each transaction right after they have been initialized and before a connection gets associated with them.
 L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"start"> 的事件中你可以直接访问到每次初始化后的并在后端建立连接之前。
@@ -833,7 +831,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
   $tx->req->content->asset($asset);
   $ua->start($tx);
 
-=head2 Non-blocking
+=head2 非阻塞 
 
 这个 L<Mojo::UserAgent> 从底层开始就是设计成非阻塞的，整个阻塞的 API 仅仅是一个简单方便的包装。特别是对于高延迟的任务，如网络抓取，这种功能非常有用，因为可以使你同时并行很多连接。
 
@@ -856,7 +854,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 您可以完全控制的 L<Mojo::IOLoop> 的事件循环。
 
-=head2 Parallel blocking requests
+=head2 并行阻塞请求 
 
 你可以模拟阻塞的行为使用 L<Mojo::IOLoop>  的 delay 来同步多个非阻塞的请求。不过你需要知道，多个任务结束的顺序是随机的.
 
@@ -885,7 +883,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
   $ua->get('http://mojolicio.us/perldoc' => $delay->begin);
   $delay->wait unless Mojo::IOLoop->is_running;
 
-=head2 Command line
+=head2 命令行 
 
 在使用命令行检查时，不知道你们是不是很反感很大的 HTML 文件。得益于  C<mojo get> 这个命令可以帮助我们改变这些。你只需要随意的使用一下 CSS 的选择器  L<Mojo::DOM>  和 JOSNP 的  L<Mojo::JSON::Pointer> 就能搞定.
 
@@ -924,7 +922,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
   $ ./myapp.pl get /welcome 'head > title'
 
-=head2 Oneliners
+=head2 单行 
 
 为了快速的 hacks 和测试， L<ojo> 的单行也是一个不错的选择.
 
@@ -934,7 +932,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 有一些不错的功能，虽然不一定经常使用，但可能用时会非常不错.
 
-=head2 Adding commands to Mojolicious
+=head2 增加命令到 Mojolicious
 
 你现在可能使用了很多 L<Mojolicious::Commands> 原生的命令，对于新增加一个命令，也非常的方便.
 
@@ -979,7 +977,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
   1;
 
-=head2 Running code against your application
+=head2 针对您的应用程序来运行代码 
 
 没有想过对 L<Mojolicious> 的应用程序使用一个快速的单行来测试? 得益于的 C<eval> 命令，你可以方便的做到这一点，直接通过 C<app> 来访问应用程序对象本身。
 
@@ -1053,7 +1051,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 这个程序，没有模式路径选择，所以会使用默认的 C</> 然后自动的调用 stash 中的值来生成一个响应.
 
-=head2 Hello World oneliners
+=head2 单行的 Hello World 应用
 
 这个 C<Hello World>  的例子也可以使用 L<ojo> 的单行实现.
 

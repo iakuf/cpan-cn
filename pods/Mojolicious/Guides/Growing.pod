@@ -36,12 +36,7 @@ MVC 是一种现代的软件体系结构的模式，它起源于 Smalltalk-80 �
 
 =head2 REpresentational State Transfer
 
-REST is a software architectural style for distributed hypermedia systems such
-as the web. While it can be applied to many protocols it is most commonly used
-with HTTP these days. In REST terms, when you are opening a URL like
-C<http://mojolicio.us/foo> with your browser, you are basically asking the web
-server for the HTML C<representation> of the C<http://mojolicio.us/foo>
-C<resource>.
+RESR 是一种 Web 软件架构的风格, 近来常常用于给 HTTP 做协议. 在 REST 中，你可以打开 C<http://mojolicio.us/foo> 这个 URL 在你的浏览器中，你相当于告诉你的 Web 服务来进行一个 HTML 的表示这个地址的资源。
 
   +--------+                                +--------+
   |        | -> http://mojolicio.us/foo  -> |        |
@@ -49,10 +44,7 @@ C<resource>.
   |        | <- <html>Mojo rocks!</html> <- |        |
   +--------+                                +--------+
 
-The fundamental idea here is that all resources are uniquely addressable with
-URLs and every resource can have different representations such as HTML, RSS
-or JSON. User interface concerns are separated from data storage concerns and
-all session state is kept client-side.
+这里的基本思想是，所有的资源都是有一个唯一的 URL 来进行查寻，并且每个资源都可以有不同的表示方式，如 HTML, RSS 和 JSON 。让界面从数据层分离出来只需要注意和用户会议的状态进行互交。
 
   +---------+                        +------------+
   |         | ->    PUT /foo      -> |            |
@@ -70,16 +62,11 @@ all session state is kept client-side.
   |         | <-    200 OK        <- |            |
   +---------+                        +------------+
 
-While HTTP methods such as C<PUT>, C<GET> and C<DELETE> are not directly part
-of REST they go very well with it and are commonly used to manipulate
-C<resources>.
+虽然 HTTP 的方法象 C<PUT>, C<GET> 和 C<DELETE> 并不是 REST 的一部分，但他们用来管理资源非常不错.
 
 =head2 Sessions
 
-HTTP was designed as a stateless protocol, web servers don't know anything
-about previous requests, which makes user-friendly login systems very tricky.
-Sessions solve this problem by allowing web applications to keep stateful
-information across several HTTP requests.
+Web 服务上的 HTTP 本来就被设计成一个无状态的协议，所以我们并不知道是否是以前的请求，这使得让用户友好登录到系统变得非常棘手。Sessions 就是用来解决这个问题，使得网络应用中跨多个 HTTP 请求后还能保留状态信息。
 
   GET /login?user=sri&pass=s3cret HTTP/1.1
   Host: mojolicio.us
@@ -98,8 +85,7 @@ information across several HTTP requests.
   Content-Length: 16
   Hello again sri.
 
-Traditionally all session data was stored on the server-side and only session
-ids were exchanged between browser and web server in the form of cookies.
+传统的上，所有的 session 会话数据存储在服务器端的，只有 Session 中会话的 ID 以 Cookie 的形式在 Web 服务器和浏览器之间交换。
 
   HTTP/1.1 200 OK
   Set-Cookie: session=base64(hmac-sha1(json($session)))
@@ -190,16 +176,13 @@ you refresh your browser.
 
 =head2 Model
 
-In L<Mojolicious> we consider web applications simple frontends for existing
-business logic, that means L<Mojolicious> is by design entirely L<model> layer
-agnostic and you just use whatever Perl modules you like most.
+在 L<Mojolicious>  中，我们认为 Web 应用是现有业务逻辑的简单前端, 这意味着 L<Mojolicious> 设计完全是和   L<model> 层无关的，你可以使用任意的 Perl 模块来替换。
 
   $ mkdir lib
   $ touch lib/MyUsers.pm
   $ chmod 644 lib/MyUsers.pm
 
-Our login manager will simply use a plain old Perl module abstracting away all
-logic related to matching usernames and passwords.
+我们的登录管理,将只使用一个普通的原有 Perl 模块抽象出，来匹配用户名和密码这个工作相关的逻辑。
 
   package MyUsers;
 
@@ -226,9 +209,7 @@ logic related to matching usernames and passwords.
 
   1;
 
-A simple helper function can be registered with the method
-L<Mojolicious/"helper"> to make our C<model> available to all actions and
-templates.
+如果你想实现自己的 C<model> 的动作和模板，你可以使用  L<Mojolicious/"helper">  的功能来注册你的方法。
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
@@ -655,8 +636,7 @@ Only a few small details change.
 
 =head2 Simplified tests
 
-Normal L<Mojolicious> applications are a little easier to test, so
-C<t/login.t> can be simplified.
+Normal L<Mojolicious> applications are a little easier to test, so C<t/login.t> can be simplified.
 
   use Test::More;
   use Test::Mojo;

@@ -3,7 +3,8 @@
 use utf8; 
 use Mojolicious::Lite;
 
-app->secret('foo')->config(hypnotoad => {listen => ['http://*:80']});
+app->secret('foo')->config(hypnotoad => {listen => ['http://*:8000']});
+
 
 # Documentation browser under "/perldoc" (this plugin requires Perl 5.10)
 plugin 'PODRenderer';

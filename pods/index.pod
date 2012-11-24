@@ -43,6 +43,15 @@ DBIx::Class 就最好的 ORM 的类，这有一本 L<DBIx::Cookbook> 可以提�
 
 =back
 
+=head1 Perl 打包
+
+=over 2
+
+=item L<PAR::Tutorial>
+
+有关 Perl 打包成单独文件的教程
+
+=back
 
 =head1 更多 
 

@@ -133,23 +133,16 @@ object we started out with, the SQL will look something like:
 SELECT me.id, me.name FROM Name
 WHERE me.PathID = 10;
 
-=head2 Fetching data from ResultSets
+=head2 从 ResultSets 的结果中读取数据 
 
-Calling any of these methods will cause DBIx::Class to actually run
-the query represented by the resultset. All the searching above did
-not run any queries.
+只要查询的语句没有问题的话，任何方法的调用，都会返回 DBIx::Class 中查询结果的返回集在 resultset 中。
 
-As we saw in Part1, we can fetch a single Row using C<find>. This is
-just for fetching a row based on a known unique value, often the
-primary key.
+正如你在 Part1 部分所能见到的，我们使用 C<find> 来取单行的数据，这只是基于主键和 unique 来取数据。
 
   ## Name row with PK 1:
   my $name1 = $schema->resultset('Name')->find({ id => 1 });
 
-If L</Unique constraints> have been defined, we can also C<find> a Row
-based on those, we can force C<find> to use a unique constraint instead
-of the primary key, which is set up internally as a constraint named
-C<primary>.
+如果 L</Unique constraints> 有定义，我们可以使用 C<find> 来对行基本这个查找，我们也可以在 C<find> 的时候使用 unique 的值来替换默认的 primary key 的查找方式。我们只需要设置象下面的 key 指定为 unique 的值就好了。
 
   ## Find path '/support', use pathconst index:
   my $supppath = $schema->resultset('Path')->find(
@@ -157,9 +150,7 @@ C<primary>.
     { key => 'pathconst' }
   );
 
-To fetch multiple rows from a resultset, we can simply turn it into an
-array of Row objects. If your resultset is large, this may take a
-while and use some memory.
+从结果集中取得多行的集要怎么办啦，我们可以简单的给这些行对象全都转换成数组。如果你的结果很大的话，你可以使用 while 来使用少一些内存。
 
   ## All results in an array:
   my @anames = $anames_rs->all;
@@ -169,8 +160,7 @@ while and use some memory.
      print $name->id;
   }
 
-To fetch the rows one at a time, we can treat the resultset like an
-iterator. This only uses memory for one object at a time.
+下面这个就是使用 while ，这时在同一时间只从结果集中取一行数组出来，所以这样比上面的方法会少使用很多内存.
 
   ## One at a time.
   while (my $aname = $anames_rs->next)
@@ -178,31 +168,28 @@ iterator. This only uses memory for one object at a time.
      print $name->id;
   }
 
-If we only ever wanted the first result of a search, we can also call
-C<first> to get the first row in the result. This is probably only
-useful if we searched using ordering to sort the results.
+有时我们只需要使用查找到的第一行的数据，我们可以使用  C<first>  来取得首行的结果。这常常用在排序过的结果后，然后来取这个.
 
   ## First A-name:
   my $aname = $aname_rs->first;
   print $aname->id;
 
-We can also get columns of data from a resultset, rather than
-rows. This is a handy way to fetch all the IDs of a search. 
+我们也可以从一个结果集的数据中取得所有列，而不是行。下面这是一个非常方便的方法来获取所有的查找到的 ID 。
 
   ## IDs of all Names beginning with A:
   my @aids = $aname_rs->get_column('id')->all;
 
-Or a sum across all the rows in our resultset.
+也可以对结果集中所有的列进行 sum 的计算之类操作。
 
   ## Sum of all the IDs, for no useful reason:
   my $sumids = $aname_rs->get_column('id')->sum;
 
-Or an arbitrary function, like the lengths of all the names.
+还可以是任意的功能，象计算所有的 name 的长度.
 
   ## Slightly less contrived:
   my @lengths = $aname_rs->get_column('name')->func('LENGTH');
 
-For more of these see L<DBIx::Class::ResultSetColumn>.
+更多的功能请看 L<DBIx::Class::ResultSetColumn>.
 
 =head1 相关连数据 
 
