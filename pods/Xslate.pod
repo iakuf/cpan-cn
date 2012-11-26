@@ -298,9 +298,9 @@ C<given-when>(也被称为 B<switch statement>):
 
 有几个内建的函数，你不能重新定义：
 
-    : $var | mark_raw   # marks it as a raw string
-    : $var | raw        # synonym to mark_raw
-    : $var | unmark_raw # removes "raw" marker from it
+    : $var | mark_raw   # 标志这个显示，以原始字符串显示
+    : $var | raw        # 和上面 mark_raw 是一样，只是简写
+    : $var | unmark_raw # 给需生的标签都转换了
     : $var | html       # does html-escape to it and marks it as raw
     : $var | dump       # dumps it with Data::Dumper
 

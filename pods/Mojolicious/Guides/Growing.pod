@@ -90,70 +90,58 @@ Web 服务上的 HTTP 本来就被设计成一个无状态的协议，所以我�
   HTTP/1.1 200 OK
   Set-Cookie: session=base64(hmac-sha1(json($session)))
 
-In L<Mojolicious> however we are taking this concept one step further by
-storing everything in C<HMAC-SHA1> signed cookies, which is more compatible
-with the REST philosophy and reduces infrastructure requirements.
+在 L<Mojolicious> 中对 session 进行了进一步的处理，使用 C<HMAC-SHA1> 签署 cookie, 这更兼容 REST 的理念并降低一些其它的要求.
 
-=head2 Test Driven Development
+=head2 测试驱动开发(Test Driven Development)
 
-TDD is a software development process where the developer starts writing
-failing test cases that define the desired functionality and then moves on to
-producing code that passes these tests. There are many advantages such as
-always having good test coverage and code being designed for testability,
-which will in turn often prevent future changes from breaking old code. Most
-of L<Mojolicious> was developed using TDD.
+TDD，是一种不同于传统软件开发流程的新型的开发方法。它要求在编写某个功能的代码之前先编写测试代码，然后只编写使测试通过的功能代码，通过测试来推动整个开发的进行。这有助于编写简洁可用和高质量的代码，并加速开发过程。有许多优点，如始终具有良好的测试覆盖率和代码的可测试性设计，这将反过来往往防止未来的变化影响旧的代码的功能。大多的 L<Mojolicious> 使用 TDD 开发;
 
-=head1 PROTOTYPE
+=head1 原型 
 
-One of the main differences between L<Mojolicious> and other web frameworks is
-that it also includes L<Mojolicious::Lite>, a micro web framework optimized
-for rapid prototyping.
+L<Mojolicious> 和其他 Web 框架的主要区别之一是，它还包括有一个 L<Mojolicious::Lite>，这是一个微型的 Web 框架，为快速实现原型优化过的。
 
-=head2 Differences
+=head2 差异
 
-You likely know the feeling, you've got a really cool idea and want to try it
-as quickly as possible, that's exactly why L<Mojolicious::Lite> applications
-don't need more than a single file.
+你有一些很好的主意，有很酷的想法，你想尽可能快地尝试实现它，这也是为什么 L<Mojolicious::Lite> 写的应用程序不需要超过一个单个文件的原因。
 
   myapp.pl   # Templates and even static files can be inlined
 
-Full L<Mojolicious> applications on the other hand are much closer to a well
-organized CPAN distribution to maximize maintainability.
+全功能的 L<Mojolicious> 应用程序更加接近象一个 CPAN 的发布包一样，有着良好结构，以最大限度的提高可维护性.
 
-  myapp                      # Application directory
-  |- script                  # Script directory
-  |  +- myapp                # Application script
-  |- lib                     # Library directory
-  |  |- MyApp.pm             # Application class
-  |  +- MyApp                # Application namespace
-  |     +- Example.pm        # Controller class
-  |- t                       # Test directory
+  myapp                      # 应用程序的目录 
+  |- script                  # 脚本的目录 
+  |  +- myapp                # 应用程序的脚本  
+  |- lib                     # Library 的目录 
+  |  |- MyApp.pm             # 应用程序的类 
+  |  +- MyApp                # 应用程序的名字空间 
+  |     +- Example.pm        # Controller 类
+  |- t                       # 测试目录 
   |  +- basic.t              # Random test
-  |- log                     # Log directory
-  |  +- development.log      # Development mode log file
-  |- public                  # Static file directory (served automatically)
-  |  +- index.html           # Static HTML file
-  +- templates               # Template directory
-     |- layouts              # Template directory for layouts
-     |  +- default.html.ep   # Layout template
-     +- example              # Template directory for "Example" controller
-        +- welcome.html.ep   # Template for "welcome" action
+  |- log                     # 日志目录 
+  |  +- development.log      # 开发模式的日志
+  |- public                  # 静态文件的目录 (served automatically)
+  |  +- index.html           # 静态 HTML 文件
+  +- templates               # 模板目录
+     |- layouts              # 模板目录和 layout
+     |  +- default.html.ep   # Layout 模板 
+     +- example              # "Example"  controller 的模板目录
+        +- welcome.html.ep   # "welcome" 动作的模板
 
-Both application skeletons can be automatically generated.
+这二种应用类型的骨架，可以使用 generate 来自动生成.
 
   $ mojo generate lite_app
   $ mojo generate app
 
-=head2 Foundation
+=head2 基础
 
-We start our new application with a single executable Perl script.
+我们开始我们新的应用程序使用单个可执行的 Perl 程序。
 
   $ mkdir myapp
   $ cd myapp
   $ touch myapp.pl
   $ chmod 744 myapp.pl
 
-This will be the foundation for our login manager example application.
+这是我们 login manager 的样例程序的一个基础。
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
@@ -165,14 +153,12 @@ This will be the foundation for our login manager example application.
 
   app->start;
 
-The built-in development web server makes working on your application a lot of
-fun thanks to automatic reloading.
+内置的 Web 开发服务器有个非常好的地方，就是会自动的在你的程序变化更新后重新加载。你不在需要手工的重起.
 
   $ morbo myapp.pl
   Server available at http://127.0.0.1:3000.
 
-Just save your changes and they will be automatically in effect the next time
-you refresh your browser.
+当你保存你的修改后，会在你下一次刷新浏览器的时候就会自动生效了.
 
 =head2 Model
 
@@ -241,21 +227,17 @@ you refresh your browser.
 
   app->start;
 
-The method L<Mojolicious::Controller/"param"> is used to access query
-parameters, POST parameters, file uploads and route placeholders, all at once.
+这个 L<Mojolicious::Controller/"param">  的方法会取得请求过来的参数，POST 的参数，文件上传送的内容和 Route 的占位符取得的内容.和其它.
 
-=head2 Testing
+=head2 测试 Testing
 
-In L<Mojolicious> we take test driven development very serious and try to
-promote it wherever we can.
+在 L<Mojolicious> 中我们希望大家能都认真的采用测试驱动开发，并努力推动它.
 
   $ mkdir t
   $ touch t/login.t
   $ chmod 644 t/login.t
 
-L<Test::Mojo> is a scriptable HTTP user agent designed specifically for
-testing, with many fun state of the art features such as CSS selectors based
-on L<Mojo::DOM>.
+L<Test::Mojo> 是一个脚本化的 HTTP user agent ，设计是专门用于测试的，它有非常多有趣的功能如基于 CSS 选择器的 L<Mojo::DOM>.
 
   use Test::More;
   use Test::Mojo;
@@ -290,18 +272,16 @@ on L<Mojo::DOM>.
 
   done_testing();
 
-From now on you can always check your progress by running these unit tests
-against your application.
+从现在开始，在你的应用程序中，你随时可以检查的你的程序，通过运行这些单元测试.
 
   $ ./myapp.pl test
   $ ./myapp.pl test t/login.t
 
-To make the tests less noisy and limit log output to just C<error> messages
-you can also add a line like this.
+为了减少一些测试时的其它东西，你可以调整你的日志只输出 C<error> 的信息.
 
   $t->app->log->level('error');
 
-Quick C<GET> requests can be performed right from the command line.
+快速的测试 C<GET> 请求可以执行这个命令。
 
   $ ./myapp.pl get /
   Wrong username or password.
@@ -318,44 +298,33 @@ Quick C<GET> requests can be performed right from the command line.
 
 =head2 State keeping
 
-Sessions in L<Mojolicious> pretty much just work out of the box once you start
-using the method L<Mojolicious::Controller/"session">, there is no setup
-required, but we suggest setting a more secure passphrase with
-L<Mojolicious/"secret">.
+Sessions 在 L<Mojolicious> 中非常简单，直接可以通过 L<Mojolicious::Controller/"session"> 方法来使用，不过建议你使用更加安全的通过 L<Mojolicious/"secret"> 来设置个密码短语。
 
   app->secret('Mojolicious rocks');
 
-This passphrase is used by the C<HMAC-SHA1> algorithm to make signed cookies
-secure and can be changed at any time to invalidate all existing sessions.
+这个密码短语是使用的 C<HMAC-SHA1> 算法来签名你的 cookie , 并可以随时改变让所有现有会话无效。
 
   $self->session(user => 'sri');
   my $user = $self->session('user');
 
-By default all sessions expire after one hour, for more control you can use
-the C<expiration> session value to set an expiration date in seconds from now.
+默认的 sessions 的有效时间为一个小时，如果你想自己控制，就使用 C<expiration> 的参数，来设置 session 方法中的值就可以了。
 
   $self->session(expiration => 3600);
 
-And the whole session can be deleted by using the C<expires> session value to
-set an absolute expiration date in the past.
+可以通过设置 C<expires>  来让会话过期，如果要删除就使用你个过去的时间就好了。
 
   $self->session(expires => 1);
 
-For data that should only be visible on the next request, like a confirmation
-message after a 302 redirect, you can use the flash, accessible through the
-method L<Mojolicious::Controller/"flash">.
+对于只让下一个请求可见的信息，象下面这个 302 的重定向，你可以使用 L<Mojolicious::Controller/"flash"> 的方法。
 
   $self->flash(message => 'Everything is fine.');
   $self->redirect_to('goodbye');
 
-Just remember that all session data gets serialized with L<Mojo::JSON> and
-stored in C<HMAC-SHA1> signed cookies, which usually have a 4096 byte limit,
-depending on browser.
+你需要知道的就是所有的会话的数据都被 L<Mojo::JSON> 实例化并使用 C<HMAC-SHA1> 签名 cookie 来存储的。通常浏览器对这个数据有 4096 个字节的限制需要你注意.
 
-=head2 Final prototype
+=head2 最终的原型
 
-A final C<myapp.pl> prototype passing all of the unit tests above could look
-like this.
+上面那个最终的原型 C<myapp.pl> 会是下面这个样子。
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
@@ -441,37 +410,28 @@ like this.
     <body><%= content %></body>
   </html>
 
-A list of all built-in helpers can be found in
-L<Mojolicious::Plugin::DefaultHelpers> and L<Mojolicious::Plugin::TagHelpers>.
+全部的原生的 helpers 可以看  L<Mojolicious::Plugin::DefaultHelpers> 和  L<Mojolicious::Plugin::TagHelpers>.
 
-=head1 WELL STRUCTURED APPLICATION
+=head1 完整结构的应用 
 
-Due to the flexibility of L<Mojolicious> there are many variations of the
-actual growing process, but this should give you a good overview of the
-possibilities.
+L<Mojolicious> 非常的灵活，所以在实际变成完整应用时有很多的变化，这给你很好的概括了各种可能性.
 
 =head2 Inflating templates
 
-All templates and static files inlined in the C<DATA> section can be
-automatically turned into separate files in the C<templates> and C<public>
-directories.
+所有在 C<DATA> 的部分的内容的静态文件和模板，可以自动的生成并放在 C<templates> 和 C<public> 的目录.
 
   $ ./myapp.pl inflate
 
-Those directories always get priority, so inflating can also be a great way to
-allow your users to customize their applications.
+这些目录会优先取得内容,比起本身的 C<DATA> 部分，所以 inflating 可以让你定制你的应用。
 
-=head2 Simplified application class
+=head2 简单的应用程序的类 
 
-This is the heart of every full L<Mojolicious> application and always gets
-instantiated during server startup.
+这些东西是整个 L<Mojolicious> 应用的心脏，这些内容在 Web 服务启动的过程中被实例化.
 
   $ touch lib/MyApp.pm
   $ chmod 644 lib/MyApp.pm
 
-We will start by extracting all actions from C<myapp.pl> and turn them into
-simplified hybrid routes in the L<Mojolicious::Routes> router, none of the
-actual action code needs to be changed.
+我们开始从  C<myapp.pl> 提取出所有 action 的代码，放到指定的目录中，变成 L<Mojolicious::Routes> 中混合的 route 。我们并不需要改变实际的功能代码.
 
   package MyApp;
   use Mojo::Base 'Mojolicious';
@@ -513,13 +473,11 @@ actual action code needs to be changed.
 
   1;
 
-The C<startup> method gets called right after instantiation and is the place
-where the whole application gets set up.
+这设置整个应用程序和实例化的地方 ，这个 C<startup> 的方法被调用后。
 
-=head2 Simplified application script
+=head2 简单的应用的脚本 
 
-C<myapp.pl> itself can now be turned into a simplified application script to
-allow running unit tests again.
+这个 C<myapp.pl> 本身可以变成一个简单的应用程序来让你在次运行所有的程序。
 
   #!/usr/bin/env perl
 
@@ -534,14 +492,13 @@ allow running unit tests again.
 
 =head2 Controller class
 
-Hybrid routes are a nice intermediate step, but to maximize maintainability it
-makes sense to split our action code from its routing information.
+混合起来的 routes 很容易几步就实现，要最大限度地提高可维护性是有意义的，分离我们的操作代码和它的路由信息就可以达到这个目标.
 
   $ mkdir lib/MyApp
   $ touch lib/MyApp/Login.pm
   $ chmod 644 lib/MyApp/Login.pm
 
-Once again the actual action code does not change at all.
+当然，实际的功能代码还是不需要修改。
 
   package MyApp::Login;
   use Mojo::Base 'Mojolicious::Controller';
@@ -571,13 +528,11 @@ Once again the actual action code does not change at all.
 
   1;
 
-All L<Mojolicious::Controller> controllers are plain old Perl classes and get
-instantiated on demand.
+全部的 L<Mojolicious::Controller> 的 controller 就是普通的 Perl 的类。
 
 =head2 Application class
 
-The application class C<lib/MyApp.pm> can now be reduced to model and routing
-information.
+这个 C<lib/MyApp.pm>  的应用的类，可以现在可以减少到只有模式和路由的信息.
 
   package MyApp;
   use Mojo::Base 'Mojolicious';
@@ -599,13 +554,11 @@ information.
 
   1;
 
-L<Mojolicious::Routes> allows many route variations, choose whatever you like
-most.
+这个 L<Mojolicious::Routes> 可以有非常多的 route 的变化， 选出你最喜欢的方式.
 
 =head2 Templates
 
-Templates are usually bound to controllers, so they need to be moved into the
-appropriate directories.
+我们给模板绑定到控制器, 所以需要给他们移动到相应的目录.
 
   $ mkdir templates/login
   $ mv templates/index.html.ep templates/login/index.html.ep
@@ -613,14 +566,14 @@ appropriate directories.
 
 =head2 Script
 
-Finally C<myapp.pl> can be replaced with a proper L<Mojolicious> script.
+最终的 C<myapp.pl>  替换成 L<Mojolicious> 的脚本.
 
   $ rm myapp.pl
   $ mkdir script
   $ touch script/myapp
   $ chmod 744 script/myapp
 
-Only a few small details change.
+只有几个小的改变。
 
   #!/usr/bin/env perl
 
@@ -634,9 +587,9 @@ Only a few small details change.
   require Mojolicious::Commands;
   Mojolicious::Commands->start_app('MyApp');
 
-=head2 Simplified tests
+=head2 简单的 tests
 
-Normal L<Mojolicious> applications are a little easier to test, so C<t/login.t> can be simplified.
+标准的 L<Mojolicious> 应用程序更容易测试，所以 C<t/login.t> 可以简化.
 
   use Test::More;
   use Test::Mojo;
@@ -663,13 +616,10 @@ Normal L<Mojolicious> applications are a little easier to test, so C<t/login.t> 
 
   done_testing();
 
-Test driven development takes a little getting used to, but is very well worth
-it!
+测试驱动开发需要多一点时间，但很值得！
 
 =head1 MORE
 
-You can continue with L<Mojolicious::Guides> now or take a look at the
-L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>, which contains a lot
-more documentation and examples by many different authors.
+你现在可以看看 L<Mojolicious::Guides> 。现在也可以看看 L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>,  这有很多文档和不同作者的例子.
 
 =cut
