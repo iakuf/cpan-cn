@@ -15,6 +15,43 @@
 如果你从没用过 Perl, 推荐你看看 L<Learn Perl in 2 hours 30 minutes|http://qntm.org/files/perl/perl.html> 这个快速了解的教程, 或者
 L<Modern Perl book|http://modernperlbooks.com/books/modern_perl/>, 这个免费提供多种格式可以选择。前面二个都是优秀的介文档.想看更多就看 L<learn.perl.org|http://learn.perl.org/>.
 
+=head1 相关的基础文档
+
+当然，也有国内可爱的 Perl 开发人员，提供译了不少的中文文档。如下列出了我收集的一部分。
+
+L<perl> - Perl 语言
+
+L<perlcn> - 简体中文 Perl 指南
+
+L<perlintro> - Perl 简介和概览
+
+L<perlbook> - Perl 书籍信息
+
+L<perlcheat> - Perl 5 速查
+
+L<perlreftut> - Mark 的关于引用的简短指南
+
+L<perllol> - 操作数组的数组（二维数组）
+
+L<perlobj> - Perl 对象
+
+L<perlootut> - perl 教程之面向对象编程
+
+L<perlstyle> - Perl 程序风格指南
+
+L<perlopentut> - Perl 中 open 的指南
+
+L<perlunitut> - Perl万国码指南
+
+L<perlembed> - 在 C 程序中嵌入 perl
+
+L<perlxstut> - 写 XSUBs 指南
+
+L<perlutil> - Perl 发行版中的实用程序
+
+L<perlvar> - Perl 预定义变量
+
+
 =head1 网站开发教程
 
 =over 2
@@ -35,11 +72,15 @@ DBIx::Class 就最好的 ORM 的类，这有一本 L<DBIx::Cookbook> 可以提�
 
 =head1 事件编程
 
-=over 2
+=over 3
 
-=item L<AnyEvent>
+=item L<AnyEvent::Intro>
 
 使用 AnyEvent
+
+=item L<POE>
+
+抽象的更好的事件编程模型
 
 =back
 
@@ -49,7 +90,7 @@ DBIx::Class 就最好的 ORM 的类，这有一本 L<DBIx::Cookbook> 可以提�
 
 =item L<PAR::Tutorial>
 
-有关 Perl 打包成单独文件的教程
+有关 Perl 打包成单独文件的教程, 另外还可以看看 L<pp> 的命令工具
 
 =back
 
