@@ -100,10 +100,10 @@ B<pp> S<[ B<-ABCEFILMPTSVXacdefghilmnoprsvxz> ]> S<[ I<parfile> | I<scriptfile> 
     % pp -o hello hello.pl      # Pack 'hello.pl' into executable 'hello'
                                 # (or 'hello.exe' on Win32)
 
-    % pp -o foo foo.pl bar.pl   # Pack 'foo.pl' and 'bar.pl' into 'foo'
-    % ./foo                     # Run 'foo.pl' inside 'foo'
-    % mv foo bar; ./bar         # Run 'bar.pl' inside 'foo'
-    % mv bar baz; ./baz         # Error: Can't open perl script "baz"
+    % pp -o foo foo.pl bar.pl   # 给 'foo.pl' 和 'bar.pl' 封装成 'foo' 一个文件
+    % ./foo                     # 运行 'foo' 里面的 'foo.pl' 
+    % mv foo bar; ./bar         # 运行 'foo' 里面的 'bar.pl' 
+    % mv bar baz; ./baz         # Error: Can't open perl script "baz" 这样就出错了，因为包中找不到 baz
 
     % pp -p file                # Creates a PAR file, 'a.par'
     % pp -o hello a.par         # Pack 'a.par' to executable 'hello'

@@ -4,6 +4,7 @@
 
 =head1 文档
 
+
 Mojolicious::Guides::Rendering - 渲染
 
 =head1 概述
@@ -689,20 +690,32 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
 
 =head2 Chunked transfer encoding
 
+=begin original
+
 For very dynamic content you might not know the response C<Content-Length> in
 advance, that's where the C<chunked> C<Transfer-Encoding> comes in handy. A
 common use would be to send the C<head> section of an HTML document to the
 browser in advance and speed up preloading of referenced images and
 stylesheets.
 
+=end original
+
+对于动态的内容，你并不能提前知道响应的 C<Content-Length> 的大小，这时  C<chunked> C<Transfer-Encoding>  就非常有用。一个常见的用处是给 HTML 中发 C<head>  部分到用户的浏览器来提前加快预载图象和样式表。
+
   $self->write_chunk('<html><head><title>Example</title></head>' => sub {
     my $self = shift;
     $self->finish('<body>Example</body></html>');
   });
 
+=begin original
+
 The optional drain callback ensures that all previous chunks have been
 written before processing continues. An empty chunk or call to
 L<Mojolicious::Controller/"finish"> marks the end of the stream.
+
+=end original
+
+上面这个能保证 drain 的回调会给先前的数据写入完后，才会接着继续处理，一个空的 chunk 或者调用 L<Mojolicious::Controller/"finish">  标志着这个流结束了.
 
   29
   <html><head><title>Example</title></head>
@@ -710,14 +723,23 @@ L<Mojolicious::Controller/"finish"> marks the end of the stream.
   <body>Example</body></html>
   0
 
-Especially in combination with long inactivity timeouts this can be very
-useful for Comet (C<long polling>). Due to limitations in some web servers
-this might not work perfectly in all deployment environments.
+=begin original
+
+Especially in combination with long inactivity timeouts this can be very useful for Comet (C<long polling>). Due to limitations in some web servers this might not work perfectly in all deployment environments.
+
+=end original
+
+特别是结合长时间闲置超时的应用象 Comet (C<long polling>) 时非常的有用。不过由于一些 Web 服务器的限制，并不能包证这个能在所有的地方都能正常工作.
 
 =head2 Encoding
 
-Templates stored in files are expected to be C<UTF-8> by default, but that can
-be easily changed.
+=begin original
+
+Templates stored in files are expected to be C<UTF-8> by default, but that can be easily changed.
+
+=end original
+
+默认的模板是存成 C<UTF-8> 的格式，你也可以很容易的修改.
 
   # Application
   package MyApp;
@@ -732,8 +754,13 @@ be easily changed.
 
   1;
 
-All templates from the C<DATA> section are bound to the encoding of the Perl
-script, so don't forget to use the L<utf8> pragma if necessary.
+=begin original
+
+All templates from the C<DATA> section are bound to the encoding of the Perl script, so don't forget to use the L<utf8> pragma if necessary.
+
+=end original
+
+如果从 C<DATA> 块中绑定模板到 Perl 的程序中时，不要忘记使用 L<utf8> 的编译指示.
 
   use Mojolicious::Lite;
   use utf8;
@@ -748,13 +775,20 @@ script, so don't forget to use the L<utf8> pragma if necessary.
 
 =head2 Base64 encoded DATA files
 
-Base64 encoded static files such as images can be easily stored in the C<DATA>
-section of your application, similar to templates.
+=begin original
+
+Base64 encoded static files such as images can be easily stored in the C<DATA> section of your application, similar to templates.
+
+=end original
+
+在你的应用程序中，你可以很容易的静态文件，如图片，存储在  C<DATA> 的部分，类似于模板一样.
 
   @@ favicon.ico (base64)
   ...base64 encoded image...
 
 =head2 Inflating DATA templates
+
+=begin original
 
 Templates stored in files get preferred over files from the C<DATA> section,
 this allows you to include a default set of templates in your application that
@@ -762,12 +796,21 @@ the user can later customize. The C<inflate> command will write all templates
 and static files from the C<DATA> section into actual files in the
 C<templates> and C<public> directories.
 
+=end original
+
+模板存储后，会从 C<DATA> 部分优先取得，所以可以让你在你的应用程序中包含默认的模板。当然你也可以以后进行自定义。使用 C<inflate> 的命令会给所有 C<DATA> 部分的静态文件都写到 C<templates> 和 C<public> 的目录中.
+
   $ ./myapp.pl inflate
 
-=head2 Customizing the template syntax
+=head2 定制模板语法
 
-You can easily change the whole template syntax by loading
-L<Mojolicious::Plugin::EPRenderer> with a custom configuration.
+=begin original
+
+You can easily change the whole template syntax by loading L<Mojolicious::Plugin::EPRenderer> with a custom configuration.
+
+=end original
+
+你可以很容易的通过 L<Mojolicious::Plugin::EPRenderer> 来定义你自己的模板语法的配置。
 
   use Mojolicious::Lite;
 
@@ -787,12 +830,23 @@ L<Mojolicious::Plugin::EPRenderer> with a custom configuration.
   @@ index.html.mustache
   Hello {{= $name }}.
 
+=begin original
+
 L<Mojo::Template> contains the whole list of available options.
+
+=end original
+
+L<Mojo::Template>  中含可用选项的完整的列表
 
 =head2 Adding your favorite template system
 
-Maybe you would prefer a different template system than C<ep>, all you have to
-do is add a new C<handler>.
+=begin original
+
+Maybe you would prefer a different template system than C<ep>, all you have to do is add a new C<handler>.
+
+=end original
+
+也许你喜欢其它的模板系统，相比起 C<ep>。 你可以使用 C<handler> 来给新的模板系统加入到你的应用中来.
 
   use Mojolicious::Lite;
 
@@ -831,8 +885,14 @@ do is add a new C<handler>.
   @@ index.html.mine
   ...
 
+=begin original
+
 Since most template systems don't support templates in the C<DATA> section the
 renderer provides methods to help you with that.
+
+=end original
+
+大多的模板系统都不支持从 C<DATA> 部分来取得模板，使用上面的方法可以帮你实现.
 
 =head1 MORE
 

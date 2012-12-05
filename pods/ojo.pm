@@ -73,34 +73,29 @@ sub _request {
 
 ojo - 单个字母的 Mojo 的功能 
 
-=head1 SYNOPSIS
+=head1 概要
 
   $ perl -Mojo -E 'say g("mojolicio.us")->dom->at("title")->text'
 
-=head1 DESCRIPTION
+=head1 描述
 
-A collection of automatically exported functions for fun Perl oneliners. Ten
-redirects will be followed by default, you can change this behavior with the
-C<MOJO_MAX_REDIRECTS> environment variable.
+这是一个非常有意思的东西就是 Perl 的单行功能合集。 默认的情况下，可以重定向 10 次，你可以修改  C<MOJO_MAX_REDIRECTS> 来改变它的行为.
 
   $ MOJO_MAX_REDIRECTS=0 perl -Mojo -E 'say g("mojolicio.us")->code'
 
-Proxy detection is enabled by default, but you can disable it with the
-C<MOJO_PROXY> environment variable.
+默认也是打开了代理检查的功能，如果你想禁用这个功能，就使用 C<MOJO_PROXY> 的环境变量来修改它.
 
   $ MOJO_PROXY=0 perl -Mojo -E 'say g("mojolicio.us")->body'
 
-=head1 FUNCTIONS
+=head1 函数
 
-L<ojo> implements the following functions.
+L<ojo> 实现了下列的函数
 
 =head2 C<a>
 
   my $app = a('/hello' => sub { shift->render(json => {hello => 'world'}) });
 
-Create a route with L<Mojolicious::Lite/"any"> and return the current
-L<Mojolicious::Lite> object. See also the L<Mojolicious::Lite> tutorial for
-more argument variations.
+使用 L<Mojolicious::Lite/"any">  中的 route  功能来创建一个 L<Mojolicious::Lite> 对象，你可以看  L<Mojolicious::Lite> 的教程中参数的详细信息.
 
   $ perl -Mojo -E 'a("/hello" => {text => "Hello Mojo!"})->start' daemon
 
@@ -108,7 +103,7 @@ more argument variations.
 
   my $stream = b('lalala');
 
-Turn string into a L<Mojo::ByteStream> object.
+打开 L<Mojo::ByteStream> 对象字符.
 
   $ perl -Mojo -E 'b(g("mojolicio.us")->body)->html_unescape->say'
 
@@ -116,15 +111,14 @@ Turn string into a L<Mojo::ByteStream> object.
 
   my $collection = c(1, 2, 3);
 
-Turn list into a L<Mojo::Collection> object.
+打开列出  L<Mojo::Collection>  对象的功能.
 
 =head2 C<d>
 
   my $res = d('mojolicio.us');
   my $res = d('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<DELETE> request with L<Mojo::UserAgent/"delete"> and return
-resulting L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"delete"> 中的 C<DELETE> 请求并返回 L<Mojo::Message::Response> 对象.
 
 =head2 C<f>
 
@@ -190,7 +184,7 @@ L<Mojo::Message::Response> object.
 
   my $perl = r({data => 'structure'});
 
-Dump a Perl data structure with L<Data::Dumper>.
+给  Perl 的数据结构使用 L<Data::Dumper> 来 Dump 出来。
 
   perl -Mojo -E 'say r(g("mojolicio.us")->headers->to_hash)'
 
@@ -199,22 +193,20 @@ Dump a Perl data structure with L<Data::Dumper>.
   my $res = t('mojolicio.us');
   my $res = t('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<PATCH> request with L<Mojo::UserAgent/"patch"> and return resulting
-L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"patch"> 中发出 C<PATCH> 的请求并返回 L<Mojo::Message::Response> 的对象.
 
 =head2 C<u>
 
   my $res = u('mojolicio.us');
   my $res = u('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<PUT> request with L<Mojo::UserAgent/"put"> and return resulting
-L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"put">  中的 C<PUT>  请求并返回 L<Mojo::Message::Response> 的对象.
 
 =head2 C<x>
 
   my $dom = x('<div>Hello!</div>');
 
-Turn HTML/XML input into L<Mojo::DOM> object.
+打开 L<Mojo::DOM> 对象处理 HTML/XML 的输入.
 
   $ perl -Mojo -E 'say x(b("test.html")->slurp)->at("title")->text'
 
