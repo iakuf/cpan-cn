@@ -77,9 +77,9 @@ DBIx::Class 就最好的 ORM 的类，这有一本 L<DBIx::Cookbook> 可以提�
 
 =over 3
 
-=item L<AnyEvent::Intro>
+=item L<AnyEvent>
 
-使用 AnyEvent
+使用 AnyEvent 的一些 pod,译文主要有 L<AnyEvent::Intro> 和 L<AnyEvent::Handle> 常用的学会这二个基本就能用了.
 
 =item L<POE>
 

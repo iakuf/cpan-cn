@@ -308,7 +308,7 @@ C<given-when>(也被称为 B<switch statement>):
 
 =head2 方法
 
-当 $var 是一个对象的实例时,你可以可以调用它的方法通过"."这个操作符.
+当 $var 是一个对象的实例时, 你可以通过 "." 这个操作符来调用它, 类似于 Perl 中的 -> 和 Perl 6 的语法是一样的.
 
     <: $var.method() :>
     <: $var.method(1, 2, 3) :>
@@ -351,16 +351,16 @@ xslate 模板可以递归地引入，但包括深度限制为100.
     : cascade myapp::base with myapp::role1, myapp::role2
     : cascade with myapp::role1, myapp::role2
 
-在派生模板中你可以扩展自己的模板, 例如我们使用 F<myapp/foo.tx> 通过块修饰方法 (block modifiers).
+在派生模板中你可以扩展自己的模板, 例如我们在 F<myapp/foo.tx> 文件中, 通过使用 around 的块修饰方法 (block modifiers) 来修改导入进来的默认模板.
 
     : # 给 "myapp/base.tx" 级联进来
     : cascade myapp::base
-    : # 使用默认的标题，所以 title 块不能写出来，只修改 body 块. 
+    : # 使用默认的标题，所以 title 块不需要写出来，只修改 body 块. 
     : around body -> {
         My template body!
     : }
 
-然后, 你还可以修改你的模板 F<myapp/bar.tx> ,这次我们显示的使用 title 并使用默认值:
+然后, 我们在一个新的模板 F<myapp/bar.tx> 中, 引入 myapp::foo 后，在来测试使用最开始 title 的默认值，并使用其它块修饰来修改 body :
 
     : cascade myapp::foo
     : around title -> {
@@ -394,7 +394,8 @@ xslate 模板可以递归地引入，但包括深度限制为100.
 
     : cascade myapp::base with myapp::role1, myapp::role2
 
-你可以替换掉基础模板, 如下新的例子中只要在你的文件中 F<myapp/hello.tx> 来做基础模块: 
+
+我们现在开始一个新的例子,现在 F<myapp/hello.tx> 来做基础模板,我们测试替换掉基础模板: 
 
     : around hello -> {
         --------------
@@ -402,7 +403,7 @@ xslate 模板可以递归地引入，但包括深度限制为100.
         --------------
     : }
 
-主模板:
+我们当前要使用的模板, 注意这使用了 with, F<with> 进来的模板会影响当前的模板:
 
     : cascade with myapp::hello
 

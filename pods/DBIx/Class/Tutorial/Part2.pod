@@ -4,48 +4,39 @@
 
 =head1 NAME
 
-DBIx::Class::Tutorial::Part2
+DBIx::Class::Tutorial::Part2 教程的第二部分
 
 =head1 DESCRIPTION
 
-This is part two of the tutorial. See L<DBIx::Class::Tutorial::Part1>
-if you haven't already.
+如果你读了  L<DBIx::Class::Tutorial::Part1> ，你现在见到的是这个教程的第二个部分.
 
-In which we discuss more about resultsets and rows, and do some
-funky related data dealing.
+在我们讨论更多关于 ResultSet 和行，做一些时髦的有关数据处理。
 
 =head1 GLOSSARY
 
 =over
 
-=item Relationship(s)
+=item 关系 Relationship(s)
 
-In case you didn't catch this in Part1.
+如果你没赶上这个教程的第 1 部分
 
-Relationships definitions are what DBIx::Class uses to C<JOIN> tables
-in the SQL queries it produces.
+关系(Relationships)的定义是指，DBIx::Class 使用 C<JOIN> 表进行 SQL 查询的内容。
 
-You can define relationships in your
-L<Result class|DBIx::Class::Tutorial::Part1/Result class>es. Even
-relationships that your database does not know about.
+你可以在 L<Result class|DBIx::Class::Tutorial::Part1/Result class> 中定义你自己的关系，即使你的数据库不知道的他们之间的关系。
 
-To access a relationship from both ends, you need to define it
-twice, once at each Result class end.
+要访问二端都相互有的关系，你需要定义 2 次，每个 Result 的类上面。
 
-=item Accessors
+=item 访问函数 Accessors
 
-An accessor is a method for getting/setting some data on an object.
+访问函数是你数据对象上进行 getting 和 setting 的方法.
 
-DBIx::Class defines accessors for all of the columns defined in your
-Result classes. It also defines an accessor for each
-relationship you define.
+DBIx::Class 会在你的 Result 类上为全部的 column 列定义访问函数
 
-In fact, it creates two accessors for C<has_many> relationships. 
+事实上，在 C<has_many> 来创建关系时会创建二个问函数。
 
   __PACKAGE__->has_many('names', 'Breadcrumbs::Schema::Name', 'PathID');
 
-Here, the C<names> accessor will return a list of Row objects in list
-context, and a L</ResultSet> in scalar context.
+这个中的  C<names> 访问函数会在列表上下文时返回  Row 对象的列表，标量上下文返回 L</ResultSet>。
 
 Another accessor named C<names_rs> is added, which will always return
 a ResultSet, no matter which context it is called in. This is useful
@@ -135,14 +126,14 @@ WHERE me.PathID = 10;
 
 =head2 从 ResultSets 的结果中读取数据 
 
-只要查询的语句没有问题的话，任何方法的调用，都会返回 DBIx::Class 中查询结果的返回集在 resultset 中。
+只要查询的语句没有问题的话，任何方法的调用，都会返回 DBIx::Class 中查询结果的返回集存储在 resultset 的对象中。
 
 正如你在 Part1 部分所能见到的，我们使用 C<find> 来取单行的数据，这只是基于主键和 unique 来取数据。
 
   ## Name row with PK 1:
   my $name1 = $schema->resultset('Name')->find({ id => 1 });
 
-如果 L</Unique constraints> 有定义，我们可以使用 C<find> 来对行基本这个查找，我们也可以在 C<find> 的时候使用 unique 的值来替换默认的 primary key 的查找方式。我们只需要设置象下面的 key 指定为 unique 的值就好了。
+如果 L</Unique constraints> 有定义，我们可以使用 C<find> 来对行进行基本的查找，我们也可以在 C<find> 的时候使用 unique 的值来替换默认的 primary key 的查找方式。我们只需要设置一下，象下面的 key 指定为 unique 的值就好了。
 
   ## Find path '/support', use pathconst index:
   my $supppath = $schema->resultset('Path')->find(
@@ -150,7 +141,7 @@ WHERE me.PathID = 10;
     { key => 'pathconst' }
   );
 
-从结果集中取得多行的集要怎么办啦，我们可以简单的给这些行对象全都转换成数组。如果你的结果很大的话，你可以使用 while 来使用少一些内存。
+从结果集中取得多行的结果集要怎么办啦，我们可以简单的给这些行对象全都转换成数组。如果你的结果很大的话，你可以使用 while 来使用少一些内存。
 
   ## All results in an array:
   my @anames = $anames_rs->all;
@@ -160,7 +151,7 @@ WHERE me.PathID = 10;
      print $name->id;
   }
 
-下面这个就是使用 while ，这时在同一时间只从结果集中取一行数组出来，所以这样比上面的方法会少使用很多内存.
+下面这个就是使用 while ，这时在同一时间只从结果集中取一行数组出来，所以这样比上面的方法会少使用很多内存,因为不用给所有行都存在数组的内存中.
 
   ## One at a time.
   while (my $aname = $anames_rs->next)
@@ -168,7 +159,7 @@ WHERE me.PathID = 10;
      print $name->id;
   }
 
-有时我们只需要使用查找到的第一行的数据，我们可以使用  C<first>  来取得首行的结果。这常常用在排序过的结果后，然后来取这个.
+有时我们只需要使用查找到的第一行的数据，我们可以使用  C<first>  来取得首行的结果。这常常用在排序过的结果后，然后来取这个的对象.
 
   ## First A-name:
   my $aname = $aname_rs->first;
