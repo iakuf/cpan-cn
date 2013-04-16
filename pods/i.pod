@@ -1,0 +1,293 @@
+=pod
+
+=encoding utf-8
+
+=head1 NAME
+
+Example::PlackStreamingAndNonblocking - About Plack / PSGI Streaming and nonblocking
+
+=head1 DESCRIPTION
+
+This article reviews the hows and whys of L<Plack|http://search.cpan.org/perldoc?Plack> streaming and nonblocking
+for the perspective of someone who is very unfamiliar with the topic, 
+    
+but has experience with Perl and understands the basics of L<Plack|http://search.cpan.org/perldoc?Plack>.  It takes the form
+of a tutorial starting from a basic Plack application, and introduces both non
+blocking and streaming concept using L<AnyEvent|http://search.cpan.org/perldoc?AnyEvent>.
+
+The goals of these examples is to help the reader understand the problems we are trying to solve using streaming and / or non blocking coding techniques, more then to give example cookbook style code.  As a result some of the examples will be somewhat contrived for the purposes of eludication.
+
+It would be helpful to have read the L<PSGI|http://search.cpan.org/perldoc?PSGI> specification, although you are not
+expected to fully grasp all of it.  Some familiarity with the documentation
+and tutorial of <AnyEvent|http://search.cpan.org/perldoc?AnyEvent> would also assist you.
+
+=head1 INTRODUCTION
+
+除非是个非常死板的 Perl 程序员，不然你一定听到这种新的技术.
+
+象 L<PSGI|http://search.cpan.org/perldoc?PSGI> 和 L<Plack|http://search.cpan.org/perldoc?Plack>, 这种技术目前成为最主流的创建 Web 应用和接口的技术了。
+
+简单来讲, L<Plack|http://search.cpan.org/perldoc?Plack> 是一种很好的 '强力胶(superglue)' 用于连接你的 Web 应用和服务器.
+
+这是你的应用程序和外部网络连接的标准接口，并可以在其中共享一些中间件来使用和重用一些基本的功能。
+
+有关 L<PSGI|http://search.cpan.org/perldoc?PSGI> 很容易理解，就算是新人也很容易了解它。我们现在写一个简单的  Perl / Plack 的应用叫 (`scripts/trivial_01.psgi`);
+
+    use strictures;
+
+    my $app = sub {
+      return [200, ['Content-Type'=>'text/plain'],
+      ["Hello World!\n"]];
+    };
+
+我们在命令行下启动它，并使用 telnet 来取这个信息.
+
+(In terminal one)
+
+    $ plackup scripts/trivial_01.psgi 
+    HTTP::Server::PSGI: Accepting connections at http://0:5000/
+
+(In terminal two)
+
+    $ telnet 127.0.0.1 5000
+    Trying 127.0.0.1...
+    Connected to localhost.
+    Escape character is '^]'.
+    GET / HTTP/1.0
+
+    HTTP/1.0 200 OK
+    Date: Sun, 03 Feb 2013 21:39:20 GMT
+    Server: HTTP::Server::PSGI
+    Content-Type: text/plain
+    Content-Length: 12
+
+    Hello World!
+    Connection closed by foreign host.
+    $ 
+
+你可以通过这个地址来看这个的输出 L<Plack Video|https://github.com/jjn1056/Example-PlackStreamingAndNonblocking/blob/master/share/videos/trivial_01.mov>
+
+这部分帮我们在次复习和了解了 L<PSGI|http://search.cpan.org/perldoc?PSGI> 和  L<Plack|http://search.cpan.org/perldoc?Plack> 的关键点。
+
+这个技术现在对于普通的 Perl 的 Web 应用程序的开发冲击很大。但有 L<PSGI|http://search.cpan.org/perldoc?PSGI> 有二个部分可能不太理解 ，就是 Streaming 和 Non-blocking. 接下来我们会顾流和非阻塞的代码都分别和相互之间的关联。以帮你大家了解什么时候需要使用什么技术来开发你的应用程序.
+
+=head1 Web 扩展的经典方法 
+
+在我们了解为什么在我们的应用上面要使用 L<PSGI|http://search.cpan.org/perldoc?PSGI> 的流和非阻塞的技术之前，我们必须退后一步明白以前的 web 技术进华是怎么实现的，以级怎么来以满足不断增长的需求的规模和复杂性。因为最终它不无论应用程序是如何写的，如果它不能访问，或者如果它执行非常的慢慢，用户是不能接受的。
+
+我们最开始创建自己的 Web 应用程序时我们会在前面放一个 fork webserver 象 Apache. Forking 是一种操作系统的技术用来同时做多个事情。在 Apache 的服务器中 Fork 出来多个进程，包含控制其它进程的进程，并负责产生更加多的子进程，然后当请求到时，所有监听着的连接的进程来开始服务。
+
+例如，当我们的 Apache 启动了 10 个子进程来监听 80 端口处理 Web 的请求。前 10 个进入的请求立即能开始服务，现在只要你的应用程序快速的响应并且传进来的请求不是很多。所以这种模式非常好。因为没有请求在等待。
+
+现在我们更加深入的看看，比如你 Apache 有 10 个子进程可以工作并且在等待进入的请求，如果你的响应优化的非常好，只需要十分之一秒的时间，这意味着你理论上来讲最大每秒处理 100 个请求(每个进程处理 10 个响应，只需要十分之一秒的时间 10\*10=100).
+
+在现实生活中，情况可能都会更糟糕, 因为你可以有一个很慢的客户端请求发送过来(例如有人在14.4K调制解调器),或其他的网络拥塞问题。你可以在一定程度上缓解这个问题，使用前端缓存代理服务器CDN，并添加更多的Web服务器并在前面使用负载平衡系统做成一个大的服务器集群，这样来直截扩展。
+
+但最后，你的处理响应的能力就固定在这个程度，因为这种请求响应的模块中有个  __blocks__ 的系统。这样会给你处理的进程和请求绑定起来并不能处理其它的请求。
+
+现今的 Web 应用程序都是每一个客户端会有多个请求发送过来。想想真实生活中的 Web 应用，如 gmail ，这样应用程序客户端需要请求很多次，然后每个请求都很长时间运行并保持着连接。在经典的阻塞模型，你可能需要很多很多的服务器，才能提供足够的连接，等待的过程（比如百万计的人每天打开 Gmail）。
+
+现在我们使用 Plack 来创建一个应用来演示很多连接，访问使用 Forking 的服务器。我们用程序中来 sleep 5 来表示程序需要做很繁重的工作。
+
+    use strictures;
+
+    my $app = sub {
+      sleep 5;
+      return [200, ['Content-Type'=>'text/plain'],
+      ["Hello World!\n"]];
+    };
+
+所以，我在这里 `sleep 5` 造成了五秒钟的延迟，然后再响应。这虽然是人为的，但绝对有可能的，因为你的应用程序作出响应之前，需要做很多的数据库检查和处理。在这我们使用 `Starman`，这是一个Prefork的服务器（它的默认提前 fork 5 个子进程，因此可以同一时间服务 5 个请求）来运行此应用程序。我们将使用 Apache ab 来访问服务器 100 次并且并发 100（换句话说总共 100 个到服务器的请求，和同时连接 100 个客户端的）。
+
+你猜这个需要多久处理完.
+
+(In terminal one)
+
+    $ plackup scripts/slow_blocking_01.psgi --server Starman
+    2013/02/03-17:52:32 Starman::Server (type Net::Server::PreFork) starting! pid(11719)
+    Resolved [*]:5000 to [0.0.0.0]:5000, IPv4
+    Binding to TCP port 5000 on host 0.0.0.0 with IPv4
+    Setting gid to "20 20 20 12 61 79 80 81 98"
+    Starman: Accepting connections at http://*:5000/
+
+(In terminal two)
+
+    $ ./ab -n 100 -c 100 http://127.0.0.1:5000/
+    This is ApacheBench, Version 2.3 <$Revision: 1178079 $>
+    Benchmarking 127.0.0.1 (be patient).....done
+        
+
+    Server Hostname:        127.0.0.1
+    Server Port:            5000
+
+    Document Path:          /
+    Document Length:        13 bytes
+
+    Concurrency Level:      100
+    Time taken for tests:   100.062 seconds
+    Complete requests:      100
+    Failed requests:        0
+    Write errors:           0
+    Total transferred:      11400 bytes
+    HTML transferred:       1300 bytes
+    Requests per second:    1.00 [#/sec] (mean)
+    Time per request:       100062.073 [ms] (mean)
+    Time per request:       1000.621 [ms] (mean, across all concurrent requests)
+    Transfer rate:          0.11 [Kbytes/sec] received
+
+
+应用服务 5 个请求，阻塞了几秒钟，直接到服务完换下面的。所以整个过程大约需要 100 s.(每 5 秒处理一个请求， 5 个进程，所以刚好 100s ).
+
+这个例子有点极端，因为我们可以做很多的其它的工作。比如我们可以在静态资源前面放上 CDN ，也可以给这些需要计算并花时间的任务使用独立的队列服务，也可以使用边缘缓存的技术来加快更加。但有时，我们有时没有选择，有些类型的 Web 应用程序，就需要一次处理超大量的请求。象前面讲的 Gmail ,所以这时如果都靠设备，投入太高。平时使用率又不高。
+
+
+=head1 Nonblocking with AnyEvent
+
+上面这种应对大规模的方法的功能问题是使用派生的进程来处理，但阻塞会让整个响应变慢，影响第二个请求和服务器进行交互。不然在同一时间可以服务更加大量的应用.
+
+有个地方得强调一下，因为这有些不同，在应用每秒可以处理完的响应和同时并发连接上来服务的客户端并不一样。如果你有一个 Apache 需要 1/10 秒来处理，我们只需要 fork 多个子进程就好。这是指每秒值 100 个请求，但其实同时响应完的不超过 10 个。
+
+因此，如果问题是阻塞，我们该怎么办？
+
+Perl 提供了好几种方式来构建无阻塞的应用程序， 并且  L<Plack|http://search.cpan.org/perldoc?Plack> 也支持。我们使用 L<AnyEvent|http://search.cpan.org/perldoc?AnyEvent> 这个体系来支持这个应用，因为高性能和很好的文档资料。
+
+L<AnyEvent|http://search.cpan.org/perldoc?AnyEvent> 是一个 API ，在它之上的许多可能的事件循环，这使得它很容易上手。
+事件循环背后的想法是，你建立一个应用程序响应事件，但好的是并不需要阻塞其他应用程序的实际响应处理。
+
+这是通过使用操作系统的功能，让它在幕后切换非常迅速，从而使很多事情看起来发生在同一时间。
+
+看起来这样的事件循环很神奇的让你的服务器达到了尚不具有的能力，其实他只是让你更加有效的使用你拥有的东西. 所以，这意味着有时候增加越来越多的东西时，你最终服务器也会变慢，但关键是他们变慢并不是因为阻塞，不需要让其它的请求挂起等待着。这样可以使服务器在同一时间服务更加多的客户。象前面的例子因为最后的 5 个请求不得不等待近 100s 才开始运行，其实这时我的服务器空闲率 99.9％.
+
+我们来看看这个应用程序.
+
+    use AnyEvent;
+    use strictures;
+      
+
+    my $app = sub {
+      my $env = shift;
+     
+
+      return sub {
+        my $writer = (my $responder = shift)->(
+          [ 200, [ 'Content-Type', 'text/plain' ]]);
+     
+
+        $writer->write("Starting: ${\scalar(localtime)}\n");
+
+        my $cb = sub {
+          my $message = shift;
+          $writer->write("Finishing: $message\n");
+          $writer->close;
+        };
+     
+
+       my $watcher;
+       $watcher = AnyEvent->timer(
+        after => 5,
+        cb => sub {
+          $cb->(scalar localtime);
+          undef $watcher; =head1 cancel circular-ref
+        });
+
+      };
+    };
+
+现在，我们添加了一些额外的一些输出，可以更加容易的知道发生了什么事情，但总的来讲，这还是相当复杂的
+Now, I've added a few extra bits of output so as to make it easier to see what is going on, but overall there's quite a bit more complexity here.  Let's try to break it down a bit.  In the introduction we used the most simple form of a L<PSGI|http://search.cpan.org/perldoc?PSGI> appliction, which as you recalled looked like this:
+
+    use strictures;
+
+    my $app = sub {
+      return [200, ['Content-Type'=>'text/plain'],
+      ["Hello World!\n"]];
+    };
+
+我们现在是有个匿名的子程序用来执行对每个请求的处理。子程序返回一个数组引用，分三个部分，第一部分是 HTTP 的状态码，第二个是 HTTP 的头部的数组引用，第三个是响应内容的数组引用.
+
+如果服务器支持，你可以使用第二个子程序来替换掉这三个元素，这个用来做延迟响应的，当服务器准备好执行的时候。这主要的想法是推迟处理的请求/响应。所以你可以重写上面的应用变成(c<scripts/trivial\_02.psgi>).
+
+    use strictures;
+
+    my $app = sub {
+      return sub {
+        (my $responder = shift)->([200,
+          ['Content-Type'=>'text/plain'],
+          ["Hello World!\n"]]);
+      }
+    };
+
+因此，这个并没有真正帮你做什么，但它是我们的非阻塞应用的基础，以及我们的流媒体的例子，我们将在后面的文章中介绍。在上面这个例子中，意思是讲"直到服务器真的要求为它创建的响应时才创建，通过这样做，你就可以开始去耦从实际生成响应的响应，这是一个很好的开始和一个有用的技术，但它尚未足够实现了全非阻塞响应。
+
+下面非阻塞的示例  (`scripts/long_job_anyevent.psgi`) 中的关键点在于调用 `$responder` 的代码块引用，我们只传了部分响应，有 HTTP 的状态和 HTTP 的头部。 当 $responder 象这样时，你可以得到 `$writer` 的对象并用它来发送 HTTP 的内容的响应。你可以使用 ->write 的方法来写内容，并可以调用多次。最后直到调用  ->close 时结束。这是一种常用的应用程序一起使用的延迟的响应和流媒体接口的最终版本。让我们看看它，然后看到它看起来像当我们在支持 （如 Twiggy） 的非阻塞接口的服务器下运行它。
+
+    use strictures;
+
+    my $app = sub {
+      return sub {
+        my $writer = (my $responder = shift)->(
+          [ 200, [ 'Content-Type' => 'text/plain' ]]);
+
+        $writer->write("Hello World!\n");
+        $writer->close;
+      };
+    };
+
+As written this again is not really buying you anything, although if the body of the response was large you could use this as a way to serve 'chunks' of it which might reduce the memory footprint of the application.  We'll talk more about streaming in a bit, but the key here is that the application is still a blocking application, even though it is using the delayed and even streaming response approach.  If you want non-blocking, you have to take this a step further and involve an eventloop framework like <AnyEvent|http://search.cpan.org/perldoc?AnyEvent>.  Lets see what that would look like
+    
+正如前面写的，这又不是真的东西，虽然如果响应的正文非常大，我们可以使用 chunks，因为，您可以使用这个技术会降低应用程序的内存占用。但这里的关键在于应用程序仍然是非阻塞应用程序中，即使它是使用延迟和甚至流响应的方法。如果你希望非阻塞，你必须更加深入 <AnyEvent|http://search.cpan.org/perldoc?AnyEvent> eventloop 框架。让我看看那会看起来像
+
+    use strictures;
+
+    my $app = sub {
+      sleep 5;
+      return [200, ['Content-Type'=>'text/plain'],
+      ["Hello World!\n"]];
+    };
+
+As follows
+
+
+
+    use strictures;
+
+    my $app = sub {
+      return sub {
+        (my $responder = shift)->([200,
+          ['Content-Type'=>'text/plain'],
+          ["Hello World!\n"]]);
+      }
+    };
+
+
+
+
+
+\-high concurrany
+\-very dynamic or realtime data (not suitable for caching)
+\-each client needs lots of connections
+
+is not a panacea
+can play nice with other 'classic' scale techniques, job queues, caching,
+even proxies to help deal with slow clients
+
+
+
+
+
+=head1 SEE ALSO
+
+The following modules or resources may be of interest.
+
+<Plack|http://search.cpan.org/perldoc?Plack>, <AnyEvent|http://search.cpan.org/perldoc?AnyEvent>, [strictures](http://search.cpan.org/perldoc?strictures)
+
+=head1 AUTHOR
+
+    John Napiorkowski C<< <jjnapiork@cpan.org> >>
+
+=head1 COPYRIGHT & LICENSE
+
+    Copyright 2013, John Napiorkowski C<< <jjnapiork@cpan.org> >>
+
+This program is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself.

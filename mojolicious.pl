@@ -1,12 +1,11 @@
 #!/usr/bin/env perl
-
 use utf8; 
 use Mojolicious::Lite;
+use Smart::Comments;
 
 app->secret('foo')->config(hypnotoad => {listen => ['http://*:8000']});
 
 
-# Documentation browser under "/perldoc" (this plugin requires Perl 5.10)
 plugin 'PODRenderer';
 
 # Analytics
@@ -23,13 +22,13 @@ hook before_dispatch => sub {
   $self->redirect_to($self->req->url->to_abs->host("$1mojolicio.us"));
 };
 
-# Welcome to Mojolicious
+## Welcome to Mojolicious
 get '/' => sub {
   my $self = shift;
 
   # 如果请求的是 "get.mojolicio.us"
-  return $self->render('installer', format => 'txt')
-    if $self->req->url->base->host =~ /^get\./;
+  return $self->render('installer', format => 'txt') if $self->req->url->base->host =~ /^get\./;
+  return $self->render('cpan') if $self->req->url->base->host =~ /^cpan\./;
 
   # 得到最新版本的 mojo  
   return $self->redirect_to('http://www.github.com/kraih/mojo/tarball/master')
@@ -39,4 +38,9 @@ get '/' => sub {
   $self->render('index');
 };
 
+
+#get '/' => sub {
+#    my $self = shift;
+#    return $self->render_text();
+#};
 app->start;

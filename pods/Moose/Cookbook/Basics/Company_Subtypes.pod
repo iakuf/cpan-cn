@@ -1,0 +1,713 @@
+package Moose::Cookbook::Basics::Company_Subtypes;
+
+# ABSTRACT: Demonstrates the use of subtypes and how to model classes related to companies, people, employees, etc.
+
+
+
+=pod
+
+=head1 NAME
+
+Moose::Cookbook::Basics::Company_Subtypes - Demonstrates the use of subtypes and how to model classes related to companies, people, employees, etc.
+
+=head1 VERSION
+
+version 2.0604
+
+=head1 SYNOPSIS
+
+  package Address;
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  use Locale::US;
+  use Regexp::Common 'zip';
+
+  my $STATES = Locale::US->new;
+  subtype 'USState'
+      => as Str
+      => where {
+             (    exists $STATES->{code2state}{ uc($_) }
+               || exists $STATES->{state2code}{ uc($_) } );
+         };
+
+  subtype 'USZipCode'
+      => as Value
+      => where {
+             /^$RE{zip}{US}{-extended => 'allow'}$/;
+         };
+
+  has 'street'   => ( is => 'rw', isa => 'Str' );
+  has 'city'     => ( is => 'rw', isa => 'Str' );
+  has 'state'    => ( is => 'rw', isa => 'USState' );
+  has 'zip_code' => ( is => 'rw', isa => 'USZipCode' );
+
+  package Company;
+  use Moose;
+  use Moose::Util::TypeConstraints;
+
+  has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+  has 'address'   => ( is => 'rw', isa => 'Address' );
+  has 'employees' => (
+      is      => 'rw',
+      isa     => 'ArrayRef[Employee]',
+      default => sub { [] },
+  );
+
+  sub BUILD {
+      my ( $self, $params ) = @_;
+      foreach my $employee ( @{ $self->employees } ) {
+          $employee->employer($self);
+      }
+  }
+
+  after 'employees' => sub {
+      my ( $self, $employees ) = @_;
+      return unless $employees;
+      foreach my $employee ( @$employees ) {
+          $employee->employer($self);
+      }
+  };
+
+  package Person;
+  use Moose;
+
+  has 'first_name' => ( is => 'rw', isa => 'Str', required => 1 );
+  has 'last_name'  => ( is => 'rw', isa => 'Str', required => 1 );
+  has 'middle_initial' => (
+      is        => 'rw', isa => 'Str',
+      predicate => 'has_middle_initial'
+  );
+  has 'address' => ( is => 'rw', isa => 'Address' );
+
+  sub full_name {
+      my $self = shift;
+      return $self->first_name
+          . (
+          $self->has_middle_initial
+          ? ' ' . $self->middle_initial . '. '
+          : ' '
+          ) . $self->last_name;
+  }
+
+  package Employee;
+  use Moose;
+
+  extends 'Person';
+
+  has 'title'    => ( is => 'rw', isa => 'Str',     required => 1 );
+  has 'employer' => ( is => 'rw', isa => 'Company', weak_ref => 1 );
+
+  override 'full_name' => sub {
+      my $self = shift;
+      super() . ', ' . $self->title;
+  };
+
+=head1 DESCRIPTION
+
+=begin original
+
+This recipe introduces the C<subtype> sugar function from
+L<Moose::Util::TypeConstraints>. The C<subtype> function lets you
+declaratively create type constraints without building an entire
+class.
+
+=end original
+
+这个指南介绍了 L<Moose::Util::TypeConstraints> 中的 C<subtype> .这次这个 C<subtype> 的功能主要是让我们可以在创建和进入类的时候来自定义一些类型约束.
+
+=begin original
+
+In the recipe we also make use of L<Locale::US> and L<Regexp::Common>
+to build constraints, showing how constraints can make use of existing
+CPAN tools for data validation.
+
+Finally, we introduce the C<required> attribute option.
+
+=end original
+
+在这个指南,我们也借助 L<Locale::US> 和 L<Regexp::Common> 二个第三方模块建立一些特别的约束条件.可以展示介绍怎么样使用现有的 CPAN 上的工具来用做约束的功能, 对进行传送参数的数据验证.
+
+=begin original
+
+In the C<Address> class we define two subtypes. The first uses the
+L<Locale::US> module to check the validity of a state. It accepts
+either a state abbreviation of full name.
+
+=end original
+
+在这个 C<Address> 类中,我们定义了二个 subtypes. 首先使用 L<Locale::US> 模块检查州(state)是否有效,它只接受州(state)的全名缩写.
+
+=begin original
+
+A state will be passed in as a string, so we make our C<USState> type
+a subtype of Moose's builtin C<Str> type. This is done using the C<as>
+sugar. The actual constraint is defined using C<where>. This function
+accepts a single subroutine reference. That subroutine will be called
+with the value to be checked in C<$_> (1). It is expected to return a
+true or false value indicating whether the value is valid for the
+type.
+
+We can now use the C<USState> type just like Moose's builtin types:
+
+=end original
+
+州(state)将作为字符串来处理,所以要在我们在 Moose 中创建 C<UUState> 的子类型(subtype) 内部使用是 C<Str> 类型 .这是一个语法糖,我们在这个地方实际是在定义约束.这个 C<where> 中的内容,其实是接受一个子函数的引用.这个子函数会检查 c<$_> (1) 的内容,它会通过返回 true 和 false 来表示这个值的属性和内容是否正确;
+
+这样操作后,现在这个新的 USState 的子类型很象 Moose 内置的类型.可以象内置的一样使用.
+
+  has 'state'    => ( is => 'rw', isa => 'USState' );
+
+=begin original
+
+When the C<state> attribute is set, the value is checked against the
+C<USState> constraint. If the value is not valid, an exception will be
+thrown.
+
+=end original
+
+当 state 属性设置的时候,就会检查这个的值是否违反了 USState 的类型约束.如果值是有违反类型约束,就不可用的,就会报出一个错来.
+
+=begin original
+
+The next C<subtype>, C<USZipCode>, uses
+L<Regexp::Common>. L<Regexp::Common> includes a regex for validating
+US zip codes. We use this constraint for the C<zip_code> attribute.
+
+=end original
+
+下一个 C<subtype>, C<USZipCode>, 使用的是 L<Regexp::Common> 模块来检查属性 ,L<Regexp::Common> 包含了一些验证的美国(US)邮政编码的正则代码.我们使用这个来约束这个 C<zip_code> 邮政编码的属性
+
+  subtype 'USZipCode'
+      => as Value
+      => where {
+             /^$RE{zip}{US}{-extended => 'allow'}$/;
+         };
+
+=begin original
+
+Using a subtype instead of requiring a class for each type greatly
+simplifies the code. We don't really need a class for these types, as
+they're just strings, but we do want to ensure that they're valid.
+
+=end original
+
+使用这种子类型可以大大简化了代码,其实我们并不真的需要在我们的类中有这些类型,只是因为它们是字符串,所以我们才要确保他们是有效的,我们只需要我们所要的字符串.这样保证类更好的封装.
+
+=begin original
+
+The type constraints we created are reusable. Type constraints are
+stored by name in a global registry, which means that we can refer to
+them in other classes. Because the registry is global, we do recommend
+that you use some sort of namespacing in real applications,
+like C<MyApp::Type::USState> (just as you would do with class names).
+
+These two subtypes allow us to define a simple C<Address> class.
+
+=end original
+
+这个类型约束也是可以重用的,类型约束会根据自己的名字注册到全局(global)中来存着.所以我们可以在其它的类中调用这个.因为这个子类型约束的注册是全局的名字空间中.我们建议您实际应用中对使用下面这样的以命名空间来排的名字.象 C<MyApp::Type::USState>（就像你做的类名）.
+
+这两个子类型让我们很方便的定义一个简单的 C<Address> 类.
+
+=begin original
+
+Then we define our C<Company> class, which has an address. As we saw
+in earlier recipes, Moose automatically creates a type constraint for
+each our classes, so we can use that for the C<Company> class's
+C<address> attribute:
+
+=end original
+
+接下来,我们定义我们的 C<Company> 类,类中有 address 的属性, 正如我们在前面指南看到的, Moose 自动动创建每个类名的类型约束,所以我们可以在 C<Company> 类中使用 C<Address> 属性类型约束,所以这个参数只能传一个类进去：
+
+  has 'address'   => ( is => 'rw', isa => 'Address' );
+
+=begin original
+
+A company also needs a name:
+
+=end original
+
+公司必须有一个名字：
+
+  has 'name' => ( is => 'rw', isa => 'Str', required => 1 );
+
+=begin original
+
+This introduces a new attribute option, C<required>. If an attribute
+is required, then it must be passed to the class's constructor, or an
+exception will be thrown. It's important to understand that a
+C<required> attribute can still be false or C<undef>, if its type
+constraint allows that.
+
+=end original
+
+这个是一个新的属性的选项,如果属性中 required 是真,在类构造时,一定需要提供这个属性,不然就会出错.有一个重要的地方需要我们明白,一个 required 的属性传送进来,就象有类型约束,还是有可能仍然是假的或者 undef,类型约束不保证内容,这也是为什么上面为什么使用子类型的原因,因为只能说明它通过了的子类型约束才是允许的.
+
+=begin original
+
+The next attribute, C<employees>, uses a I<parameterized> type
+constraint:
+
+=end original
+
+在接下来的类中的一个属性,employees ,使用参数的类型的约束：
+
+  has 'employees' => (
+      is      => 'rw',
+      isa     => 'ArrayRef[Employee]'
+      default => sub { [] },
+  );
+
+=begin original
+
+This constraint says that C<employees> must be an array reference
+where each element of the array is an C<Employee> object. It's worth
+noting that an I<empty> array reference also satisfies this
+constraint, such as the value given as the default here.
+
+=end original
+
+这个约束指出 C<employees> 属性在类生成时一定需要传一个数组的引用,其中每个数组元素都是 C<Employee> 对象.值得一提的是,一个空数组的引用也满足这个约束, 确保这里给出默认的值.
+
+=begin original
+
+Parameterizable type constraints (or "container types"), such as
+C<ArrayRef[`a]>, can be made more specific with a type parameter. In
+fact, we can arbitrarily nest these types, producing something like
+C<HashRef[ArrayRef[Int]]>. However, you can also just use the type by
+itself, so C<ArrayRef> is legal. (2)
+
+=end original
+
+参数类型的约束（或 "容器类型"）,例如 C<ArrayRef[`a]>,能被用来创建更多的参数类型,事实上,我们可以任意嵌套这些类型,产生类似 C<HashRef[ArrayRef[Int]]>.另外,你也可以只使用自己的类型,所以 C<ArrayRef> 是合法的.(2)
+
+=begin original
+
+If you jump down to the definition of the C<Employee> class, you will
+see that it has an C<employer> attribute.
+
+=end original
+
+如果你跳到下面来看 C<Employee> 类的定义,你会看到它有一个 C<employer> 属性.
+
+=begin original
+
+When we set the C<employees> for a C<Company> we want to make sure
+that each of these employee objects refers back to the right
+C<Company> in its C<employer> attribute.
+
+=end original
+
+我们来为 C<Company> 来设置 C<employees> 属性时,我们要确保这些 employee 的对象引用会是正确的公司中 C<emplayer> 的属性.
+
+=begin original
+
+To do that, we need to hook into object construction. Moose lets us do
+this by writing a C<BUILD> method in our class. When your class
+defines a C<BUILD> method, it will be called by the constructor
+immediately after object construction, but before the object is returned
+to the caller. Note that all C<BUILD> methods in your class hierarchy
+will be called automatically; there is no need to (and you should not)
+call the superclass C<BUILD> method.
+
+=end original
+
+要做到这一点,我们必须 hook 对象的构造,Moose 可以让我们为我们自己的类来写 C<BUILD> 的方法.当你的类定义了 C<BUILD> 方法时,这将调用对象的构造函数后立即执行,但在此之前的对象就返回给调用者了.请注意,在你的类的层次结构中所有 C<BUILD> 方法将被自动调用,而不需要（和你不应该）调用父类的 C<BUILD> 方法.
+
+=begin original
+
+The C<Company> class uses the C<BUILD> method to ensure that each
+employee of a company has the proper C<Company> object in its
+C<employer> attribute:
+
+=end original
+
+这个 C<Company> 类使用 C<BUILD> 方法,用来确保公司中的每个雇员有适合的在 C<Company> 对象中的 C<emplayer> 的属性中.
+
+  sub BUILD {
+      my ( $self, $params ) = @_;
+      foreach my $employee ( @{ $self->employees } ) {
+          $employee->employer($self);
+      }
+  }
+
+=begin original
+
+The C<BUILD> method is executed after type constraints are checked, so it is
+safe to assume that if C<< $self->employees >> has a value, it will be an
+array reference, and that the elements of that array reference will be
+C<Employee> objects.
+
+=end original
+
+类型约束的检查之后,才会执行这个 C<BUILD> 的方法,所以默认是假设 C<< $self->employees >> 一定有值,这还是比较安全.这个是一个数组的引用,并且该数组元素是引用 C<Employee> 对象.
+
+=begin original
+
+We also want to make sure that whenever the C<employees> attribute for
+a C<Company> is changed, we also update the C<employer> for each
+employee.
+
+To do this we can use an C<after> modifier:
+
+=end original
+
+我们也想确保无论何时 C<Company> 中的 C<employees> 的属性改变,也能更新到各自的 C<employer> 中的 employee 中.
+要做到这一点,我们可以使用 C<after> 修饰：
+
+  after 'employees' => sub {
+      my ( $self, $employees ) = @_;
+      return unless $employees;
+      foreach my $employee ( @$employees ) {
+          $employee->employer($self);
+      }
+  };
+
+=begin original
+
+Again, as with the C<BUILD> method, we know that the type constraint check has
+already happened, so we know that if C<$employees> is defined it will contain
+an array reference of C<Employee> objects.
+
+Note that C<employees> is a read/write accessor, so we must return early if
+it's called as a reader.
+
+=end original
+
+这个地方与上面的 C<BUILD> 的方法一样,我们知道,类型约束检查已经检查过了,所以我们知道,如果 C<$employees> 是定义的,它将包含一个 C<Employee> 对象数组的引用.
+
+注意 C<employees> 是一个读/写的访问器,如果是作为一个 reader 调用,我们必须尽早返回.
+
+=begin original
+
+The B<Person> class does not really demonstrate anything new. It has several
+C<required> attributes. It also has a C<predicate> method, which we
+first used in L<Moose::Cookbook::Basics::BinaryTree_AttributeFeatures>.
+
+The only new feature in the C<Employee> class is the C<override>
+method modifier:
+
+=end original
+
+这个 B<Person> 类并没有真正什么新的东西了,他有几个必须的属性,他也有 C<predicate> 的方法,我们可以看看指南 3.
+
+这个唯一的新特性是 C<Employee> 类中的 C<override> 方法修饰.
+
+  override 'full_name' => sub {
+      my $self = shift;
+      super() . ', ' . $self->title;
+  };
+
+=begin original
+
+This is just a sugary alternative to Perl's built in C<SUPER::>
+feature. However, there is one difference. You cannot pass any
+arguments to C<super>. Instead, Moose simply passes the same
+parameters that were passed to the method.
+
+A more detailed example of usage can be found in
+F<t/recipes/moose_cookbook_basics_recipe4.t>.
+
+=end original
+
+这仅仅是一个可以选择 Perl 语法糖,用来使用 C<SUPER::> 的特性,但有一点不同,您不能传递任何参数给 C<super> , Moose 是简单给相同的参数传递给 super() 的方法.
+
+更多的详细的内容,可以看看 F<t/recipes/moose_cookbook_basics_recipe4.t>.
+
+=for testing-SETUP use Test::Requires {
+    'Locale::US'     => '0',
+    'Regexp::Common' => '0',
+};
+
+=head1 CONCLUSION
+
+This recipe was intentionally longer and more complex. It illustrates
+how Moose classes can be used together with type constraints, as well
+as the density of information that you can get out of a small amount
+of typing when using Moose.
+
+This recipe also introduced the C<subtype> function, the C<required>
+attribute, and the C<override> method modifier.
+
+We will revisit type constraints in future recipes, and cover type
+coercion as well.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+The value being checked is also passed as the first argument to
+the C<where> block, so it can be accessed as C<$_[0]>.
+
+=item (2)
+
+Note that C<ArrayRef[]> will not work. Moose will not parse this as a
+container type, and instead you will have a new type named
+"ArrayRef[]", which doesn't make any sense.
+
+=back
+
+=begin testing
+
+{
+    package Company;
+
+    sub get_employee_count { scalar @{(shift)->employees} }
+}
+
+use Scalar::Util 'isweak';
+
+my $ii;
+is(
+    exception {
+        $ii = Company->new(
+            {
+                name    => 'Infinity Interactive',
+                address => Address->new(
+                    street   => '565 Plandome Rd., Suite 307',
+                    city     => 'Manhasset',
+                    state    => 'NY',
+                    zip_code => '11030'
+                ),
+                employees => [
+                    Employee->new(
+                        first_name => 'Jeremy',
+                        last_name  => 'Shao',
+                        title      => 'President / Senior Consultant',
+                        address    => Address->new(
+                            city => 'Manhasset', state => 'NY'
+                        )
+                    ),
+                    Employee->new(
+                        first_name => 'Tommy',
+                        last_name  => 'Lee',
+                        title      => 'Vice President / Senior Developer',
+                        address =>
+                            Address->new( city => 'New York', state => 'NY' )
+                    ),
+                    Employee->new(
+                        first_name     => 'Stevan',
+                        middle_initial => 'C',
+                        last_name      => 'Little',
+                        title          => 'Senior Developer',
+                        address =>
+                            Address->new( city => 'Madison', state => 'CT' )
+                    ),
+                ]
+            }
+        );
+    },
+    undef,
+    '... created the entire company successfully'
+);
+
+isa_ok( $ii, 'Company' );
+
+is( $ii->name, 'Infinity Interactive',
+    '... got the right name for the company' );
+
+isa_ok( $ii->address, 'Address' );
+is( $ii->address->street, '565 Plandome Rd., Suite 307',
+    '... got the right street address' );
+is( $ii->address->city,     'Manhasset', '... got the right city' );
+is( $ii->address->state,    'NY',        '... got the right state' );
+is( $ii->address->zip_code, 11030,       '... got the zip code' );
+
+is( $ii->get_employee_count, 3, '... got the right employee count' );
+
+# employee #1
+
+isa_ok( $ii->employees->[0], 'Employee' );
+isa_ok( $ii->employees->[0], 'Person' );
+
+is( $ii->employees->[0]->first_name, 'Jeremy',
+    '... got the right first name' );
+is( $ii->employees->[0]->last_name, 'Shao', '... got the right last name' );
+ok( !$ii->employees->[0]->has_middle_initial, '... no middle initial' );
+is( $ii->employees->[0]->middle_initial, undef,
+    '... got the right middle initial value' );
+is( $ii->employees->[0]->full_name,
+    'Jeremy Shao, President / Senior Consultant',
+    '... got the right full name' );
+is( $ii->employees->[0]->title, 'President / Senior Consultant',
+    '... got the right title' );
+is( $ii->employees->[0]->employer, $ii, '... got the right company' );
+ok( isweak( $ii->employees->[0]->{employer} ),
+    '... the company is a weak-ref' );
+
+isa_ok( $ii->employees->[0]->address, 'Address' );
+is( $ii->employees->[0]->address->city, 'Manhasset',
+    '... got the right city' );
+is( $ii->employees->[0]->address->state, 'NY', '... got the right state' );
+
+# employee #2
+
+isa_ok( $ii->employees->[1], 'Employee' );
+isa_ok( $ii->employees->[1], 'Person' );
+
+is( $ii->employees->[1]->first_name, 'Tommy',
+    '... got the right first name' );
+is( $ii->employees->[1]->last_name, 'Lee', '... got the right last name' );
+ok( !$ii->employees->[1]->has_middle_initial, '... no middle initial' );
+is( $ii->employees->[1]->middle_initial, undef,
+    '... got the right middle initial value' );
+is( $ii->employees->[1]->full_name,
+    'Tommy Lee, Vice President / Senior Developer',
+    '... got the right full name' );
+is( $ii->employees->[1]->title, 'Vice President / Senior Developer',
+    '... got the right title' );
+is( $ii->employees->[1]->employer, $ii, '... got the right company' );
+ok( isweak( $ii->employees->[1]->{employer} ),
+    '... the company is a weak-ref' );
+
+isa_ok( $ii->employees->[1]->address, 'Address' );
+is( $ii->employees->[1]->address->city, 'New York',
+    '... got the right city' );
+is( $ii->employees->[1]->address->state, 'NY', '... got the right state' );
+
+# employee #3
+
+isa_ok( $ii->employees->[2], 'Employee' );
+isa_ok( $ii->employees->[2], 'Person' );
+
+is( $ii->employees->[2]->first_name, 'Stevan',
+    '... got the right first name' );
+is( $ii->employees->[2]->last_name, 'Little', '... got the right last name' );
+ok( $ii->employees->[2]->has_middle_initial, '... got middle initial' );
+is( $ii->employees->[2]->middle_initial, 'C',
+    '... got the right middle initial value' );
+is( $ii->employees->[2]->full_name, 'Stevan C. Little, Senior Developer',
+    '... got the right full name' );
+is( $ii->employees->[2]->title, 'Senior Developer',
+    '... got the right title' );
+is( $ii->employees->[2]->employer, $ii, '... got the right company' );
+ok( isweak( $ii->employees->[2]->{employer} ),
+    '... the company is a weak-ref' );
+
+isa_ok( $ii->employees->[2]->address, 'Address' );
+is( $ii->employees->[2]->address->city, 'Madison', '... got the right city' );
+is( $ii->employees->[2]->address->state, 'CT', '... got the right state' );
+
+# create new company
+
+my $new_company
+    = Company->new( name => 'Infinity Interactive International' );
+isa_ok( $new_company, 'Company' );
+
+my $ii_employees = $ii->employees;
+foreach my $employee (@$ii_employees) {
+    is( $employee->employer, $ii, '... has the ii company' );
+}
+
+$new_company->employees($ii_employees);
+
+foreach my $employee ( @{ $new_company->employees } ) {
+    is( $employee->employer, $new_company,
+        '... has the different company now' );
+}
+
+## check some error conditions for the subtypes
+
+isnt(
+    exception {
+        Address->new( street => {} ),;
+    },
+    undef,
+    '... we die correctly with bad args'
+);
+
+isnt(
+    exception {
+        Address->new( city => {} ),;
+    },
+    undef,
+    '... we die correctly with bad args'
+);
+
+isnt(
+    exception {
+        Address->new( state => 'British Columbia' ),;
+    },
+    undef,
+    '... we die correctly with bad args'
+);
+
+is(
+    exception {
+        Address->new( state => 'Connecticut' ),;
+    },
+    undef,
+    '... we live correctly with good args'
+);
+
+isnt(
+    exception {
+        Address->new( zip_code => 'AF5J6$' ),;
+    },
+    undef,
+    '... we die correctly with bad args'
+);
+
+is(
+    exception {
+        Address->new( zip_code => '06443' ),;
+    },
+    undef,
+    '... we live correctly with good args'
+);
+
+isnt(
+    exception {
+        Company->new(),;
+    },
+    undef,
+    '... we die correctly without good args'
+);
+
+is(
+    exception {
+        Company->new( name => 'Foo' ),;
+    },
+    undef,
+    '... we live correctly without good args'
+);
+
+isnt(
+    exception {
+        Company->new( name => 'Foo', employees => [ Person->new ] ),;
+    },
+    undef,
+    '... we die correctly with good args'
+);
+
+is(
+    exception {
+        Company->new( name => 'Foo', employees => [] ),;
+    },
+    undef,
+    '... we live correctly with good args'
+);
+
+=end testing
+
+=head1 AUTHOR
+
+Moose is maintained by the Moose Cabal, along with the help of many contributors. See L<Moose/CABAL> and L<Moose/CONTRIBUTORS> for details.
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2012 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
+
+
+__END__
+
+

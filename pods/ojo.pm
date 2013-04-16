@@ -125,16 +125,14 @@ L<ojo> 实现了下列的函数
   my $res = f('http://kraih.com' => {a => 'b'});
   my $res = f('kraih.com' => 'UTF-8' => {a => 'b'} => {DNT => 1});
 
-Perform C<POST> request with L<Mojo::UserAgent/"post_form"> and return
-resulting L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"post_form"> 来执行 C<POST> 的请求会返回 L<Mojo::Message::Response> 这个响应的对象。注意倒数第二个括号号中的 hash 引用是 POST 提交时的参数，倒数第一个括号中的 hash 引用是 http 的 header 头部。其它 HTTP 请求的方法也是一样.
 
 =head2 C<g>
 
   my $res = g('mojolicio.us');
   my $res = g('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<GET> request with L<Mojo::UserAgent/"get"> and return resulting
-L<Mojo::Message::Response> object.
+使用  L<Mojo::UserAgent/"get"> 来执行 C<GET> 的这种请求，并返回 L<Mojo::Message::Response>  的对象.
 
   $ perl -Mojo -E 'say g("mojolicio.us")->dom("h1, h2, h3")->pluck("text")'
 
@@ -143,8 +141,7 @@ L<Mojo::Message::Response> object.
   my $res = h('mojolicio.us');
   my $res = h('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<HEAD> request with L<Mojo::UserAgent/"head"> and return resulting
-L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"head">  来执行 C<HEAD> 这个请求并返回 L<Mojo::Message::Response>  的对象.
 
 =head2 C<j>
 
@@ -152,7 +149,7 @@ L<Mojo::Message::Response> object.
   my $array = j($bytes);
   my $hash  = j($bytes);
 
-Encode Perl data structure or decode JSON with L<Mojo::JSON>.
+对 Perl 的数据结构使用 L<Mojo::JSON> 编码成 JSON 的结构。
 
   $ perl -Mojo -E 'b(j({hello => "world!"}))->spurt("hello.json")'
 
@@ -161,24 +158,21 @@ Encode Perl data structure or decode JSON with L<Mojo::JSON>.
   my $res = n('http://kraih.com' => {a => 'b'});
   my $res = n('kraih.com' => {a => 'b'} => {DNT => 1});
 
-Perform C<POST> request with L<Mojo::UserAgent/"post_json"> and return
-resulting L<Mojo::Message::Response> object.
+使用  L<Mojo::UserAgent/"post_json"> 的模块来执行  C<POST>  的请求，并返回  <Mojo::Message::Response> 的对象.
 
 =head2 C<o>
 
   my $res = o('mojolicio.us');
   my $res = o('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<OPTIONS> request with L<Mojo::UserAgent/"options"> and return
-resulting L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"options"> 的模块来执行 C<OPTIONS> 的请求，并返回  <Mojo::Message::Response> 的对象.
 
 =head2 C<p>
 
   my $res = p('mojolicio.us');
   my $res = p('http://mojolicio.us' => {DNT => 1} => 'Hi!');
 
-Perform C<POST> request with L<Mojo::UserAgent/"post"> and return resulting
-L<Mojo::Message::Response> object.
+使用 L<Mojo::UserAgent/"post"> 的模块来执行 C<POST> 的请求，并返回  <Mojo::Message::Response> 的对象.
 
 =head2 C<r>
 

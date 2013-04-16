@@ -51,6 +51,10 @@ L<perlutil> - Perl 发行版中的实用程序
 
 L<perlvar> - Perl 预定义变量
 
+=head1 Perl 6
+
+我们先从 Perl 6 的虚拟机开始吧，这有个 L<Parrot> 的入门 
+
 =head1 协程
 
 L<Coro> 是一个所谓的真正的线程, 可以看看 L<Coro::Intro> 文档

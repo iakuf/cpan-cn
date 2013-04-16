@@ -1,0 +1,101 @@
+<html>
+<body>
+<link rel='stylesheet' href='style.css' type='text/css'>
+
+<h1>Preface</h1>
+
+<p>今年晚些时候，Perl 就 23 岁了。 这门语言已经由介于 Shell 脚本和 C 程序之间(Perl 1)的 简易系统管理工具，转变成为一种强大的通用编程语言。他承接着丰富的代码资产(Perl 5)，并在 对通用编程的不断反思中，续写又一个 25 年的辉煌(Perl 6)。</p>
+
+<p>尽管如此，Perl 语言提供的强大特性还是未能得到现存大部分 Perl 5 程序的充分利用。你 <i>可以</i> 写出与Perl 4（或Perl 3或Perl 2或Perl 1）相仿的 Perl 5 程序，但用到整个 Perl 5 社区已经 发明、发扬、发现的神奇特性的程序，会更短、更快、更强大，相比其它版本，也更易维护。</p>
+
+<p><i>Modern Perl</i> 仅是对老练而高效的Perl 5程序员的工作方式的一种粗略描述。他们使用惯用语。 他们充分利用CPAN。他们的程序带有明显的 “Perl 的味道”，他们展现出对事物的良好品味、独到的匠心 以及对 Perl 通透的理解。</p>
+
+<p>你也可以学着成为这样的Perl程序员。</p>
+
+<h1>运行 Modern Perl</h1>
+
+<p>除非另作说明，每一处代码片段总是假设如下基本程序框架：</p>
+
+<div class="programlisting">
+
+<pre><code>    #!/usr/bin/perl
+
+    use Modern::Perl;
+
+    # &#x8FD9;&#x91CC;&#x662F;&#x793A;&#x4F8B;&#x4EE3;&#x7801;
+    ...</code></pre>
+
+</div>
+
+<div class="sidebar">
+
+<p>Modern::Perl 模块可以从 CPAN 获取。你可以自行安装它，或用如下代码代替：</p>
+
+<div class="programlisting">
+
+<pre><code>    use strict;
+    use warnings;
+    use 5.010;</code></pre>
+
+</div>
+
+<p>其余用到诸如 <code>ok()</code>, <code>like()</code>, 及 <code>is()</code> (<a href="chapter_09.html#testing">æµè¯</a>) 等测试函数的代码片段，该框架则为：</p>
+
+<div class="programlisting">
+
+<pre><code>    #!/usr/bin/perl
+
+    use Modern::Perl;
+    <b>use Test::More;</b>
+
+    # &#x8FD9;&#x91CC;&#x662F;&#x793A;&#x4F8B;&#x4EE3;&#x7801;
+    ...
+    done_testing();</code></pre>
+
+</div>
+
+<p>书中给出的例子假设你正使用 Perl 5.10 或更新版本，理想的话至少是 Perl 5.10.1。许多例子经适当 修改就可以在 Perl 5 的早期版本上运行，但是早于 Perl 5.10.0 的版本会给你带来更多的困难。本书 同样描述（但不 <i>要求</i> 使用）Perl 5.12 中新引入的功能。</p>
+
+<p>你通常可以自行安装一份最新的 Perl。Windows 用户可以从 <font class="url">http://www.strawberryperl.com/</font> 下载 Strawberry Perl。操作系统自带 Perl 5（以及 C 编译器还有其他一些开发工具）的用户，可以以安装 CPAN 模块 <code>App::perlbrew</code> <font class="footnote"> (footnote: 安装指南参见 <font class="url">http://search.cpan.org/perldoc?App::perlbrew</font>)</font> 作为开始.</p>
+
+<p><code>perlbrew</code> 允许你安装并管理多个版本的 Perl 5。默认地。它将它们安装在你的家目录下。你不仅可以 在不影响系统自带 Perl 的情况下拥有多个版本的 Perl 5，而且不用劳烦系统管理员给你特定权限，就 可以把你喜欢的任何模块安装到这些目录中。</p>
+
+<h2>Perl 5 和 Perl 6</h2>
+
+<p>你应该学习 Perl 5 还是 Perl 6？它们有着同样的哲学和语法以及库和社区，它们有各自合适的位置。如果：</p>
+
+<ul>
+
+<li>你有现成的 Perl 5 代码要维护</li>
+
+<li>你需要利用 CPAN 模块</li>
+
+<li>你的部署策略要求严格的稳定性</li>
+
+</ul>
+
+<p>那么学 Perl 5 吧。如果：</p>
+
+<ul>
+
+<li>你对频繁升级习以为常</li>
+
+<li>你能够承受试验新语法和新功能</li>
+
+<li>你需要的功能仅由 Perl 6 提供</li>
+
+<li>你可以为它的开发做出贡献（无论是补丁、缺陷报告、文档、赞助或其他资源）</li>
+
+</ul>
+
+<p>那么学 Perl 6 吧。</p>
+
+<p>一般说来，Perl 5 的开发会保持有关核心语言的部分。有好有坏，变化产生得相当缓慢。Perl 6 更 具实验性质，它更注重找到最合理的设计而非保证旧的代码可以工作。所幸的是，你可以学习并使用 两者（并且它们影响着互相进步）。</p>
+
+<p>本书讨论 Perl 5。如要学习 Perl 6，请浏览 <font class="url">http://perl6.org/</font>，试用 Rakudo（<font class="url">http://www.rakudo.org/</font>）， 并参考同样由 Onyx Neon Press 出版的 <i>Using Perl 6</i> 一书。</p>
+
+</div>
+
+</body>
+</html>
+
