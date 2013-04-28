@@ -32,21 +32,15 @@ AnyEvent::Handle - AnyEvent 的非阻塞  I/O 处理
 
 =head1 DESCRIPTION
 
-This is a helper module to make it easier to do event-based I/O on
-stream-based filehandles (sockets, pipes, and other stream things).
+这是一个帮助，告诉你怎么在流上写基于事件 I/O 句柄的操作(sockets，管道和其它的流处理).
 
-The L<AnyEvent::Intro> tutorial contains some well-documented
-AnyEvent::Handle examples.
+在  L<AnyEvent::Intro> 包含着一些 AnyEvent::Handle 的示例.
 
-In the following, where the documentation refers to "bytes", it means
-characters. As sysread and syswrite are used for all I/O, their
-treatment of characters applies to this module as well.
+在下面的文档中指的 "bytes" 是意味着字符，象 sysread 和 syswrite 能在所有的 I/O 的地方操作他们。所有和字符有关的模块也一样.
 
-At the very minimum, you should specify C<fh> or C<connect>, and the
-C<on_error> callback.
+最少你需要指定  C<fh>  或 C<connect>, 和 C<on_error>  的回调.
 
-All callbacks will be invoked with the handle object as their first
-argument.
+全部的回调会给句柄对象做为第一个参数.
 
 =cut
 
@@ -85,45 +79,33 @@ sub MAX_READ_SIZE() { 131072 }
 
 =item $handle = B<new> AnyEvent::Handle fh => $filehandle, key => value...
 
-The constructor supports these arguments (all as C<< key => value >> pairs).
+构造函数支持这些参数 (全部是 C<< key => value >> 对).
 
 =over 4
 
 =item fh => $filehandle     [C<fh> or C<connect> MANDATORY]
 
-The filehandle this L<AnyEvent::Handle> object will operate on.
-NOTE: The filehandle will be set to non-blocking mode (using
-C<AnyEvent::Util::fh_nonblocking>) by the constructor and needs to stay in
-that mode.
+这个句柄会使用 L<AnyEvent::Handle> 对象来操作。
+
+注意： 这个句柄会被构造函数设置成 non-blocking mode (使用 C<AnyEvent::Util::fh_nonblocking>) 。
 
 =item connect => [$host, $service]      [C<fh> or C<connect> MANDATORY]
 
-Try to connect to the specified host and service (port), using
-C<AnyEvent::Socket::tcp_connect>. The C<$host> additionally becomes the
-default C<peername>.
+尝试连接到指定的主机($host)和服务($service 端口), 使用的是 C<AnyEvent::Socket::tcp_connect>. 这个 C<$host> 会变成默认的 C<peername>。
 
-You have to specify either this parameter, or C<fh>, above.
+您必须指定使用此 C<fh> 参数.
 
-It is possible to push requests on the read and write queues, and modify
-properties of the stream, even while AnyEvent::Handle is connecting.
+它可能会推请求到读和写的队列上，并修改流的属性，使用 AnyEvent::Handle 来操作连接.
 
-When this parameter is specified, then the C<on_prepare>,
-C<on_connect_error> and C<on_connect> callbacks will be called under the
-appropriate circumstances:
+当设置了  C<on_prepare>, C<on_connect_error> 和 C<on_connect> 的回调，会在适当的时候调用这些回调。
 
 =over 4
 
 =item on_prepare => $cb->($handle)
 
-This (rarely used) callback is called before a new connection is
-attempted, but after the file handle has been created (you can access that
-file handle via C<< $handle->{fh} >>). It could be used to prepare the
-file handle with parameters required for the actual connect (as opposed to
-settings that can be changed when the connection is already established).
+这个回调并不常用，它是在创建连接之前，创建句柄之后被调用，所以这时已经可以访问 C<< $handle->{fh} >> 了。它可以用于设置句柄所需要的连接所使用的参数，因为还没有建立连接，所以可以更改设置.
 
-The return value of this callback should be the connect timeout value in
-seconds (or C<0>, or C<undef>, or the empty list, to indicate that the
-default timeout is to be used).
+这个回调要返回连接超时的值以秒为单位(C<0> 或 C<undef> 或 空的列表，以表明默认要使用的超时时间)
 
 =item on_connect => $cb->($handle, $host, $port, $retry->())
 
@@ -139,12 +121,10 @@ default timeout is to be used).
 
 =item on_connect_error => $cb->($handle, $message)
 
-This callback is called when the connection could not be
-established. C<$!> will contain the relevant error code, and C<$message> a
-message describing it (usually the same as C<"$!">).
+当无法建议连接时，这个回调会被调用， C<$!> 会包含相关的错误代码， C<$message> 会包含一些消息(通常是和 C<"$!"> 一样);
 
-If this callback isn't specified, then C<on_error> will be called with a
-fatal error instead.
+        
+如果不指定此回调，后面的 C<on_error> 将调用一个致命错误
 
 =back
 
@@ -152,35 +132,19 @@ fatal error instead.
 
 这是错误时的回调，当调用这个时,说明有一些错误出现，例如象不能解析主机名，失败的连接，读错误.
 
-有些错误是致命的(会通过 C<$fatcl> 会被设置成真).当出现 fatal 的错误时，调用错误回调后 handle 的对象会被 destroyed (通过调用 C<< -> destroy >>).
-Some errors are fatal (which is indicated by C<$fatal> being true). On fatal errors the handle object will be destroyed (by a call to C<< -> destroy >>) after invoking the error callback (which means you are free to examine the handle object). Examples of fatal errors are an EOF condition
-with active (but unsatisfiable) read watchers (C<EPIPE>) or I/O errors. In
-cases where the other side can close the connection at will, it is
-often easiest to not report C<EPIPE> errors in this callback.
+有些错误是致命的( C<$fatcl> 会被设置成真).当出现 fatal 的错误,句柄的对象会被 destroyed (通过调用 C<< -> destroy >>), 后才调用错误回调，所以你可以随意检查句柄对象。常用的致命错误的例子是当一个活动的读 watcher （C<EPIPE> 进程没处理 Socket 错误继续向 TCP 写入数据）时发生 EOF 条件或 I/O 错误。
 
-AnyEvent::Handle tries to find an appropriate error code for you to check
-against, but in some cases (TLS errors), this does not work well.
+AnyEvent::Handle 会试图找到对应合适的错误代码，但有些时候象 (TLS 错误),并不一定能很好的工作.
 
-If you report the error to the user, it is recommended to always output
-the C<$message> argument in human-readable error messages (you don't need
-to report C<"$!"> if you report C<$message>).
+如果您报告错误给用户，建议在人类可读的错误信息 (所以并不建议你直接输出 C<"$!"> );
 
-If you want to react programmatically to the error, then looking at C<$!>
-and comparing it against some of the documented C<Errno> values is usually
-better than looking at the C<$message>.
+如果你真想输出这些错误 ，你最好看看和 C<Errno> 文档来比较一下 C<$!> ，然后提供信息.
 
-Non-fatal errors can be retried by returning, but it is recommended
-to simply ignore this parameter and instead abondon the handle object
-when this callback is invoked. Examples of non-fatal errors are timeouts
-C<ETIMEDOUT>) or badly-formatted data (C<EBADMSG>).
+只要是非致命错误(  C<Non-fatal> ),你可以简单的重试和忽略，常用的非致命错误的例子是超时  C<ETIMEDOUT> 和 C<EBADMSG>。
 
-On entry to the callback, the value of C<$!> contains the operating
-system error code (or C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT>, C<EBADMSG> or
-C<EPROTO>).
+在进入回调时， C<$!> 会包含着操作系统的错误代码(C<ENOSPC>, C<EPIPE>, C<ETIMEDOUT>, C<EBADMSG> or C<EPROTO>).
 
-While not mandatory, it is I<highly> recommended to set this callback, as
-you will not be notified of errors otherwise. The default just calls
-C<croak>.
+虽然不是强制性的, 但我还是建议设置这个回调，这样不会出现很多错误报告，不然会调用 C<croak>.
 
 =item on_read => $cb->($handle)
 
@@ -216,24 +180,13 @@ C<croak>.
 
 =item wtimeout => $fractional_seconds
 
-If non-zero, then these enables an "inactivity" timeout: whenever this many seconds pass without a successful read or write on the underlying file handle (or a call to C<timeout_reset>), the C<on_timeout> callback
-will be invoked (and if that one is missing, a non-fatal C<ETIMEDOUT>
-error will be raised).
+上面的参数只要不是为零，对于不活动的连接就会激活超时断开: 当这些句柄正常的读和写时超过多少秒时(或调用 C<timeout_reset>)，这个 C<on_timeout> 的回调就会被调用(如果这个回调不存在，会引起 C<ETIMEDOUT> 的错误).
 
-There are three variants of the timeouts that work independently of each
-other, for both read and write (triggered when nothing was read I<OR>
-written), just read (triggered when nothing was read), and just write:
-C<timeout>, C<rtimeout> and C<wtimeout>, with corresponding callbacks
-C<on_timeout>, C<on_rtimeout> and C<on_wtimeout>, and reset functions
-C<timeout_reset>, C<rtimeout_reset>, and C<wtimeout_reset>.
+在 AnyEvent 中有三种不同的超时，这三种不同的超时相互独立，同时作用于读取和写入的超时（触发在没有读 I<OR> 写时),只和读有关的超时(触发在没有读)和只和写有关的超时(触发没有写时):  C<timeout>, C<rtimeout> and C<wtimeout>,与相应的回调是  C<on_timeout>, C<on_rtimeout> 和 C<on_wtimeout> 和重置功能  C<timeout_reset>, C<rtimeout_reset>, 和 C<wtimeout_reset>。
 
-Note that timeout processing is active even when you do not have any
-outstanding read or write requests: If you plan to keep the connection
-idle then you should disable the timeout temporarily or ignore the
-timeout in the corresponding C<on_timeout> callback, in which case
-AnyEvent::Handle will simply restart the timeout.
+注意这个超时，如果你一段时间没有读取和写入的请求时，只要打开了它就会工作，所以如果你打算保持这种空闲的连接，你需要暂时禁用超时或忽略  C<on_timeout> 这个超时的回调，象  AnyEvent::Handle 中会直接重设超时.                                                                                                                                                                                
 
-Zero (the default) disables the corresponding timeout.
+零 （默认） 禁用相应的超时。
 
 =item on_timeout => $cb->($handle)
 
