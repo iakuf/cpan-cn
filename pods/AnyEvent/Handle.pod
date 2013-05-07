@@ -198,44 +198,23 @@ AnyEvent::Handle 会试图找到对应合适的错误代码，但有些时候象
 
 =item rbuf_max => <bytes>
 
-If defined, then a fatal error will be raised (with C<$!> set to C<ENOSPC>)
-when the read buffer ever (strictly) exceeds this size. This is useful to
-avoid some forms of denial-of-service attacks.
+如果定义了这个参数，当读的缓冲区超过这个大小时，会引发一个致命错误(会给  C<$!> 设置成 C<ENOSPC>)。这是个很严格的检查，但这也很有用，可以避免某些形式的拒绝服务攻击。
 
-For example, a server accepting connections from untrusted sources should
-be configured to accept only so-and-so much data that it cannot act on
-(for example, when expecting a line, an attacker could send an unlimited
-amount of data without a callback ever being called as long as the line
-isn't finished).
+例如，有时不受信任的源服务器连接上来有一些不法的行为，这些攻击者发送无限量的数量包，然后你的回调因为一直在接收并不回调也没有回调的截止字符。这样你的服务一下就能挂掉.
 
 =item wbuf_max => <bytes>
 
-If defined, then a fatal error will be raised (with C<$!> set to C<ENOSPC>)
-when the write buffer ever (strictly) exceeds this size. This is useful to
-avoid some forms of denial-of-service attacks.
+如果定义了这个参数，当写的缓冲区超过这个大小时，会引发一个致命错误(会给  C<$!> 设置成 C<ENOSPC>)。这是个很严格的检查，但这也很有用，可以避免某些形式的拒绝服务攻击。
 
-Although the units of this parameter is bytes, this is the I<raw> number
-of bytes not yet accepted by the kernel. This can make a difference when
-you e.g. use TLS, as TLS typically makes your write data larger (but it
-can also make it smaller due to compression).
+虽然此参数的单位是字节，但这是指尚未接受由内核提供的原始数量的字节。这是有用的，比如在 TLS 中，因为 TLS 通常写入的数据较大(当然也有可能更小，可以压缩).
 
-As an example of when this limit is useful, take a chat server that sends
-chat messages to a client. If the client does not read those in a timely
-manner then the send buffer in the server would grow unbounded.
+这种限制，比如在聊天的聊天消息发送到客户端的服务器。如果客户端不及时阅读这些服务器发送缓冲区中会无限增长。
 
 =item autocork => <boolean>
 
-When disabled (the default), C<push_write> will try to immediately
-write the data to the handle if possible. This avoids having to register
-a write watcher and wait for the next event loop iteration, but can
-be inefficient if you write multiple small chunks (on the wire, this
-disadvantage is usually avoided by your kernel's nagle algorithm, see
-C<no_delay>, but this option can save costly syscalls).
+默认是禁用， C<push_write> 的实现是只要可能会尝试立即给数据写入句柄中。这样就没有必要给注册  write watcher 并等待下一次事件循环迭代，但是如果你要写入很多小块数据时这样比较低效。（这种缺点通常避免由您的内核 nagle 算法，请参阅 C <no_delay>）。
 
-When enabled, writes will always be queued till the next event loop
-iteration. This is efficient when you do many small writes per iteration,
-but less efficient when you do a single write only per iteration (or when
-the write buffer often is full). It also increases write latency.
+启用时，写操作将总是排入队列直到下一次的事件循环迭代。当你每次迭代 （或当写入缓冲区满了） 仅写一次，这时如果写入很多小数据合并时非常有效，不然效率较低。它还增加了写入滞后时间。
 
 =item no_delay => <boolean>
 
@@ -1066,36 +1045,24 @@ arguments using the first one.
 
 =back
 
-=head2 READ QUEUE
+=head2 READ QUEUE 读队列
 
-AnyEvent::Handle manages two queues per handle, one for writing and one
-for reading.
 
-The read queue is more complex than the write queue. It can be used in two
-ways, the "simple" way, using only C<on_read> and the "complex" way, using
-a queue.
+AnyEvent::Handle 管理着二个句柄，一个写一个用于读。
 
-In the simple case, you just install an C<on_read> callback and whenever
-new data arrives, it will be called. You can then remove some data (if
-enough is there) from the read buffer (C<< $handle->rbuf >>). Or you can
-leave the data there if you want to accumulate more (e.g. when only a
-partial message has been received so far), or change the read queue with
-e.g. C<push_read>.
+读取的队列是比写入队列更复杂。它可以使用两种方式，"简单"的方法是直接使用 C<on_read> 另外一种是"复杂"的方式，使用队列。
 
-In the more complex case, you want to queue multiple callbacks. In this
-case, AnyEvent::Handle will call the first queued callback each time new
-data arrives (also the first time it is queued) and remove it when it has
-done its job (see C<push_read>, below).
+在最简单的情况下，如果你只使用了 C<on_read> 的回调，这会在每当数据到达时就会被调用。这时你可以直接使用 C<< $handle->rbuf >> 从读缓冲区中移除一些数据.或者你想保留来积累更多的数据(例如到目前只收到了部分消息)，或者更换成读取队列来处理 C<push_read>.
 
-This way you can, for example, push three line-reads, followed by reading
-a chunk of data, and AnyEvent::Handle will execute them in order.
+在更加复杂的例子中，你想在队列中使用多个回调，比如， 在 AnyEvent::Handle 在每次有新的数据到达时调用队列第一个回调并在完成工作后删除这些数据(看下面的  C<push_read>).
 
-Example 1: EPP protocol parser. EPP sends 4 byte length info, followed by
-the specified number of bytes which give an XML datagram.
+使用这种方式，象下面这样，多了三行读，下面的是读 chunk 的数据，AnyEvent::Handle 会按顺序来执行。
 
-   # in the default state, expect some header bytes
+示例 1： EPP 协议分析器。EPP 发送 4 字节长度信息，其次是指定给一个 XML 数据报的字节数。
+
+   # 在默认状态下，期望某些头字节
    $handle->on_read (sub {
-      # some data is here, now queue the length-header-read (4 octets)
+      # 当收到一些数据,对头的长度进行读取 (4 octets)
       shift->unshift_read (chunk => 4, sub {
          # header arrived, decode
          my $len = unpack "N", $_[1];
@@ -1239,18 +1206,11 @@ sub on_read {
 
 =item $handle->rbuf
 
-Returns the read buffer (as a modifiable lvalue). You can also access the
-read buffer directly as the C<< ->{rbuf} >> member, if you want (this is
-much faster, and no less clean).
+返回的读取的缓冲区（也可作为一个可修改的的左值）.你也可以直接通过 C<< ->{rbuf} >> 来访问，这样会更加快些。
 
-The only operation allowed on the read buffer (apart from looking at it)
-is removing data from its beginning. Otherwise modifying or appending to
-it is not allowed and will lead to hard-to-track-down bugs.
+这只能做读缓冲的操作，也就是删除数据。其它的修改和追加是不允许的，这导致难以查的错误。
 
-NOTE: The read buffer should only be used or modified in the C<on_read>
-callback or when C<push_read> or C<unshift_read> are used with a single
-callback (i.e. untyped). Typed C<push_read> and C<unshift_read> methods
-will manage the read buffer on their own.
+注意： 读缓冲只能在 C<on_read> 的回调中使用和修改。要么使用 C<push_read> 和 C<unshift_read> 的单个回调。 C<push_read> 和 C<unshift_read> 的方法会自己管理读缓冲区。
 
 =cut
 
@@ -1262,23 +1222,17 @@ sub rbuf : lvalue {
 
 =item $handle->unshift_read ($cb)
 
-Append the given callback to the end of the queue (C<push_read>) or
-prepend it (C<unshift_read>).
+C<push_read> 是在最队列的结尾加入一个新的回调，C<unshift_read> 是在所有队列的前面加上这个回调。
 
-The callback is called each time some additional read data arrives.
+回调的时间是当每次有一些额外的读数据到达时回调。
 
-It must check whether enough data is in the read buffer already.
+上面的方法需要检查是否有足够的数据已经是在读缓冲区。
 
-If not enough data is available, it must return the empty list or a false
-value, in which case it will be called repeatedly until enough data is
-available (or an error condition is detected).
+如果没有足够的数据也是可用的，它必须返回空列表或假的值，在这种情况下，它会被反复调用，直到足够的可用数据（或检测到错误条件）。
 
-If enough data was available, then the callback must remove all data it is
-interested in (which can be none at all) and return a true value. After returning
-true, it will be removed from the queue.
+如果有够的数据，你的回调需要删除你所感兴趣的这些数据(which can be none at all)并返回 true 。这时才会给给这个从队列移除.
 
-These methods may invoke callbacks (and therefore the handle might be
-destroyed after it returns).
+这些方法可能会调用一些其它回调函数（所以它返回后句柄可能会销毁），
 
 =cut
 

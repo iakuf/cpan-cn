@@ -236,46 +236,31 @@ And elsewhere:
 
 这个模块可以理解为超级精减和优化的 L<Moose> 并且支持非常的快速启动,但是它只有你 "所需要的功能" 的集合.
 
-这个也避免了XS依赖，好让你可以更加简单的部署，之所以叫  C<Moo> 是因为他提供了几乎所有 L<Moose> 的功能,注，并不完全，大约 2/3 的功能.
+这个也避免了 XS 依赖，好让你可以更加简单的部署，之所以叫  C<Moo> 是因为他提供了几乎所有 L<Moose> 的功能,注，并不完全，大约 2/3 的功能.
 
-Unlike L<Mouse> this module does not aim at full compatibility with L<Moose>'s surface syntax, preferring instead of provide full interoperability via the metaclass inflation capabilities described in L</MOO AND MOOSE>.
+这模块不象 L<Mouse> , L<Mouse>主要是想对 L<Moose> 做全面兼容, 所以这个是用元类来提供全面的互操作性 </MOO AND MOOSE>.
 
-For a full list of the minor differences between L<Moose> and L<Moo>'s surface
-syntax, see L</INCOMPATIBILITIES WITH MOOSE>.
+如果你想看看 L<Moose> 和 L<Moo> 这些小的差别，可以看看  L</INCOMPATIBILITIES WITH MOOSE>.
 
 =head1 WHY MOO EXISTS
 
-If you want a full object system with a rich Metaprotocol, L<Moose> is
-already wonderful.
+如果你想有一个完整的丰富的面象对象系统的话 L<Moose> 是非常好的东西.
 
-However, sometimes you're writing a command line script or a CGI script
-where fast startup is essential, or code designed to be deployed as a single
-file via L<App::FatPacker>, or you're writing a CPAN module and you want it
-to be usable by people with those constraints.
+然而，有时你写一个命令行脚本或CGI脚本，快速启动它是必不可少的，或设计作为一个单一的会要通过 L<App::FatPacker> 部署的代码，或者你正在编写一个 CPAN 模块，你希望提供一些属性和功能的制约。
 
-I've tried several times to use L<Mouse> but it's 3x the size of Moo and
-takes longer to load than most of my Moo based CGI scripts take to run.
+我试过几次使用 L<Mouse>, 但他比 Moo 大最少三倍以上，并且程序运行需要比较多的时间。
 
-If you don't want L<Moose>, you don't want "less metaprotocol" like L<Mouse>,
-you want "as little as possible" -- which means "no metaprotocol", which is
-what Moo provides.
+如果你不想使用 L<Moose>, 你也不想 "less metaprotocol" 象 L<Mouse>,  你想尽可能少的东西时，这就是 Moo 所能提供的.
 
-Better still, if you install and load L<Moose>, we set up metaclasses for your
-L<Moo> classes and L<Moo::Role> roles, so you can use them in L<Moose> code
-without ever noticing that some of your codebase is using L<Moo>.
+更加好的是，如果你以前使用 L<Moose>, 现在换成 L<Moo> 大多的时候能正常的使用.
 
-Hence, Moo exists as its name -- Minimal Object Orientation -- with a pledge
-to make it smooth to upgrade to L<Moose> when you need more than minimal
-features.
+因些， Moo 就象他的名字，最小的面象对象，你如果要升级成 L<Moose> 也可以很平滑的升级到.
 
 =head1 MOO AND MOOSE
 
-If L<Moo> detects L<Moose> being loaded, it will automatically register
-metaclasses for your L<Moo> and L<Moo::Role> packages, so you should be able
-to use them in L<Moose> code without anybody ever noticing you aren't using
-L<Moose> everywhere.
+如果 Moo 发现加载了  L<Moose> ,它会自动的注册元类(metaclasses)到你的 L<Moo> 和  L<Moo::Role> 的包中，所以你可以直接使用  L<Moose> 的代码,而不会让人注意到你是不是使用的 L<Moose>.
 
-Extending a L<Moose> class or consuming a L<Moose::Role> will also work.
+扩展一个 L<Moose> 的类或 consuming 一个 L<Moose::Role> 的也可以。
 
 So will extending a L<Mouse> class or consuming a L<Mouse::Role> - but note
 that we don't provide L<Mouse> metaclasses or metaroles so the other way
@@ -321,13 +306,13 @@ L<http://shadow.cat/blog/matt-s-trout/moo-versus-any-moose> which explains
 the differing strategies in more detail and provides a direct example of
 where L<Moo> succeeds and L<Any::Moose> fails.
 
-=head1 IMPORTED METHODS
+=head1 导入的方法
 
 =head2 new
 
  Foo::Bar->new( attr1 => 3 );
 
-or
+和其它的面象对象一样，传统的构造函数.
 
  Foo::Bar->new({ attr1 => 3 });
 
@@ -343,27 +328,19 @@ or
 
  Foo::Bar->new( 3 );
 
-The default implementation of this method accepts a hash or hash reference of named parameters. If it receives a single argument that isn't a hash reference
-it throws an error.
+这个方法默认接受哈希或哈希值引用的命名参数，如果接收的是单个参数和不是哈希会引发错误.
 
-You can override this method in your class to handle other types of options
-passed to the constructor.
-
-This method should always return a hash reference of named options.
+你可以在你的类中重写此方法来处理类型传递给构造函数。
+        
+这种方法应始终返回哈希值引用的内容。
 
 =head2 BUILD
 
-Define a C<BUILD> method on your class and the constructor will automatically
-call the C<BUILD> method from parent down to child after the object has
-been instantiated.  Typically this is used for object validation or possibly
-logging.
+如果定义了 C<BUILD> 的方法，在你的类构造的时候会自动的调用 C<BUILD> 方法。先从父到子然后实例化对象.通常这是用于验证对象或可能记录。
 
 =head2 DEMOLISH
 
-If you have a C<DEMOLISH> method anywhere in your inheritance hierarchy,
-a C<DESTROY> method is created on first object construction which will call
-C<< $instance->DEMOLISH($in_global_destruction) >> for each C<DEMOLISH>
-method from child upwards to parents.
+如果在你你的继承层次中的任何一个地方有 C<DEMOLISH> 的方法， a C<DESTROY> method is created on first object construction which will call C<< $instance->DEMOLISH($in_global_destruction) >> fo    r each C<DEMOLISH> method from child upwards to parents.
 
 Note that the C<DESTROY> method is created on first construction of an object
 of your class in order to not add overhead to classes without C<DEMOLISH>
@@ -375,30 +352,27 @@ methods; this may prove slightly surprising if you try and define your own.
    ...
  }
 
-Returns true if the object composes in the passed role.
+如果对象中有 role 会返回真.
 
-=head1 IMPORTED SUBROUTINES
+=head1 导入的子函数
 
 =head2 extends
 
  extends 'Parent::Class';
 
-Declares base class. Multiple superclasses can be passed for multiple
-inheritance (but please use roles instead).
+声明基类, 在多重继承的时候，可以传递到多个父类上(最好使用 role 代替这个功能).
 
-Calling extends more than once will REPLACE your superclasses, not add to
-them like 'use base' would.
+调用 extends 会替换你的父类, 不象 'use base' 只是增加你的父类。
 
 =head2 with
 
  with 'Some::Role1';
 
-or
+或
 
  with 'Some::Role1', 'Some::Role2';
 
-Composes one or more L<Moo::Role> (or L<Role::Tiny>) roles into the current
-class.  An error will be raised if these roles have conflicting methods.
+组合一个或多个角色( L<Moo::Role> (or L<Role::Tiny>))到当前类. 如果这些角色有冲突的方法，将引发错误。
 
 =head2 has
 
@@ -406,108 +380,73 @@ class.  An error will be raised if these roles have conflicting methods.
    is => 'ro',
  );
 
-Declares an attribute for the class.
-
-The options for C<has> are as follows:
+声明为类的属性。C<has>的选项如下所示：
 
 =over 2
 
 =item * is
 
-B<required>, may be C<ro>, C<lazy>, C<rwp> or C<rw>.
+B<required>, 也许还有 C<ro>, C<lazy>, C<rwp> or C<rw>.
 
-C<ro> generates an accessor that dies if you attempt to write to it - i.e.
-a getter only - by defaulting C<reader> to the name of the attribute.
+C<ro> 的这个功能会让写访问器失效,如果你想写它的话。
 
-C<lazy> generates a reader like C<ro>, but also sets C<lazy> to 1 and
-C<builder> to C<_build_${attribute_name}> to allow on-demand generated
-attributes.  This feature was my attempt to fix my incompetence when
-originally designing C<lazy_build>, and is also implemented by
-L<MooseX::AttributeShortcuts>.
+这个用于当设置了 C<lazy> 为 1 和设置了  C<builder> 中的 C<_build_${attribute_name}> 来按需生成属性时。
 
-C<rwp> generates a reader like C<ro>, but also sets C<writer> to
-C<_set_${attribute_name}> for attributes that are designed to be written
-from inside of the class, but read-only from outside.
-This feature comes from L<MooseX::AttributeShortcuts>.
+C<rwp> 会生成一个象 C<ro> 一样的访问器，但在写的时候，在内部可以写入，外部调用时不能写入只能读取.
 
-C<rw> generates a normal getter/setter by defaulting C<accessor> to the
-name of the attribute.
+这个 C<rw> 生成标准的 getter/setter 来让属性可以读写.
 
 =item * isa
 
-=begin original
+需要提供个代码块，如果提供了会用于检查传给属性的值。不同于  L<Moose>,  Moo 并没有包含基本的类型系统，所以不能使用 C<< isa => 'Num' >>， 你需要
 
-Takes a coderef which is meant to validate the attribute.  Unlike L<Moose>, Moo
-does not include a basic type system, so instead of doing C<< isa => 'Num' >>, one should do
-
-=end original
-
-需要一个代码引用 C<coderef>，其目的是要用于验证属性用.和 L<Moose> 不一样, Moo 并不包括基本的类型系统， 所以象 Moose 中的 C<< isa => 'Num' >> 需要使用下面的这个来替换
 
  isa => sub {
    die "$_[0] is not a number!" unless looks_like_number $_[0]
  },
 
+注意上面这个例子返回值是会被忽略.
+
 L<Sub::Quote aware|/SUB QUOTE AWARE>
 
-=begin original
+由于 L<Moo> 在 coerce 前并没有 C<isa> 检查，如果需要的话，你需要调用默认省略的 BUILDS 。
 
-Since L<Moo> does B<not> run the C<isa> check before C<coerce> if a coercion
-subroutine has been supplied, C<isa> checks are not structural to your code
-and can, if desired, be omitted on non-debug builds (although if this results
-in an uncaught bug causing your program to break, the L<Moo> authors guarantee
-nothing except that you get to keep both halves).
+如果你想使用 L<MooseX::Types> 风格的名字检查，请看  L<MooX::Types::MooseLike>.
 
-=end original
-
-由于 L<Moo> 在 coerce 前并B<没>有 C<isa> 检查。如果想强制转换 subroutine， 
-
-If you want L<MooseX::Types> style named types, look at
-L<MooX::Types::MooseLike>.
-
-To cause your C<isa> entries to be automatically mapped to named
-L<Moose::Meta::TypeConstraint> objects (rather than the default behaviour
-of creating an anonymous type), set:
+这样会让你的 C<isa> 的功能自动的映射到 L<Moose::Meta::TypeConstraint> 的对象上, 设置方式:
 
   $Moo::HandleMoose::TYPE_MAP{$isa_coderef} = sub {
     require MooseX::Types::Something;
     return MooseX::Types::Something::TypeName();
   };
 
-Note that this example is purely illustrative; anything that returns a
-L<Moose::Meta::TypeConstraint> object or something similar enough to it to
-make L<Moose> happy is fine.
+注意，这个例子纯粹是说明性.
 
 =item * coerce
 
-Takes a coderef which is meant to coerce the attribute.  The basic idea is to
-do something like the following:
+提供一个代码块，强制转换该属性。基本的想法是做类似如下的内容：
 
  coerce => sub {
    $_[0] + 1 unless $_[0] % 2
  },
 
-Note that L<Moo> will always fire your coercion: this is to permit
-C<isa> entries to be used purely for bug trapping, whereas coercions are
-always structural to your code. We do, however, apply any supplied C<isa>
-check after the coercion has run to ensure that it returned a valid value.
+注意，了L<Moo> 总是会触发强制转换：这是允许 C<isa> 只是纯粹是为了错误捕获，所以 C<isa> 只是为了确保返回一个有效的值，然后才会运行 coerce.
 
 L<Sub::Quote aware|/SUB QUOTE AWARE>
 
 =item * handles
 
-Takes a string
+给一个字符串.
 
   handles => 'RobotRole'
 
-Where C<RobotRole> is a role (L<Moo::Role>) that defines an interface which
-becomes the list of methods to handle.
+这个 C<RobotRole> 是角色(L<Moo::Role>)  定义好的接口变成一个方法列表给 handle。
 
-Takes a list of methods
+给一个方法列表
 
  handles => [ qw( one two ) ]
 
-Takes a hashref
+给一个哈希的引用
 
  handles => {
    un => 'one',
@@ -515,98 +454,71 @@ Takes a hashref
 
 =item * trigger
 
-Takes a coderef which will get called any time the attribute is set. This
-includes the constructor. Coderef will be invoked against the object with the
-new value as an argument.
+这个是个代码引用会在任何这个属性设置的时候调用.这个时间包括构造对象的时候.
 
-If you set this to just C<1>, it generates a trigger which calls the
-C<_trigger_${attr_name}> method on C<$self>. This feature comes from
-L<MooseX::AttributeShortcuts>.
+代码引用调用的时候会给对象和本属性的值做为参数传过去.
 
-Note that Moose also passes the old value, if any; this feature is not yet
-supported.
+如果你设置这个值为 C<1>, 这时会在 C<$self> 生成一个叫 C<_trigger_${attr_name}> 的触发器方法,这个特性来自 L<MooseX::AttributeShortcuts>.
+
+注意，Moose 好象还传旧的值进去，目前这个还不支持.
 
 L<Sub::Quote aware|/SUB QUOTE AWARE>
 
 =item * C<default>
 
-Takes a coderef which will get called with $self as its only argument
-to populate an attribute if no value is supplied to the constructor - or
-if the attribute is lazy, when the attribute is first retrieved if no
-value has yet been provided.
+这个也是一个代码引用, 这个会代码引用会以 $self 做为唯一的参数传成这个代码引用.本功能用于在构造对象时没提供参数时来用于填充属性的默认值 - 或如果属性是设置成 lazy 也会调用这个，当在第一次取属性时，没有提供任何值也会调用.
 
-Note that if your default is fired during new() there is no guarantee that
-other attributes have been populated yet so you should not rely on their
-existence.
+注意，如果你的 default 这个功能在 new() 的时候使用的其它的属性有可能没有填入，所以你不应该依赖其它参数的存在.
 
 L<Sub::Quote aware|/SUB QUOTE AWARE>
 
 =item * C<predicate>
 
-Takes a method name which will return true if an attribute has a value.
+需要给这个方法一个名字，用于检查本属性的值是否被设置，如果设置了就返回 true.
 
-If you set this to just C<1>, the predicate is automatically named
-C<has_${attr_name}> if your attribute's name does not start with an
-underscore, or <_has_${attr_name_without_the_underscore}> if it does.
-This feature comes from L<MooseX::AttributeShortcuts>.
+如果你直接设置成 C<1>, 这个 predicate 会自动以 C<has_${attr_name}> 来做为名字，给你这个对象的属性用于检查值.这些特性来自 L<MooseX::AttributeShortcuts>.
 
 =item * C<builder>
 
-Takes a method name which will be called to create the attribute - functions
-exactly like default except that instead of calling
+需要给个方法的名字来调用，用于创建属性.就象 default 的功能一样，但不是调用函数.
 
   $default->($self);
 
-Moo will call
+Moo 会调用 
 
   $self->$builder;
 
-If you set this to just C<1>, the predicate is automatically named
-C<_build_${attr_name}>.  This feature comes from L<MooseX::AttributeShortcuts>.
+如果你设置为 C<1>, 这个 predicate 会自动的帮你设置 C<_build_${attr_name}> 的名字.这个特性来自 L<MooseX::AttributeShortcuts>.
 
 =item * C<clearer>
 
-Takes a method name which will clear the attribute.
+这个需要提供一个名字来做为清除这个属性用.
 
-If you set this to just C<1>, the clearer is automatically named
-C<clear_${attr_name}> if your attribute's name does not start with an
-underscore, or <_clear_${attr_name_without_the_underscore}> if it does.
-This feature comes from L<MooseX::AttributeShortcuts>.
+如果设置成 C<1>, 这个 clearer 会自动的使用 C<clear_${attr_name}>  这个名字. 这个特性来自 L<MooseX::AttributeShortcuts>.
 
 =item * C<lazy>
 
-B<Boolean>.  Set this if you want values for the attribute to be grabbed
-lazily.  This is usually a good idea if you have a L</builder> which requires
-another attribute to be set.
+B<Boolean>。 如果你想你的属性在调用的时候才创建，你可以使用这个参数。这个通常用于在 L</builder> 的时候依赖其它的参数时用。
 
 =item * C<required>
 
-B<Boolean>.  Set this if the attribute must be passed on instantiation.
+B<Boolean>. 设置了这个为真后，必须在对象实例创建的时候设置这个属性。
 
 =item * C<reader>
 
-The value of this attribute will be the name of the method to get the value of
-the attribute.  If you like Java style methods, you might set this to
-C<get_foo>
+这个是用于设置一个方法的名字，用于取得本属性的值。如果你喜欢 Java 的风格，你可以命名为 C<get_foo>。
 
 =item * C<writer>
 
-The value of this attribute will be the name of the method to set the value of
-the attribute.  If you like Java style methods, you might set this to
-C<set_foo>.
+如果在设置这个属性的时候会使用这个方法来设置属性的值。如果你喜欢 Java 的风格，你可以命名为 C<set_foo>.
 
 =item * C<weak_ref>
 
-B<Boolean>.  Set this if you want the reference that the attribute contains to
-be weakened; use this when circular references are possible, which will cause
-leaks.
+B<Boolean>.  Set this if you want the reference that the attribute contains to be weakened; use this when circular references are possible, which will cause leaks.
 
 =item * C<init_arg>
 
-Takes the name of the key to look for at instantiation time of the object.  A
-common use of this is to make an underscored attribute have a non-underscored
-initialization name. C<undef> means that passing the value in on instantiation
-is ignored.
+Takes the name of the key to look for at instantiation time of the object.  A common use of this is to make an underscored attribute have a non-underscored initialization name. C<undef> means that passing the value in on instantiation is ignored.
 
 =back
 
@@ -614,22 +526,19 @@ is ignored.
 
  before foo => sub { ... };
 
-See L<< Class::Method::Modifiers/before method(s) => sub { ... } >> for full
-documentation.
+在 before 后面指定的方法被调用前，调用本引用的代码. 看  L<< Class::Method::Modifiers/before method(s) => sub { ... } >>  有全部的文档.
 
 =head2 around
 
  around foo => sub { ... };
 
-See L<< Class::Method::Modifiers/around method(s) => sub { ... } >> for full
-documentation.
+在 around 后面指定的方法的前后包着本引用指定的代码。 看 L<< Class::Method::Modifiers/around method(s) => sub { ... } >> 有全部的文档.
 
 =head2 after
 
  after foo => sub { ... };
 
-See L<< Class::Method::Modifiers/after method(s) => sub { ... } >> for full
-documentation.
+在 after 后面指定的方法被调用后，调用本引用的代码. 看  L<< Class::Method::Modifiers/after method(s) => sub { ... } >> 有全部的文档.
 
 =head1 SUB QUOTE AWARE
 
@@ -641,7 +550,7 @@ To do this, you can write
 
 =end original
 
-L<Sub::Quote/quote_sub> 可以让我们用代码引用创造象原生的，让我们更加方便，使用 XS-free 来提升速度. 任何选项都可以在 L<Sub::Quote> 中得到利用。
+L<Sub::Quote/quote_sub> 可以让我们用代码引用创造象原生的，让我们更加方便，使用 XS-free 来提升速度. 任何选项都可以在 L<Sub::Quote> 中得到利用.
 
 要做到这一点，你可以写成:
 
@@ -654,7 +563,7 @@ L<Sub::Quote/quote_sub> 可以让我们用代码引用创造象原生的，让�
     isa => quote_sub(q{ die "Not <3" unless $_[0] < 3 })
   );
 
-which will be inlined as
+将内联成
 
   do {
     local @_ = ($_[0]->{foo});

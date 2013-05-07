@@ -52,7 +52,7 @@ Mojolicious::Guides::Rendering - 渲染
 L<Mojolicious> 包含简单但非常强大的模板系统，叫 Embedded Perl 或 C<ep>。它可以嵌入 Perl 代码，使用特别的标记并转化为实际的内容。
 
   <% Perl 代码 %>
-  <%= Perl 表达式, 结果是 XML %>
+  <%= Perl 表达式, 结果表达式的值 %>
   <%== Perl 表达式, 结果是什么就显示什么 %>
   <%# 注释, 用于 debug %>
   <%% 替换为 "<%", 用于生成模板 %>
