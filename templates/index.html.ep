@@ -128,5 +128,6 @@
   %= link_to 'http://mojolicio.us' => begin
     %= image '/mojolicious-black.png', alt => 'Mojolicious logo'
   % end
+  <script src="http://s11.cnzz.com/stat.php?id=5309652&web_id=5309652" language="JavaScript"></script>
 </div>
 

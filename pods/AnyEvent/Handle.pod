@@ -2159,68 +2159,49 @@ See also the next question, which explains this in a bit more detail.
 
 =item How can I serve requests in a loop?
 
-Most protocols consist of some setup phase (authentication for example)
-followed by a request handling phase, where the server waits for requests
-and handles them, in a loop.
+大多数协议包括二个阶段，某些的设置阶段（例如身份验证），然后通过是请求处理阶段，服务器在一个循环中等待请求并处理他们。
 
-There are two important variants: The first (traditional, better) variant
-handles requests until the server gets some QUIT command, causing it to
-close the connection first (highly desirable for a busy TCP server). A
-client dropping the connection is an error, which means this variant can
-detect an unexpected detection close.
+这有二种不同的情况： 第一种传统的比较好的处理请求交互的方式，是服务器直接从对端到得到了 QUIT 之类的命令，然后在这个时候立即关掉连接（繁忙的 TCP 服务器上这个非常可取）。另一个是客户端退出这个连接出现一些错误，这时你可以检测并需要对关闭时发现一些意外检查。
 
-To handle this case, always make sure you have a non-empty read queue, by
-pushing the "read request start" handler on it:
+To handle this case, always make sure you have a non-empty read queue, by pushing the "read request start" handler on it:
 
-   # we assume a request starts with a single line
+   # 我们假设每一个请求都是一个单独的行
    my @start_request; @start_request = (line => sub {
       my ($hdl, $line) = @_;
 
       ... handle request
 
-      # push next request read, possibly from a nested callback
+      # 推下一个处理请求的读队列,可能从嵌套回调
       $hdl->push_read (@start_request);
    });
 
    # auth done, now go into request handling loop
+   # 认证完成，现在进入请求处理循环
    # now push the first @start_request
+   # 现在推第一个 @start_request
    $hdl->push_read (@start_request);
 
-By always having an outstanding C<push_read>, the handle always expects
-some data and raises the C<EPIPE> error when the connction is dropped
-unexpectedly.
+对于有些不确认的数据在 C<push_read> 中，这个句柄在连接意外断开时总是期望得到一些数据要么得到 C<EPIPE> 的错误。
 
-The second variant is a protocol where the client can drop the connection
-at any time. For TCP, this means that the server machine may run out of
-sockets easier, and in general, it means you cannot distinguish a protocl
-failure/client crash from a normal connection close. Nevertheless, these
-kinds of protocols are common (and sometimes even the best solution to the
-problem).
+这第二种情况，有些协议可以让客户端在任何时候都能断开连接。 象 TCP 协议, 这样的话，服务器上运行 sockets 之类协议一般情况下更加容易，但这也意味当一个正常的关闭时你不能区分协议失败还是客户端崩溃这二种情况。然而，这些种类的协议很常见 (和有时甚至是解决问题的最佳办法)。
 
-Having an outstanding read request at all times is possible if you ignore
-C<EPIPE> errors, but this doesn't help with when the client drops the
-connection during a request, which would still be an error.
+如果你忽略 C<EPIPE>  的错误时，还在任何时候都有可靠的读取是可能存在的，但这并没有什么用，因为当客户端在一个请求期间断开连接时，将仍然有错误出现。
 
-A better solution is to push the initial request read in an C<on_read>
-callback. This avoids an error, as when the server doesn't expect data
-(i.e. is idly waiting for the next request, an EOF will not raise an
-error, but simply result in an C<on_eof> callback. It is also a bit slower
-and simpler:
+这样最好的解决方案是在初始请求读取推给 C<on_read> 回调.这样可以在当服务器有非期望的数据时避免这样的错误.在这时会等着下一个请求进来，EOF 不会引发错误，只是你需要在 C<on_eof> 的回调中来读取结果。这样会有点慢，但是简单。 
 
-   # auth done, now go into request handling loop
+   # 验证完成，现在进入请求处理的事件循环
    $hdl->on_read (sub {
       my ($hdl) = @_;
 
-      # called each time we receive data but the read queue is empty
-      # simply start read the request
+      # 每次接收数据时调用，但读队列为空
+      # 只需开始读取这个请求
 
       $hdl->push_read (line => sub {
          my ($hdl, $line) = @_;
 
          ... handle request
 
-         # do nothing special when the request has been handled, just
-         # let the request queue go empty.
+         # 做些特别的处理，直到让请求队列为空.
       });
    });
 

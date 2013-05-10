@@ -517,7 +517,7 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
   # get 方法第二个参数引用是 header 部分要加入的内容 
   say $ua->get('www.☃.net?hello=there' => {DNT => 1})->res->body;
 
-  # 对 Form POST 进行异常处理
+  # 对 Form POST 进行异常处理, 注意，如果 POST 后面跟了二个引用，第一个是表示要发送的 Header,第二个是 body 的参数
   my $tx = $ua->post('search.cpan.org/search' => form => {q => 'mojo'});
   if (my $res = $tx->success) { say $res->body }
   else {
@@ -950,10 +950,9 @@ append a callback to perform requests non-blocking.
   my $tx = $ua->post('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->post('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<POST> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+这个是执行阻塞的 HTTP C<POST> 的请求，第二个参数的哈希引用是要传送过去的定制的 HTTP 头，第三个参数是传送的参数和内容。这个会返回一个  L<Mojo::Transaction::HTTP> 的对象。
+
+本方法取得的参数是和  L<Mojo::UserAgent::Transactor/"tx"> 一样。你可以追加一个回调来执行非阻塞的请求。
 
   $ua->post('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
