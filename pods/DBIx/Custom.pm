@@ -2295,7 +2295,8 @@ C<prepare_attr> 是  DBI 的  C<prepare> 方法第二个参数，C<fh> 是用于
 
 连接管理对象，如果  C<connector> 设置了，你可以通过取得 C<dbh> 来得到连接管理的对象。它是 C<dbh> 的方法.
 
-This is L<DBIx::Connector> example. Please pass C<default_option> to L<DBIx::Connector> C<new> method.
+这是一个使用 L<DBIx::Connector> 例子，我们可以通过  C<default_option>  来调用  L<DBIx::Connector> 的 new 方法.
+
 
   my $connector = DBIx::Connector->new(
     "dbi:mysql:database=$database",
@@ -2306,40 +2307,37 @@ This is L<DBIx::Connector> example. Please pass C<default_option> to L<DBIx::Con
   
   my $dbi = DBIx::Custom->connect(connector => $connector);
 
-If C<connector> is set to 1 when connect method is called,
-L<DBIx::Connector> is automatically set to C<connector>
+如果在连接的方法调用的时候, 给 C<connector> 设置成 1 了。这时 L<DBIx::Connector>  会自动的使用 C<connector>。
 
   my $dbi = DBIx::Custom->connect(
     dsn => $dsn, user => $user, password => $password, connector => 1);
   
   my $connector = $dbi->connector; # DBIx::Connector
 
-Note that L<DBIx::Connector> must be installed.
+这时需要注意 L<DBIx::Connector> 必须安装了才能使用.
 
 =head2 default_schema EXPERIMETNAL
 
   my $default_schema = $self->default_schema;
   $dbi = $self->default_schema('public');
 
-schema name. if database has multiple schema,
-type_rule->{into} filter don't work well.
+schema 的名字. 如果数据库有多个 schema， 就不能使用 type_rule->{into} 的过滤器.
 
-If you set C<default_schema>, type_rule->{into} filter work well.
+如果设置 C<default_schema>, 这时 type_rule->{into} 的 filter 才可以有很好的工作.
 
 =head2 dsn
 
   my $dsn = $dbi->dsn;
   $dbi = $dbi->dsn("DBI:mysql:database=dbname");
 
-Data source name, used when C<connect> method is executed.
+数据源的名字(Data source nam), 使用 C<connect> 的方法来时就会生效.
 
 =head2 default_option
 
   my $default_option = $dbi->default_option;
   $dbi = $dbi->default_option($default_option);
 
-L<DBI> default option, used when C<connect> method is executed,
-default to the following values.
+在 L<DBI> 中的默认选项，当使用 C<connect> 的方法时使用，默认是下面的值。
 
   {
     RaiseError => 1,
@@ -2352,30 +2350,28 @@ default to the following values.
   my $exclude_table = $dbi->exclude_table;
   $dbi = $dbi->exclude_table(qr/pg_/);
 
-Excluded table regex.
-C<each_column>, C<each_table>, C<type_rule>,
-and C<setup_model> methods ignore matching tables.
+排除表用的正则。 C<each_column>, C<each_table>, C<type_rule>, 和 C<setup_model>  的方法会忽略匹配的表.
 
 =head2 filters
 
   my $filters = $dbi->filters;
   $dbi = $dbi->filters(\%filters);
 
-Filters, registered by C<register_filter> method.
+Filters, 是使用 C<register_filter> 的方法来注册的.
 
 =head2 last_sql
 
   my $last_sql = $dbi->last_sql;
   $dbi = $dbi->last_sql($last_sql);
 
-Get last successed SQL executed by C<execute> method.
+最后 C<execute> 方法正常执行的 SQL。
 
 =head2 now
 
   my $now = $dbi->now;
   $dbi = $dbi->now($now);
 
-Code reference which return current time, default to the following code reference.
+代码引用用于返回当前的时间， 默认是下面这样的代码引用.
 
   sub {
     my ($sec, $min, $hour, $mday, $mon, $year) = localtime;
@@ -2384,49 +2380,45 @@ Code reference which return current time, default to the following code referenc
     return sprintf("%04d-%02d-%02d %02d:%02d:%02d");
   }
 
-This return the time like C<2011-10-14 05:05:27>.
+返回的时间象 C<2011-10-14 05:05:27>.
 
-This is used by C<insert> method's C<created_at> option and C<updated_at> option,
-and C<update> method's C<updated_at> option.
+这是用于在 C<insert> 方法时有个 C<created_at>  的选项和 C<updated_at> 的选项时用。当然还有 C<update> 方法的 C<updated_at> 的选项.
 
 =head2 models
 
   my $models = $dbi->models;
   $dbi = $dbi->models(\%models);
 
-Models, included by C<include_model> method.
+models, C<include_model> 的方法内用.
 
 =head2 option
 
   my $option = $dbi->option;
   $dbi = $dbi->option($option);
 
-L<DBI> option, used when C<connect> method is executed.
-Each value in option override the value of C<default_option>.
+这是 L<DBI> 的选择，用于 C<connect> 的方法执行的时候。这个地方调用会覆写 C<default_option>.
 
 =head2 password
 
   my $password = $dbi->password;
   $dbi = $dbi->password('lkj&le`@s');
 
-Password, used when C<connect> method is executed.
+这是用于 C<connect> 的方法执行的密码.
 
 =head2 query_builder
 
   my $builder = $dbi->query_builder;
 
-Creat query builder. This is L<DBIx::Custom::QueryBuilder>.
+创建一个 query builder. 可以看 L<DBIx::Custom::QueryBuilder>.
 
 =head2 quote
 
   my quote = $dbi->quote;
   $dbi = $dbi->quote('"');
 
-Reserved word quote.
-Default to double quote '"' except for mysql.
-In mysql, default to back quote '`'
+定制单词引号。默认 MySQL 中不是双引号 '"'. 在 mysql 中默认是反引号 '`' 做单调引号.
 
-You can set quote pair.
+你可以设置另一对引号.
 
   $dbi->quote('[]');
 
@@ -2435,95 +2427,88 @@ You can set quote pair.
   my $result_class = $dbi->result_class;
   $dbi = $dbi->result_class('DBIx::Custom::Result');
 
-Result class, default to L<DBIx::Custom::Result>.
+结果的类，默认是 L<DBIx::Custom::Result>.
 
 =head2 safety_character
 
   my $safety_character = $dbi->safety_character;
   $dbi = $dbi->safety_character($character);
 
-Regex of safety character for table and column name, default to 'a-zA-Z_'.
-Note that you don't have to specify like '[a-zA-Z_]'.
+表名和列名所使用的正则过滤过的安全字符，默认是 'a-zA-Z_'.
+注意你不需要指定成象这样 '[a-zA-Z_]'.
 
 =head2 separator
 
   my $separator = $dbi->separator;
   $dbi = $dbi->separator('-');
 
-Separator which join table name and column name.
-This have effect to C<column> and C<mycolumn> method,
-and C<select> method's column option.
+连接表名和列名的分隔符。这常常用于  C<column> 和  C<mycolumn> 的方法。和 C<select> 方法的 column option.
 
-Default to C<.>.
+默认是使用  C<.>.
 
 =head2 tag_parse
 
   my $tag_parse = $dbi->tag_parse(0);
   $dbi = $dbi->tag_parse;
 
-Enable DEPRECATED tag parsing functionality, default to 1.
-If you want to disable tag parsing functionality, set to 0.
+启动弃用的 tag 解析功能，默认是 1。如果你想禁用就设置成 0 。
 
 =head2 user
 
   my $user = $dbi->user;
   $dbi = $dbi->user('Ken');
 
-User name, used when C<connect> method is executed.
+这是 C<connect> 执行的时候用的用户名.
 
 =head2 user_column_info
 
   my $user_column_info = $dbi->user_column_info;
   $dbi = $dbi->user_column_info($user_column_info);
 
-You can set the date like the following one.
+您可以设置类似下面的.
 
   [
     {table => 'book', column => 'title', info => {...}},
     {table => 'author', column => 'name', info => {...}}
   ]
 
-Usually, you set return value of C<get_column_info>.
+通常，你可以设置 C<get_column_info> 返回的值。
 
   my $user_column_info
     = $dbi->get_column_info(exclude_table => qr/^system/);
   $dbi->user_column_info($user_column_info);
 
-If C<user_column_info> is set, C<each_column> use C<user_column_info>
-to find column info. this is very fast.
+如果 C<user_column_info> 是设置了， C<each_column> 使用 C<user_column_info> 来 find column 的信息，会更加快.
 
 =head2 user_table_info
 
   my $user_table_info = $dbi->user_table_info;
   $dbi = $dbi->user_table_info($user_table_info);
 
-You can set the following data.
+你可以设置下面的数据.
 
   [
     {table => 'book', info => {...}},
     {table => 'author', info => {...}}
   ]
 
-Usually, you can set return value of C<get_table_info>.
+通常，你可以设置 C<get_table_info>. 的返回值。
 
   my $user_table_info = $dbi->get_table_info(exclude => qr/^system/);
   $dbi->user_table_info($user_table_info);
 
-If C<user_table_info> is set, C<each_table> use C<user_table_info>
-to find table info.
+如果 C<user_table_info> 设置了，C<each_table> 使用  C<user_table_info> 来查找表的信息.
 
 =head1 METHODS
 
-L<DBIx::Custom> inherits all methods from L<Object::Simple>
-and use all methods of L<DBI>
-and implements the following new ones.
+L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的 L<DBI> 的方法，并实现了下面的这些.
 
 =head2 available_datatype
 
   print $dbi->available_datatype;
 
-Get available data types. You can use these data types
-in C<type rule>'s C<from1> and C<from2> section.
+取得全部可用的数据类型。你可以使用 C<type rule> 的 C<from1> 和 C<from2> 的部分.
+Get available data types. You can use these data types in C<type rule>'s C<from1> and C<from2> section.
 
 =head2 available_typename
 

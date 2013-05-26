@@ -1,0 +1,309 @@
+<html>
+  <head>
+    <title>这是一个中文 CPAN 文档收藏网站</title>
+    <link href="/css/prettify-mojo.css" media="screen" rel="stylesheet" />
+    <script src="/js/prettify.js"></script>
+    <style>/*<![CDATA[*/
+
+      a { color: inherit }
+      a:hover { color: #2a2a2a }
+      a img { border: 0 }
+      body {
+        background-color: #f5f6f8;
+        color: #445555;
+        font: 0.9em 'Helvetica Neue', Helvetica, sans-serif;
+        font-weight: normal;
+        line-height: 1.5em;
+        margin: 0;
+      }
+      h1, h2, h3 {
+        color: #2a2a2a;
+        font-size: 1.5em;
+        margin: 0;
+      }
+      h1 a, h2 a, h3 a { text-decoration: none }
+      pre {
+        background-color: #eee;
+        background: url(/mojolicious-pinstripe.gif);
+        -moz-border-radius: 5px;
+        border-radius: 5px;
+        color: #eee;
+        font: 0.8em Consolas, Menlo, Monaco, Courier, monospace;
+        line-height: 1.7em;
+        text-align: left;
+        text-shadow: #333 0 1px 0;
+        padding-bottom: 1.5em;
+        padding-top: 1.5em;
+        white-space: pre-wrap;
+      }
+      #footer {
+        padding-top: 1em;
+        text-align: center;
+      }
+      #perldoc {
+        background-color: #fff;
+        -moz-border-radius-bottomleft: 5px;
+        border-bottom-left-radius: 5px;
+        -moz-border-radius-bottomright: 5px;
+        border-bottom-right-radius: 5px;
+        -moz-box-shadow: 0px 0px 2px #ccc;
+        -webkit-box-shadow: 0px 0px 2px #ccc;
+        box-shadow: 0px 0px 2px #ccc;
+        margin-left: 5em;
+        margin-right: 5em;
+        padding: 3em;
+        padding-top: 70px;
+      }
+      #perldoc > ul:first-of-type a { text-decoration: none }
+      #wrapperlicious {
+        padding: 2em 7.292%;
+        position: relative;
+      }
+      .pod_toc {
+        float: right;
+        width: 26.042%;
+        background: #f6f6f6;
+        border: 1px solid #e1e1e1;
+        padding: 1em 2em;
+        margin: 1em 0em;
+      }
+
+/*]]>*/</style>  </head>
+  <body onload="prettyPrint()">
+    <script src="/js/jquery.js"></script>
+<div id="mojobar">
+  <style scoped="scoped">/*<![CDATA[*/
+
+    #mojobar {
+      background-color: #1a1a1a;
+      background: -webkit-gradient(
+        linear,
+        0% 0%,
+        0% 100%,
+        color-stop(0%, #2a2a2a),
+        color-stop(100%, #000)
+      );
+      background: -moz-linear-gradient(
+        top,
+        #2a2a2a 0%,
+        #000 100%
+      );
+      background: linear-gradient(top, #2a2a2a 0%, #000 100%);
+      -moz-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.6);
+      -webkit-box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.6);
+      box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.6);
+      height: 46px;
+      overflow: hidden;
+      position: absolute;
+      text-align: right;
+      vertical-align: middle;
+      width: 100%;
+      z-index: 1000;
+    }
+    #mojobar-logo {
+      float: left;
+      margin-left: 5em;
+      padding-top: 3px;
+    }
+    #mojobar-links {
+      display:table-cell;
+      float: right;
+      height: 60px;
+      margin-right: 5em;
+      margin-top: 1em;
+    }
+    #mojobar-links a {
+      color: #ccc;
+      font: 1em 'Helvetica Neue', Helvetica, sans-serif;
+      font-weight: 300;
+      margin-left: 0.5em;
+      padding-bottom: 1em;
+      padding-top: 1em;
+      text-decoration: none;
+      -webkit-transition: all 200ms ease-in-out;
+      -moz-transition: all 200ms ease-in-out;
+      -o-transition: all 200ms ease-in-out;
+      transition: all 200ms ease-in-out;
+    }
+    #mojobar-links a:hover { color: #fff }
+
+/*]]>*/</style>  <div id="mojobar-logo">
+    <a href="http://cpan.php-oa.com">
+</a>  </div>
+  <div id="mojobar-links">
+  </div>
+</div>
+<script>//<![CDATA[
+
+  $(window).load(function () {
+    if (window.location.hash) {
+      var tweak = $(window.location.hash).offset().top - 50;
+      $('html, body').animate({scrollTop:tweak}, 1);
+    }
+    var mojobar = $('#mojobar');
+    var start   = mojobar.offset().top;
+    var fixed;
+    $(window).scroll(function () {
+      if (!fixed && (mojobar.offset().top - $(window).scrollTop() < 0)) {
+        mojobar.css('top', 0);
+        mojobar.css('position', 'fixed');
+        fixed = true;
+      } else if (fixed && $(window).scrollTop() <= start) {
+        mojobar.css('position', 'absolute');
+        mojobar.css('top', start + 'px');
+        fixed = false;
+      }
+    });
+  });
+  $(document).ready(function() {
+    $(".mojoscroll").click(function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      var parts  = this.href.split("#");
+      var hash   = "#" + parts[1];
+      var target = $(hash);
+      var top    = target.offset().top - 50;
+      var old    = target.attr('id');
+      target.attr('id', '');
+      location.hash = hash;
+      target.attr('id', old);
+      $('html, body').animate({scrollTop:top}, 1);
+    });
+  });
+
+//]]></script>
+    <div id="wrapperlicious">
+      <div id="perldoc">
+        
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="中文_CPAN_文档">中文 CPAN 文档</a></h1>
+
+<p>这是一个中文 CPAN 文档收藏网站</p>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="简介">简介!</a></h1>
+
+<p>我们会不断更新和增加我们的文档，欢迎你也加入，有什么信息可以加入到 <a class="podlinkurl" href="">test</a> .</p>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="学习_PERL">学习 PERL</a></h1>
+
+<p>如果你从没用过 Perl,
+推荐你看看 <a class="podlinkurl" href="http://www.oschina.net/translate/learn-perl-in-2-hours">两个半小时的 Perl 之旅</a> 这个快速了解的教程,
+或者 <a class="podlinkurl" href="http://modernperlbooks.com/books/modern_perl/">Modern Perl book</a>,
+这个免费提供多种格式可以选择。前面二个都是优秀的介文档.想看更多就看 <a class="podlinkurl" href="http://learn.perl.org/">learn.perl.org</a>.</p>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="相关的基础文档">相关的基础文档</a></h1>
+
+<p>当然，也有国内可爱的 Perl 开发人员，提供译了不少的中文文档。如下列出了我收集的一部分。</p>
+
+<p><a class="podlinkpod" href="/perldoc/perl">perl</a> - Perl 语言</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlcn">perlcn</a> - 简体中文 Perl 指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlintro">perlintro</a> - Perl 简介和概览</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlbook">perlbook</a> - Perl 书籍信息</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlcheat">perlcheat</a> - Perl 5 速查</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlreftut">perlreftut</a> - Mark 的关于引用的简短指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perllol">perllol</a> - 操作数组的数组（二维数组）</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlobj">perlobj</a> - Perl 对象</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlootut">perlootut</a> - perl 教程之面向对象编程</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlstyle">perlstyle</a> - Perl 程序风格指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlopentut">perlopentut</a> - Perl 中 open 的指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlunitut">perlunitut</a> - Perl万国码指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlembed">perlembed</a> - 在 C 程序中嵌入 perl</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlxstut">perlxstut</a> - 写 XSUBs 指南</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlfilter">perlfilter</a> - Perl 过滤器</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlutil">perlutil</a> - Perl 发行版中的实用程序</p>
+
+<p><a class="podlinkpod" href="/perldoc/perlvar">perlvar</a> - Perl 预定义变量</p>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="Perl_6">Perl 6</a></h1>
+
+<p>我们先从 Perl 6 的虚拟机开始吧，这有个 <a class="podlinkpod" href="/perldoc/Parrot">Parrot</a> 的入门</p>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="协程">协程</a></h1>
+
+<p><a class="podlinkpod" href="/perldoc/Coro">Coro</a> 是一个所谓的真正的线程,
+可以看看 <a class="podlinkpod" href="/perldoc/Coro/Intro">Coro::Intro</a> 文档</p>
+
+<h1><a class="mojoscroll" href="http://cpan.php-oa.com/perldoc/Moose/Manual" id="Moose">高级的面象对象</a></h1>
+<p><a class="podlinkpod" href="/perldoc/Moose/Manual">Moose</a>相关的所有中文文档和简化迷你的 <a class="podlinkpod" href="/perldoc/Moo/">Moo</a> 这种比较推荐的面象对象技术. </p>
+
+<h1><a class="mojoscroll" href="http://cpan.php-oa.com/perldoc/index#toc" id="网站开发教程">网站开发教程</a></h1>
+
+<dl>
+<dt><a name="(20351)(29992)_Mojolicious::Lite_(36827)(34892)(32593)(31449)(24320)(21457)">使用 <a class="podlinkpod" href="/perldoc/Mojolicious/Lite">Mojolicious::Lite</a> 进行网站开发</a></dt>
+
+<dd>
+<p>要想快速的开发和入门使用 Perl 做网站，可以先看 Mojolicious 中 <a class="podlinkpod" href="/perldoc/Mojolicious/Lite">Mojolicious::Lite</a> 的教程。全部的相关教程 <a class="podlinkpod" href="/perldoc/Mojolicious/Guides">Mojolicious::Guides</a>.</p>
+
+</dd><dt><a name="(32593)(31449)(24320)(21457)(30340)(27169)(26495)_Xslate_(25216)(26415)">网站开发的模板 <a class="podlinkpod" href="/perldoc/Xslate">Xslate</a> 技术</a></dt>
+
+<dd>
+    <p>使用 Perl 扩展的 C ，来进行开发的模板技术。有着超好的性能。优美的类似于 Perl 6 的语法.</p>
+</dd>
+<dt><a name="(25968)(25454)(24211)(25805)(20316)(25216)(26415)">数据库操作技术</a></dt>
+    <dd>
+    <p>DBIx::Class 就最好的 ORM 的类，这有一本 <a class="podlinkpod" href="/perldoc/DBIx/Cookbook">DBIx::Cookbook</a> 可以提前看看.
+    相关的 <a class="podlinkpod" href="/perldoc/DBIx/Class/Tutorial">DBIx::Class::Tutorial</a> . 另外非常值得推荐的在 Mojo 之类需要异步的时候使用的原生的 DBI 连接的模块是<a class="podlinkpod" href="/perldoc/DBIx/Custom"> DBIx::Custom . </a></p>
+    </dd>
+
+<dt><a> 网站抓取 </a></dt>
+<dd><p> 个人非常推荐使用 <a class="podlinkpod" href="/perldoc/Mojo/UserAgent">Mojo::UserAgent</a> 来做网站抓取, 是我用过几个 Perl 抓取中最方便的，不但添加自定的 header 和提交参数方便，对于数据提取集成了 <a href="/perldoc/Mojo/DOM">Mojo::DOM</a> 也是最好用的提取和修改元素的工具。另外，本身有关 CSS 选择器的语法，请看  <a href="/perldoc/Mojo/DOM/CSS">Mojo::DOM::CSS</a>。它本身是基于事件，所以并发方面很容易。 其它一些 Mojo 中的常见对象  <a href="/perldoc/Mojo/Headers">Mojo::Headers</a>  <a href="/perldoc/Mojo/Content/Single">Mojo::Content::Single</a> 
+</p></dd>
+
+</dl>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="事件编程">事件编程</a></h1>
+
+<dl>
+<dt><a name="AnyEvent"><a class="podlinkpod" href="/perldoc/AnyEvent">AnyEvent</a></a></dt>
+
+<dd>
+<p>使用 AnyEvent 的一些 pod,译文主要有 <a class="podlinkpod" href="/perldoc/AnyEvent/Intro">AnyEvent::Intro</a> 和 <a class="podlinkpod" href="/perldoc/AnyEvent/Handle">AnyEvent::Handle</a> 常用的学会这二个基本就能用了.</p>
+
+</dd><dt><a name="POE"><a class="podlinkpod" href="/perldoc/POE">POE</a></a></dt>
+
+<dd>
+<p>抽象的更好的事件编程模型</p>
+</dd>
+</dl>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="Perl_打包">Perl 打包</a></h1>
+
+<dl>
+<dt><a name="PAR::Tutorial"><a class="podlinkpod" href="/perldoc/PAR/Tutorial">PAR::Tutorial</a></a></dt>
+
+<dd>
+<p>有关 Perl 打包成单独文件的教程,
+另外还可以看看 <a class="podlinkpod" href="/perldoc/pp">pp</a> 的命令工具</p>
+</dd>
+</dl>
+
+<h1><a class="mojoscroll" href="http://mojo.php-oa.com/perldoc/index#toc" id="更多">更多</a></h1>
+
+<p>有关本网站联系人网站: <a class="podlinkurl" href="http://www.php-oa.com">扶凯</a></p>
+
+      </div>
+    </div>
+    <div id="footer">
+      <a href="http://mojolicio.us">
+        <img alt="Mojolicious logo" src="/mojolicious-black.png" />
+      </a>    
+      <script src="http://s11.cnzz.com/stat.php?id=5309652&web_id=5309652" language="JavaScript"></script>
+      </div>
+  </body>
+</html>
+
+

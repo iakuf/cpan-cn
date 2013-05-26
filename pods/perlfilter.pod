@@ -124,107 +124,54 @@ C<require> 和 C<use> 的代码声明产生一个新的源码流，这个文件�
     file ---> uudecode ---> uncompress ---> parser
                filter         filter
 
-数据流经过滤器以相同的顺序出现在源文件中. 
-Data flows through filters in the same order they appear in the source file. The uudecode filter appeared before the uncompress filter, so the source file will be uudecoded before it's uncompressed.
+数据流经过滤器以相同的顺序出现在源文件中.这个 uudecode 的过滤器出现在 uncompress 的过滤之前，所以这个源文件会在 uncompressed 之前被 uudecoded。
 
 =head1 WRITING A SOURCE FILTER
 
-There are three ways to write your own source filter. You can write it
-in C, use an external program as a filter, or write the filter in Perl.
-I won't cover the first two in any great detail, so I'll get them out
-of the way first. Writing the filter in Perl is most convenient, so
-I'll devote the most space to it.
+有三种方法来写你自己的源码过滤器。你可以把它写在 C 语言中，也可以使用外部程序作为一个过滤器或写在 Perl 中做过滤器。我不会对前两个做很多的细节讲解。在Perl编写过滤器是最方便的，所以我会投入最从的空间给它。
 
 =head1 WRITING A SOURCE FILTER IN C
 
-The first of the three available techniques is to write the filter
-completely in C. The external module you create interfaces directly
-with the source filter hooks provided by Perl.
+三个可用的技术中的第一种实现是用 C 写一个过滤器，由外部模块直接与 Perl 内部提供的源码过滤器的 HOOK 点创建接口。
 
-The advantage of this technique is that you have complete control over
-the implementation of your filter. The big disadvantage is the
-increased complexity required to write the filter - not only do you
-need to understand the source filter hooks, but you also need a
-reasonable knowledge of Perl guts. One of the few times it is worth
-going to this trouble is when writing a source scrambler. The
-C<decrypt> filter (which unscrambles the source before Perl parses it)
-included with the source filter distribution is an example of a C
-source filter (see Decryption Filters, below).
-
+这种技术的优点是, 你对你的过滤器的实现和工作有完全的控制权。很大缺点是增加了复杂性，需要写一个过滤器 - 不仅仅是你需要了解的源代码过滤器的 HOOK 点，你还需要不错的有关 Perl 的知识。值得这么麻烦的为数不多的理由是编写源代码扰码时用。这个 C<decrypt> 的过滤器(在 Perl 的解析器之前解读源代码)包含在那个源码过滤的发行的例子中有个 C 的源码过滤器(看有关 Decryption 的过滤器，下面的)
 
 =over 5
 
 =item B<Decryption Filters>
 
-All decryption filters work on the principle of "security through
-obscurity." Regardless of how well you write a decryption filter and
-how strong your encryption algorithm is, anyone determined enough can
-retrieve the original source code. The reason is quite simple - once
-the decryption filter has decrypted the source back to its original
-form, fragments of it will be stored in the computer's memory as Perl
-parses it. The source might only be in memory for a short period of
-time, but anyone possessing a debugger, skill, and lots of patience can
-eventually reconstruct your program.
+所有解密的过滤器的工作的原则是 "通过隐藏来达到安全"。不管你编写了多好的 decryption 过滤器和你有多强的加密算法，只要有足够的决心的人还是可以找回原来的源代码。原因很简单 - 一旦解密的过滤器解密源返回到其原始形式, 它的片段将被存储在计算机的内存中，如 Perl 的解析器中。源码可能只能只是很短的一段时间内在内存中，但是人们可以通过调试器，相关的技能, 超级的耐心，最终可以重建你的程序。
 
-That said, there are a number of steps that can be taken to make life
-difficult for the potential cracker. The most important: Write your
-decryption filter in C and statically link the decryption module into
-the Perl binary. For further tips to make life difficult for the
-potential cracker, see the file I<decrypt.pm> in the source filters
-distribution.
+这也就是讲，使用这些步骤只是使 cracker 的工具变得更加难。用 C 写自己的 decryption 过滤器和静态的链接到解码模块到 Perl 和二进程文件上。只是提高了难度。可以看 I<decrypt.pm>  在你的源代码的过滤器的发布包中。
 
 =back
 
 =head1 CREATING A SOURCE FILTER AS A SEPARATE EXECUTABLE
 
-An alternative to writing the filter in C is to create a separate
-executable in the language of your choice. The separate executable
-reads from standard input, does whatever processing is necessary, and
-writes the filtered data to standard output. C<Filter::cpp> is an
-example of a source filter implemented as a separate executable - the
-executable is the C preprocessor bundled with your C compiler.
+替代 C 的过滤器的方式，你可以使用你所选择的语言创建一个单独的可执行文件。从标准输入读取的单个的可执行文件，读入时不需要做任何加工和将过滤后的数据写入到标准输出. C<Filter::cpp> 是一个单独的可执行的源码过滤器的一个例子 - 可执行文件是用 C 预处理器捆绑到你的 C 编译器。
 
-The source filter distribution includes two modules that simplify this
-task: C<Filter::exec> and C<Filter::sh>. Both allow you to run any
-external executable. Both use a coprocess to control the flow of data
-into and out of the external executable. (For details on coprocesses,
-see Stephens, W.R., "Advanced Programming in the UNIX Environment."
-Addison-Wesley, ISBN 0-210-56317-7, pages 441-445.) The difference
-between them is that C<Filter::exec> spawns the external command
-directly, while C<Filter::sh> spawns a shell to execute the external
-command. (Unix uses the Bourne shell; NT uses the cmd shell.) Spawning
-a shell allows you to make use of the shell metacharacters and
-redirection facilities.
+源码过滤器分布包括两个模块的简化此项任务：C<Filter::exec> 和 C<Filter::sh>。 两者都允许你执行任何外部的可执行文件.两者都使用 coprocess 来控制数据的流进和外部可执行程序的输出.
 
-Here is an example script that uses C<Filter::sh>:
+The source filter distribution includes two modules that simplify this task: C<Filter::exec> and C<Filter::sh>. Both allow you to run any external executable. Both use a coprocess to control the flow of data into and out of the external executable. (For details on coprocesses, see Stephens, W.R., "Advanced Programming in the UNIX Environment." Addison-Wesley, ISBN 0-210-56317-7, pages 441-445.) The difference between them is that C<Filter::exec> spawns the external command directly, while C<Filter::sh> spawns a shell to execute the external command. (Unix uses the Bourne shell; NT uses the cmd shell.) Spawning a shell allows you to make use of the shell metacharacters and redirection facilities.
+
+        
+这里是一个示例脚本，使用 C<Filter::sh>:
 
     use Filter::sh 'tr XYZ PQR';
     $a = 1;
     print "XYZ a = $a\n";
 
-The output you'll get when the script is executed:
+你当执行该脚本的输出：
 
     PQR a = 1
 
-Writing a source filter as a separate executable works fine, but a
-small performance penalty is incurred. For example, if you execute the
-small example above, a separate subprocess will be created to run the
-Unix C<tr> command. Each use of the filter requires its own subprocess.
-If creating subprocesses is expensive on your system, you might want to
-consider one of the other options for creating source filters.
+使用一个单独的可执行文件来做源过滤器，但会产生一个小的性能损失。例如，如果你执行上面的小例子，将创建一个单独的子进程来运行 Unix 下的 C<tr> 命令。每个单独的源码过滤器都需要自己的子进程。如果创建子进程开销在你的系统上代价很高，你可能需要考虑其它的创建源码过滤的方式.
 
 =head1 WRITING A SOURCE FILTER IN PERL
 
-The easiest and most portable option available for creating your own
-source filter is to write it completely in Perl. To distinguish this
-from the previous two techniques, I'll call it a Perl source filter.
+最简单的和最便携用于创建您自己的源码过滤器的方式是完全使用 Perl 来写.为了区分前面的两种技术，我称之为一个 Perl 源码过滤器。
 
-To help understand how to write a Perl source filter we need an example
-to study. Here is a complete source filter that performs rot13
-decoding. (Rot13 is a very simple encryption scheme used in Usenet
-postings to hide the contents of offensive posts. It moves every letter
-forward thirteen places, so that A becomes N, B becomes O, and Z
-becomes M.)
+为了帮助了解如何编写一个Perl的源代码过滤器，我们需要例子学习。下面是一个完整的源代码过滤器，执行 ROT13 译码.(Rot13 是一种非常简单的加密解密，A换成N、B换成O、依此类推到M换成Z，然后序列反转：N换成A、O换成B、最后Z换成M。)
 
 
    package Rot13;
@@ -248,49 +195,25 @@ becomes M.)
 
    1;
 
-All Perl source filters are implemented as Perl classes and have the
-same basic structure as the example above.
+上面的整个Perl 源代码过滤器是由 Perl 类实现的。
 
-First, we include the C<Filter::Util::Call> module, which exports a
-number of functions into your filter's namespace. The filter shown
-above uses two of these functions, C<filter_add()> and
-C<filter_read()>.
+首先，我们 use C<Filter::Util::Call> 这个模块，会导出一些 filter 的名字空间的函数。这个 filter 主要使用二个函数 C<filter_add()> 和  C<filter_read()>.
 
-Next, we create the filter object and associate it with the source
-stream by defining the C<import> function. If you know Perl well
-enough, you know that C<import> is called automatically every time a
-module is included with a use statement. This makes C<import> the ideal
-place to both create and install a filter object.
+接下来，我们使用 C<import> 函数导出的过滤器对象来关联相关的源码流。如果你的 Perl 不是很好，你需要知道每次 use 声明来包含模块的时候 C<import> 的会自动调用。这使得 C<import> 是个创建和安装这个过滤器对象的好理想的地方.
 
-In the example filter, the object (C<$ref>) is blessed just like any
-other Perl object. Our example uses an anonymous array, but this isn't
-a requirement. Because this example doesn't need to store any context
-information, we could have used a scalar or hash reference just as
-well. The next section demonstrates context data.
+在这个例子中的过滤器，就象任何其它的 Perl 对象中的 blessed C<$ref> 是一样。我们例子中使用的是匿名数组，这并不是强行要求。因为这个例子中并不需要在任何上下文中存储什么信息。我们使用标量和哈希也是一样，接下来的例子会演示怎么样在上下文存数据.
 
-The association between the filter object and the source stream is made
-with the C<filter_add()> function. This takes a filter object as a
-parameter (C<$ref> in this case) and installs it in the source stream.
+过滤器对象和源码流的关联是通过 C<filter_add()> 的功能。这需要过滤器对象使用 C<$ref> 做参数和安装这个源码流。
 
-Finally, there is the code that actually does the filtering. For this
-type of Perl source filter, all the filtering is done in a method
-called C<filter()>. (It is also possible to write a Perl source filter
-using a closure. See the C<Filter::Util::Call> manual page for more
-details.) It's called every time the Perl parser needs another line of
-source to process. The C<filter()> method, in turn, reads lines from
-the source stream using the C<filter_read()> function.
+最后，这些代码是实际的过滤代码。对于 Perl 源码过滤这种类型，全部的过滤方法都会调用 C<filter()>. 每次来行源码处理都要调用 Perl 解析器. C<filter_read()> 的功能来读每行的源码流。
 
-If a line was available from the source stream, C<filter_read()>
-returns a status value greater than zero and appends the line to C<$_>.
-A status value of zero indicates end-of-file, less than zero means an
-error. The filter function itself is expected to return its status in
-the same way, and put the filtered line it wants written to the source
-stream in C<$_>. The use of C<$_> accounts for the brevity of most Perl
-source filters.
+Finally, there is the code that actually does the filtering. For this type of Perl source filter, all the filtering is done in a method called C<filter()>. (It is also possible to write a Perl source filter using a closure. See the C<Filter::Util::Call> manual page for more details.) It's called every time the Perl parser needs another line of source to process. The C<filter()> method, in turn, reads lines from the source stream using the C<filter_read()> function.
 
-In order to make use of the rot13 filter we need some way of encoding
-the source file in rot13 format. The script below, C<mkrot13>, does
-just that.
+如果有一行可用的源码流到达， C<filter_read()> 会检查当大于零时会返回 status 的值并给行后面的东西追加到 C<$_>. status 的值为 0 表示文件结束，小于零表示出错了。这个 filter 函数的功能就是以相同的方式来预期返回 status，并给过滤后的行写到 C<$_> 的源码流中。对 C<$_> 进行操作在 Perl 的源代码过滤器中占大多数，这样比较简洁。
+
+If a line was available from the source stream, C<filter_read()> returns a status value greater than zero and appends the line to C<$_>.  A status value of zero indicates end-of-file, less than zero means an error. The filter function itself is expected to return its status in the same way, and put the filtered line it wants written to the source stream in C<$_>. The use of C<$_> accounts for the brevity of most Perl source filters.
+
+为了让使用 rot13 过滤器能使用，我们需要用同样的方法对源文件进行编码。下面的脚本 C<mkrot13> 用于实现这个.
 
     die "usage mkrot13 filename\n" unless @ARGV;
     my $in = $ARGV[0];
@@ -309,16 +232,16 @@ just that.
     unlink $in;
     rename $out, $in;
 
-If we encrypt this with C<mkrot13>:
+如果我们下面这个使用 C<mkrot13> 加密:
 
     print " hello fred \n";
 
-the result will be this:
+会得到这样的结果:
 
     use Rot13;
     cevag "uryyb serq\a";
 
-Running it produces this output:
+运行这个程序，使用你自己写的过滤器:
 
     hello fred
 
@@ -510,11 +433,7 @@ syntax you want your filter to have.
 
 =item Some Filters Clobber the C<DATA> Handle
 
-Some source filters use the C<DATA> handle to read the calling program.
-When using these source filters you cannot rely on this handle, nor expect
-any particular kind of behavior when operating on it.  Filters based on
-Filter::Util::Call (and therefore Filter::Simple) do not alter the C<DATA>
-filehandle.
+有些源代码过滤器使用的 C<DATA> 句柄读取调用程序。使用这些源码过滤器时，你不能依赖这个句柄，当操作它时，也不期待任何特定的行为发生。基于 Filter::Util::Call (和 Filter::Simple) 的筛选器不会改变 C <DATA>文件句柄。
 
 =back
 

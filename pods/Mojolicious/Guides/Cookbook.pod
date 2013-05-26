@@ -723,8 +723,7 @@ Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<E
 
 =head2 修饰后续请求 
 
-L<Mojo::UserAgent> can automatically follow redirects, the event L<Mojo::UserAgent/"start"> allows you direct access to each transaction right after they have been initialized and before a connection gets associated with them.
-L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"start"> 的事件中你可以直接访问到每次初始化后的并在后端建立连接之前。
+L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"start"> 的事件执行的地方是在你每次初始化访问后并后端建立连接之前。
 
   use Mojo::UserAgent;
 
@@ -745,15 +744,15 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 =head2 流响应 
 
-大多的客户端浏览器都能接收流的响应，在 L<Mojo::UserAgent> 中也可以非常容易的使用它。
+大多的客户端浏览器都能接收流的响应，在 L<Mojo::UserAgent> 中也可以非常容易的以流的方法一段一段处理。
 
   use Mojo::UserAgent;
 
-  # Build a normal transaction
+  # 创建一个事件的连接
   my $ua = Mojo::UserAgent->new;
   my $tx = $ua->build_tx(GET => 'http://mojolicio.us');
 
-  # Replace "read" events to disable default content parser
+  # 禁用内容解析并替换 "read" 事件为自己的内容.
   $tx->res->content->unsubscribe('read')->on(read => sub {
     my ($content, $chunk) = @_;
     say "Streaming: $chunk";
@@ -774,11 +773,11 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
   my $ua = Mojo::UserAgent->new;
   my $tx = $ua->build_tx(GET => 'http://mojolicio.us');
 
-  # Prepare content
+  # 准备内容
   my $content = 'Hello world!';
   $tx->req->headers->content_length(length $content);
 
-  # Start writing directly with a drain callback
+  # 开始写内容通过 drain 的回调
   my $drain;
   $drain = sub {
     my $req   = shift;
@@ -795,7 +794,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 =head2 大文件下载 
 
-当你使用 L<Mojo::UserAgent> 下载大文件时，你不需要担心内存的使用，因为它会自动的给每 C<250KB> 存成临时文件.
+当你使用 L<Mojo::UserAgent> 下载大文件时，你不需要担心内存的使用，因为它会自动的给每 C<250KB> 的大小来存成临时文件. 你可以直接使用 asset 的对象来存成文件.
 
   use Mojo::UserAgent;
 
@@ -806,7 +805,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
 为了保护避免过大的文件也有一个极限默认值 C<5MB>。你可以通过 C<MOJO_MAX_MESSAGE_SIZE> 的环境变量来调整。
 
-  # Increase limit to 1GB
+  # 增加限制的大小到 1GB
   $ENV{MOJO_MAX_MESSAGE_SIZE} = 1073741824;
 
 =head2 大文件上传
@@ -815,7 +814,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
   use Mojo::UserAgent;
 
-  # Upload file via POST and "multipart/form-data"
+  # 上传文件通过 POST 的 HTTP 方法，并且会修改成  "multipart/form-data" 的类型
   my $ua = Mojo::UserAgent->new;
   $ua->post_form('mojolicio.us/upload',
     {image => {file => '/home/sri/hello.png'}});
@@ -824,7 +823,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向，在  L<Mojo::UserAgent/"st
 
   use Mojo::UserAgent;
 
-  # Upload file via PUT
+  # 上传是通过 PUT 的 HTTP 的方法
   my $ua     = Mojo::UserAgent->new;
   my $asset  = Mojo::Asset::File->new(path => '/home/sri/hello.png');
   my $tx     = $ua->build_tx(PUT => 'mojolicio.us/upload');

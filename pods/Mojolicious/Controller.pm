@@ -681,7 +681,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
 
   $c = $c->render_later;
 
-Disable automatic rendering to delay response generation, only necessary if automatic rendring would result in a response.
+禁用自动渲染生成内容，来延迟 HTTP 的响应生成的时机，只要有必要的时候才会生成响应.大多用在异步的时候.
 
   # Delayed rendering
   $c->render_later;
