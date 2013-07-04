@@ -2507,38 +2507,36 @@ L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的
 
   print $dbi->available_datatype;
 
-取得全部可用的数据类型。你可以使用 C<type rule> 的 C<from1> 和 C<from2> 的部分.
-Get available data types. You can use these data types in C<type rule>'s C<from1> and C<from2> section.
+取得全部可用的数据类型。你可以使用 C<type rule> 的 C<from1> 和 C<from2> 的部分的 data type.
 
 =head2 available_typename
 
   print $dbi->available_typename;
 
-Get available type names. You can use these type names in
-C<type_rule>'s C<into1> and C<into2> section.
+取得可以的类型名.你可以使用  C<type rule> 的  C<into1> 和 C<into2> 部分的 type name.
 
 =head2 assign_clause
 
   my $assign_clause = $dbi->assign_clause({title => 'a', age => 2});
 
-Create assign clause
+创建分配子句 clause
 
   title = :title, author = :author
 
-This is used to create update clause.
+这是用于创建更新的子句。
 
   "update book set " . $dbi->assign_clause({title => 'a', age => 2});
 
-=head2 async EXPERIMENTAL
+=head2 async 试验性的
 
   async => sub {
     my ($dbi, $result) = @_;
     ...
   };
 
-Database async access. L<AnyEvent> is required.
+数据库的异步访问。使用 L<AnyEvent> 实现，所以是必须的。
 
-This is C<mysql> async access example.
+这有个 MySQL 异步访问的例子。
 
   use AnyEvent;
 
@@ -2583,12 +2581,12 @@ This is C<mysql> async access example.
 
   my $column = $dbi->column(book => ['author', 'title']);
 
-Create column clause. The follwoing column clause is created.
+创建列子句。按如下列子句创建
 
   book.author as "book.author",
   book.title as "book.title"
 
-You can change separator by C<separator> attribute.
+你可以修改分隔字符使用 C<separator> 的属性。
 
   # Separator is hyphen
   $dbi->separator('-');
@@ -2605,19 +2603,18 @@ You can change separator by C<separator> attribute.
     option => {mysql_enable_utf8 => 1}
   );
 
-Connect to the database and create a new L<DBIx::Custom> object.
+连接和数据库并创建一个新的 L<DBIx::Custom> 的对象。
 
-L<DBIx::Custom> is a wrapper of L<DBI>.
-C<AutoCommit> and C<RaiseError> options are true, 
-and C<PrintError> option is false by default.
+L<DBIx::Custom> 内部是封装的 L<DBI>.
+C<AutoCommit> 和 C<RaiseError> 的选项默认为真，C<PrintError> 的选择默认为假。
 
 =head2 count
 
   my $count = $dbi->count(table => 'book');
 
-Get rows count.
+获取行计数.
 
-Options is same as C<select> method's ones.
+这个的选项和 C<select> 的方法一样。
 
 =head2 create_model
 
@@ -2629,8 +2626,7 @@ Options is same as C<select> method's ones.
     ],
   );
 
-Create L<DBIx::Custom::Model> object and initialize model.
-the module is also used from C<model> method.
+创建 L<DBIx::Custom::Model> 对象并初始化 model. 这个模块也可以使用 C<model> 的方法。
 
  $dbi->model('book')->select(...);
 
@@ -2638,21 +2634,19 @@ the module is also used from C<model> method.
 
   my $dbh = $dbi->dbh;
 
-Get L<DBI> database handle. if C<connector> is set, you can get
-database handle through C<connector> object.
+得到数据库的 L<DBI> 的句柄。如果  C<connector> 是设置了，你可以从 C<connector> 的对象中取得数据库的句柄。
 
 =head2 delete
 
   $dbi->delete(table => 'book', where => {title => 'Perl'});
 
-Execute delete statement.
+执行删除声明。
 
-The following opitons are available.
+有以下可用的选项.
 
 B<OPTIONS>
 
-C<delete> method use all of C<execute> method's options,
-and use the following new ones.
+C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现了下面这些。
 
 =over 4
 
@@ -2661,8 +2655,7 @@ and use the following new ones.
   id => 4
   id => [4, 5]
 
-ID corresponding to C<primary_key>.
-You can delete rows by C<id> and C<primary_key>.
+这的 ID 应用到 C<primary_key>. 你可以由 C<id> 和 C<primary_key> 来删除行。
 
   $dbi->delete(
     primary_key => ['id1', 'id2'],
@@ -2670,7 +2663,7 @@ You can delete rows by C<id> and C<primary_key>.
     table => 'book',
   );
 
-The above is same as the followin one.
+下面这个实现的和上面的功能一样.
 
   $dbi->delete(where => {id1 => 4, id2 => 5}, table => 'book');
 
@@ -2678,7 +2671,7 @@ The above is same as the followin one.
 
   prefix => 'some'
 
-prefix before table name section.
+表名前部分的前缀.
 
   delete some from book
 
@@ -2686,11 +2679,11 @@ prefix before table name section.
 
   table => 'book'
 
-Table name.
+表名
 
 =item C<where>
 
-Same as C<select> method's C<where> option.
+和 C<select> 方法的 C<where> 选择一样。
 
 =back
 
@@ -2698,8 +2691,7 @@ Same as C<select> method's C<where> option.
 
   $dbi->delete_all(table => $table);
 
-Execute delete statement for all rows.
-Options is same as C<delete>.
+对全部的行执行删除声明。选项和 C<delete> 相同。
 
 =head2 each_column
 
@@ -2715,14 +2707,11 @@ Options is same as C<delete>.
     }
   );
 
-Iterate all column informations in database.
-Argument is callback which is executed when one column is found.
-Callback receive four arguments. C<DBIx::Custom object>, C<table name>,
-C<column name>, and C<column information>.
+遍历数据库中所有的列的信息。
+每找到一行会执行一次。执行的参数是一个回调函数。
+回调函数接收到四个参数。 C<DBIx::Custom object>, C<table name>, C<column name>, 和 C<column information>.
 
-If C<user_column_info> is set, C<each_column> method use C<user_column_info>
-infromation, you can improve the performance of C<each_column> in
-the following way.
+如果 C<user_column_info> 的设置了，C<each_column> 方法直接使用 C<user_column_info> 中的信息，这是你提高 C<each_column> 的性能的方式.
 
   my $column_infos = $dbi->get_column_info(exclude_table => qr/^system_/);
   $dbi->user_column_info($column_info);
@@ -2738,14 +2727,11 @@ the following way.
     }
   );
 
-Iterate all table informationsfrom in database.
-Argument is callback which is executed when one table is found.
-Callback receive three arguments, C<DBIx::Custom object>, C<table name>,
-C<table information>.
+遍历数据库中所有的表信息.
+找到一个表会执行一次。执行的参数是一个回调函数。
+回调函数会接收到三个参数，C<DBIx::Custom object>, C<table name>,C<table information>.
 
-If C<user_table_info> is set, C<each_table> method use C<user_table_info>
-infromation, you can improve the performance of C<each_table> in
-the following way.
+如果 C<user_table_info> 的设置了 C<each_table> 方法直接使用 C<user_table_info> 中的信息，这是你提高 C<each_table> 性能的方式.
 
   my $table_infos = $dbi->get_table_info(exclude => qr/^system_/);
   $dbi->user_table_info($table_info);
@@ -2763,22 +2749,21 @@ the following way.
     {'book.title' => 'Perl', 'book.author' => '%Ken%'}
   );
 
-Execute SQL. SQL can contain column parameter such as :author and :title.
-You can append table name to column name such as :book.title and :book.author.
-Second argunet is data, embedded into column parameter.
-Return value is L<DBIx::Custom::Result> object when select statement is executed,
-or the count of affected rows when insert, update, delete statement is executed.
+执行 SQL. SQL 可以包含一些参数，象 :author 和 :title.
+您可以附加表名，列名，如 :book.title 和 :book.author 。
+第二个参数是数据，嵌入列参数。
+当 select 的声明执行后会返回 L<DBIx::Custom::Result> 的对象。
+要么当 insert, update, delete  声明时会返回影响的行数。
 
-Named placeholder such as C<:title> is replaced by placeholder C<?>.
+命名占位符, 象 C<:title> 是和 C<?> 的替换一样.
   
-  # Original
+  # 原始
   select * from book where title = :title and author like :author
   
-  # Replaced
+  # 替换后
   select * from where title = ? and author like ?;
 
-You can specify operator with named placeholder
-by C<name{operator}> syntax.
+你也可以自己来修改 C<name{operator}> 的语法指定命名占位符。
 
   # Original
   select * from book where :title{=} and :author{like}
@@ -2786,8 +2771,7 @@ by C<name{operator}> syntax.
   # Replaced
   select * from where title = ? and author like ?;
 
-Note that colons in time format such as 12:13:15 is exeption,
-it is not parsed as named placeholder.
+Note that colons in time format such as 12:13:15 is exeption, it is not parsed as named placeholder.
 If you want to use colon generally, you must escape it by C<\\>
 
   select * from where title = "aa\\:bb";
