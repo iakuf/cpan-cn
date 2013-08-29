@@ -2158,9 +2158,13 @@ sub _add_relation_table {
 
 1;
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
-DBIx::Custom - DBI 扩展，提供更加方便的增删改查的功能. 
+DBIx::Custom - DBI 扩展,提供更加方便的增删改查的功能. 
 
 =head1 SYNOPSIS
 
@@ -2223,13 +2227,13 @@ DBIx::Custom - DBI 扩展，提供更加方便的增删改查的功能.
   
 =head1 DESCRIPTION
 
-L<DBIx::Custom> 是 DBI 的扩展更加容易的执行 SQL 的语句，有下面的一些特性.
+L<DBIx::Custom> 是 DBI 的扩展更加容易的执行 SQL 的语句,有下面的一些特性.
 
 =over 4
 
 =item *
 
-更加方便的执行 C<insert>, C<update>, C<delete>, 和 C<select> 。
+更加方便的执行 C<insert>, C<update>, C<delete>, 和 C<select> .
 
 =item *
 
@@ -2237,7 +2241,7 @@ L<DBIx::Custom> 是 DBI 的扩展更加容易的执行 SQL 的语句，有下面
 
 =item *
 
-Named place holder 支持
+命名占位支持
 
 =item *
 
@@ -2249,7 +2253,7 @@ Model support
 
 =item *
 
-可以选择任何你喜欢的关系数据库系统  C<MySQL>, C<SQLite>, C<PostgreSQL>, C<Oracle>, C<Microsoft SQL Server>, C<Microsoft Access>, C<DB2>。
+可以选择任何你喜欢的关系数据库系统  C<MySQL>, C<SQLite>, C<PostgreSQL>, C<Oracle>, C<Microsoft SQL Server>, C<Microsoft Access>, C<DB2>.
 
 =item *
 
@@ -2286,16 +2290,16 @@ L<DBIx::Custom API reference|http://search.cpan.org/~kimoto/DBIx-Custom/>
     fh => sub { shift->dbh->mysql_fd }
   })
 
-C<prepare_attr> 是  DBI 的  C<prepare> 方法第二个参数，C<fh> 是用于文件句柄的回调的 watch 使用.
+C<prepare_attr> 是  DBI 的  C<prepare> 方法第二个参数,C<fh> 是用于文件句柄的回调的 watch 使用.
 
 =head2 connector
 
   my $connector = $dbi->connector;
   $dbi = $dbi->connector($connector);
 
-连接管理对象，如果  C<connector> 设置了，你可以通过取得 C<dbh> 来得到连接管理的对象。它是 C<dbh> 的方法.
+连接管理对象,如果  C<connector> 设置了,你可以通过取得 C<dbh> 来得到连接管理的对象.它是 C<dbh> 的方法.
 
-这是一个使用 L<DBIx::Connector> 例子，我们可以通过  C<default_option>  来调用  L<DBIx::Connector> 的 new 方法.
+这是一个使用 L<DBIx::Connector> 例子,我们可以通过  C<default_option>  来调用  L<DBIx::Connector> 的 new 方法.
 
 
   my $connector = DBIx::Connector->new(
@@ -2307,7 +2311,7 @@ C<prepare_attr> 是  DBI 的  C<prepare> 方法第二个参数，C<fh> 是用于
   
   my $dbi = DBIx::Custom->connect(connector => $connector);
 
-如果在连接的方法调用的时候, 给 C<connector> 设置成 1 了。这时 L<DBIx::Connector>  会自动的使用 C<connector>。
+如果在连接的方法调用的时候, 给 C<connector> 设置成 1 了.这时 L<DBIx::Connector>  会自动的使用 C<connector>.
 
   my $dbi = DBIx::Custom->connect(
     dsn => $dsn, user => $user, password => $password, connector => 1);
@@ -2321,7 +2325,7 @@ C<prepare_attr> 是  DBI 的  C<prepare> 方法第二个参数，C<fh> 是用于
   my $default_schema = $self->default_schema;
   $dbi = $self->default_schema('public');
 
-schema 的名字. 如果数据库有多个 schema， 就不能使用 type_rule->{into} 的过滤器.
+schema 的名字. 如果数据库有多个 schema, 就不能使用 type_rule->{into} 的过滤器.
 
 如果设置 C<default_schema>, 这时 type_rule->{into} 的 filter 才可以有很好的工作.
 
@@ -2337,7 +2341,7 @@ schema 的名字. 如果数据库有多个 schema， 就不能使用 type_rule->
   my $default_option = $dbi->default_option;
   $dbi = $dbi->default_option($default_option);
 
-在 L<DBI> 中的默认选项，当使用 C<connect> 的方法时使用，默认是下面的值。
+在 L<DBI> 中的默认选项,当使用 C<connect> 的方法时使用,默认是下面的值.
 
   {
     RaiseError => 1,
@@ -2350,7 +2354,7 @@ schema 的名字. 如果数据库有多个 schema， 就不能使用 type_rule->
   my $exclude_table = $dbi->exclude_table;
   $dbi = $dbi->exclude_table(qr/pg_/);
 
-排除表用的正则。 C<each_column>, C<each_table>, C<type_rule>, 和 C<setup_model>  的方法会忽略匹配的表.
+排除表用的正则. C<each_column>, C<each_table>, C<type_rule>, 和 C<setup_model>  的方法会忽略匹配的表.
 
 =head2 filters
 
@@ -2364,14 +2368,14 @@ Filters, 是使用 C<register_filter> 的方法来注册的.
   my $last_sql = $dbi->last_sql;
   $dbi = $dbi->last_sql($last_sql);
 
-最后 C<execute> 方法正常执行的 SQL。
+最后 C<execute> 方法正常执行的 SQL.
 
 =head2 now
 
   my $now = $dbi->now;
   $dbi = $dbi->now($now);
 
-代码引用用于返回当前的时间， 默认是下面这样的代码引用.
+代码引用用于返回当前的时间, 默认是下面这样的代码引用.
 
   sub {
     my ($sec, $min, $hour, $mday, $mon, $year) = localtime;
@@ -2382,7 +2386,7 @@ Filters, 是使用 C<register_filter> 的方法来注册的.
 
 返回的时间象 C<2011-10-14 05:05:27>.
 
-这是用于在 C<insert> 方法时有个 C<created_at>  的选项和 C<updated_at> 的选项时用。当然还有 C<update> 方法的 C<updated_at> 的选项.
+这是用于在 C<insert> 方法时有个 C<created_at>  的选项和 C<updated_at> 的选项时用.当然还有 C<update> 方法的 C<updated_at> 的选项.
 
 =head2 models
 
@@ -2396,7 +2400,7 @@ models, C<include_model> 的方法内用.
   my $option = $dbi->option;
   $dbi = $dbi->option($option);
 
-这是 L<DBI> 的选择，用于 C<connect> 的方法执行的时候。这个地方调用会覆写 C<default_option>.
+这是 L<DBI> 的选择,用于 C<connect> 的方法执行的时候.这个地方调用会覆写 C<default_option>.
 
 =head2 password
 
@@ -2416,7 +2420,7 @@ models, C<include_model> 的方法内用.
   my quote = $dbi->quote;
   $dbi = $dbi->quote('"');
 
-定制单词引号。默认 MySQL 中不是双引号 '"'. 在 mysql 中默认是反引号 '`' 做单调引号.
+定制单词引号.默认 MySQL 中不是双引号 '"'. 在 mysql 中默认是反引号 '`' 做单调引号.
 
 你可以设置另一对引号.
 
@@ -2427,14 +2431,14 @@ models, C<include_model> 的方法内用.
   my $result_class = $dbi->result_class;
   $dbi = $dbi->result_class('DBIx::Custom::Result');
 
-结果的类，默认是 L<DBIx::Custom::Result>.
+结果的类,默认是 L<DBIx::Custom::Result>.
 
 =head2 safety_character
 
   my $safety_character = $dbi->safety_character;
   $dbi = $dbi->safety_character($character);
 
-表名和列名所使用的正则过滤过的安全字符，默认是 'a-zA-Z_'.
+表名和列名所使用的正则过滤过的安全字符,默认是 'a-zA-Z_'.
 注意你不需要指定成象这样 '[a-zA-Z_]'.
 
 =head2 separator
@@ -2442,7 +2446,7 @@ models, C<include_model> 的方法内用.
   my $separator = $dbi->separator;
   $dbi = $dbi->separator('-');
 
-连接表名和列名的分隔符。这常常用于  C<column> 和  C<mycolumn> 的方法。和 C<select> 方法的 column option.
+连接表名和列名的分隔符.这常常用于  C<column> 和  C<mycolumn> 的方法.和 C<select> 方法的 column option.
 
 默认是使用  C<.>.
 
@@ -2451,7 +2455,7 @@ models, C<include_model> 的方法内用.
   my $tag_parse = $dbi->tag_parse(0);
   $dbi = $dbi->tag_parse;
 
-启动弃用的 tag 解析功能，默认是 1。如果你想禁用就设置成 0 。
+启动弃用的 tag 解析功能,默认是 1.如果你想禁用就设置成 0 .
 
 =head2 user
 
@@ -2472,13 +2476,13 @@ models, C<include_model> 的方法内用.
     {table => 'author', column => 'name', info => {...}}
   ]
 
-通常，你可以设置 C<get_column_info> 返回的值。
+通常,你可以设置 C<get_column_info> 返回的值.
 
   my $user_column_info
     = $dbi->get_column_info(exclude_table => qr/^system/);
   $dbi->user_column_info($user_column_info);
 
-如果 C<user_column_info> 是设置了， C<each_column> 使用 C<user_column_info> 来 find column 的信息，会更加快.
+如果 C<user_column_info> 是设置了, C<each_column> 使用 C<user_column_info> 来 find column 的信息,会更加快.
 
 =head2 user_table_info
 
@@ -2492,22 +2496,22 @@ models, C<include_model> 的方法内用.
     {table => 'author', info => {...}}
   ]
 
-通常，你可以设置 C<get_table_info>. 的返回值。
+通常,你可以设置 C<get_table_info>. 的返回值.
 
   my $user_table_info = $dbi->get_table_info(exclude => qr/^system/);
   $dbi->user_table_info($user_table_info);
 
-如果 C<user_table_info> 设置了，C<each_table> 使用  C<user_table_info> 来查找表的信息.
+如果 C<user_table_info> 设置了,C<each_table> 使用  C<user_table_info> 来查找表的信息.
 
 =head1 METHODS
 
-L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的 L<DBI> 的方法，并实现了下面的这些.
+L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的 L<DBI> 的方法,并实现了下面的这些.
 
 =head2 available_datatype
 
   print $dbi->available_datatype;
 
-取得全部可用的数据类型。你可以使用 C<type rule> 的 C<from1> 和 C<from2> 的部分的 data type.
+取得全部可用的数据类型.你可以使用 C<type rule> 的 C<from1> 和 C<from2> 的部分的 data type.
 
 =head2 available_typename
 
@@ -2519,11 +2523,11 @@ L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的
 
   my $assign_clause = $dbi->assign_clause({title => 'a', age => 2});
 
-创建分配子句 clause
+创建分配子句 clause, 用于做键值对的存储之类使用.
 
-  title = :title, author = :author
+  title = :title, age = :age
 
-这是用于创建更新的子句。
+这是用于创建更新的子句.
 
   "update book set " . $dbi->assign_clause({title => 'a', age => 2});
 
@@ -2534,9 +2538,9 @@ L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的
     ...
   };
 
-数据库的异步访问。使用 L<AnyEvent> 实现，所以是必须的。
+数据库的异步访问.使用 L<AnyEvent> 实现,所以是必须的.
 
-这有个 MySQL 异步访问的例子。
+这有个 MySQL 异步访问的例子.
 
   use AnyEvent;
 
@@ -2581,12 +2585,12 @@ L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的
 
   my $column = $dbi->column(book => ['author', 'title']);
 
-创建列子句。按如下列子句创建
+创建列子句. 按如下列子句创建, 主要用于做自己的表名之类不需要手写.
 
   book.author as "book.author",
   book.title as "book.title"
 
-你可以修改分隔字符使用 C<separator> 的属性。
+你可以修改分隔字符使用 C<separator> 的属性.
 
   # Separator is hyphen
   $dbi->separator('-');
@@ -2603,10 +2607,10 @@ L<DBIx::Custom> 继承全部的 L<Object::Simple> 的方法和能使用全部的
     option => {mysql_enable_utf8 => 1}
   );
 
-连接和数据库并创建一个新的 L<DBIx::Custom> 的对象。
+连接和数据库并创建一个新的 L<DBIx::Custom> 的对象.
 
 L<DBIx::Custom> 内部是封装的 L<DBI>.
-C<AutoCommit> 和 C<RaiseError> 的选项默认为真，C<PrintError> 的选择默认为假。
+C<AutoCommit> 和 C<RaiseError> 的选项默认为真,C<PrintError> 的选择默认为假.
 
 =head2 count
 
@@ -2614,7 +2618,7 @@ C<AutoCommit> 和 C<RaiseError> 的选项默认为真，C<PrintError> 的选择�
 
 获取行计数.
 
-这个的选项和 C<select> 的方法一样。
+这个的选项和 C<select> 的方法一样.
 
 =head2 create_model
 
@@ -2626,7 +2630,7 @@ C<AutoCommit> 和 C<RaiseError> 的选项默认为真，C<PrintError> 的选择�
     ],
   );
 
-创建 L<DBIx::Custom::Model> 对象并初始化 model. 这个模块也可以使用 C<model> 的方法。
+创建 L<DBIx::Custom::Model> 对象并初始化 model. 这个模块也可以使用 C<model> 的方法.
 
  $dbi->model('book')->select(...);
 
@@ -2634,19 +2638,19 @@ C<AutoCommit> 和 C<RaiseError> 的选项默认为真，C<PrintError> 的选择�
 
   my $dbh = $dbi->dbh;
 
-得到数据库的 L<DBI> 的句柄。如果  C<connector> 是设置了，你可以从 C<connector> 的对象中取得数据库的句柄。
+得到数据库的 L<DBI> 的句柄.如果  C<connector> 是设置了,你可以从 C<connector> 的对象中取得数据库的句柄.
 
 =head2 delete
 
   $dbi->delete(table => 'book', where => {title => 'Perl'});
 
-执行删除声明。
+执行删除声明.
 
 有以下可用的选项.
 
 B<OPTIONS>
 
-C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现了下面这些。
+C<delete> 的方法可以使用 C<execute> 方法的全部选项,并且实现了下面这些.
 
 =over 4
 
@@ -2655,7 +2659,7 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
   id => 4
   id => [4, 5]
 
-这的 ID 应用到 C<primary_key>. 你可以由 C<id> 和 C<primary_key> 来删除行。
+这的 ID 应用到 C<primary_key>. 你可以由 C<id> 和 C<primary_key> 来删除行.
 
   $dbi->delete(
     primary_key => ['id1', 'id2'],
@@ -2683,7 +2687,7 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
 
 =item C<where>
 
-和 C<select> 方法的 C<where> 选择一样。
+和 C<select> 方法的 C<where> 选择一样.
 
 =back
 
@@ -2691,7 +2695,7 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
 
   $dbi->delete_all(table => $table);
 
-对全部的行执行删除声明。选项和 C<delete> 相同。
+对全部的行执行删除声明.选项和 C<delete> 相同.
 
 =head2 each_column
 
@@ -2707,11 +2711,11 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
     }
   );
 
-遍历数据库中所有的列的信息。
-每找到一行会执行一次。执行的参数是一个回调函数。
-回调函数接收到四个参数。 C<DBIx::Custom object>, C<table name>, C<column name>, 和 C<column information>.
+遍历数据库中所有的列的信息.
+每找到一行会执行一次.执行的参数是一个回调函数.
+回调函数接收到四个参数. C<DBIx::Custom object>, C<table name>, C<column name>, 和 C<column information>.
 
-如果 C<user_column_info> 的设置了，C<each_column> 方法直接使用 C<user_column_info> 中的信息，这是你提高 C<each_column> 的性能的方式.
+如果 C<user_column_info> 的设置了,C<each_column> 方法直接使用 C<user_column_info> 中的信息,这是你提高 C<each_column> 的性能的方式.
 
   my $column_infos = $dbi->get_column_info(exclude_table => qr/^system_/);
   $dbi->user_column_info($column_info);
@@ -2728,10 +2732,10 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
   );
 
 遍历数据库中所有的表信息.
-找到一个表会执行一次。执行的参数是一个回调函数。
-回调函数会接收到三个参数，C<DBIx::Custom object>, C<table name>,C<table information>.
+找到一个表会执行一次.执行的参数是一个回调函数.
+回调函数会接收到三个参数,C<DBIx::Custom object>, C<table name>,C<table information>.
 
-如果 C<user_table_info> 的设置了 C<each_table> 方法直接使用 C<user_table_info> 中的信息，这是你提高 C<each_table> 性能的方式.
+如果 C<user_table_info> 的设置了 C<each_table> 方法直接使用 C<user_table_info> 中的信息,这是你提高 C<each_table> 性能的方式.
 
   my $table_infos = $dbi->get_table_info(exclude => qr/^system_/);
   $dbi->user_table_info($table_info);
@@ -2749,11 +2753,9 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
     {'book.title' => 'Perl', 'book.author' => '%Ken%'}
   );
 
-执行 SQL. SQL 可以包含一些参数，象 :author 和 :title.
-您可以附加表名，列名，如 :book.title 和 :book.author 。
-第二个参数是数据，嵌入列参数。
-当 select 的声明执行后会返回 L<DBIx::Custom::Result> 的对象。
-要么当 insert, update, delete  声明时会返回影响的行数。
+执行 SQL. SQL 可以包含一些命名占位替换符, 象 :author 和 :title 这种命名占位替换符.  命名占位时您可以附加表名, 加在列名前面, 如 :book.title 和 :book.author . 
+第二个参数是数据, 根据上面嵌入行中的参数占位替换符. 当 select 的声明执行后会返回 L<DBIx::Custom::Result> 的对象.
+要么当 insert, update, delete  声明时会返回影响的行数.
 
 命名占位符, 象 C<:title> 是和 C<?> 的替换一样.
   
@@ -2763,7 +2765,7 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
   # 替换后
   select * from where title = ? and author like ?;
 
-你也可以自己来修改 C<name{operator}> 的语法指定命名占位符。
+你也可以自己来修改 C<name{operator}> 的语法指定命名占位符.
 
   # Original
   select * from book where :title{=} and :author{like}
@@ -2771,24 +2773,23 @@ C<delete> 的方法可以使用 C<execute> 方法的全部选项，并且实现�
   # Replaced
   select * from where title = ? and author like ?;
 
-Note that colons in time format such as 12:13:15 is exeption, it is not parsed as named placeholder.
-If you want to use colon generally, you must escape it by C<\\>
+注意在行中如果时间的格式是使用冒号分割象 12:13:15 这种. 这时做为命名点位符解析会失败. 如果在这个地方使用冒号做为命名占位符, 你需要使用 C<\\> 转义.
 
   select * from where title = "aa\\:bb";
 
 B<OPTIONS>
 
-The following opitons are available.
+有下列的选项是可用的.
 
 =over 4
 
 =item C<after_build_sql> 
 
-You can filter sql after the sql is build.
+在 SQL 被 build 之后, 你可以过滤它.
 
   after_build_sql => $code_ref
 
-The following one is one example.
+这是一个例子.
 
   $dbi->select(
     table => 'book',
@@ -2798,7 +2799,7 @@ The following one is one example.
     }
   );
 
-The following SQL is executed.
+会转换成执行下面的 SQL 语句.
 
   select count(*) from (select distinct(name) from book) as t1;
 
@@ -2806,23 +2807,24 @@ The following SQL is executed.
 
   append => 'order by name'
 
-Append some statement after SQL.
+在 SQL 的语句后面追加.
 
 =item C<prepare_attr> EXPERIMENTAL
 
   prepare_attr => {async => 1}
 
-Statemend handle attributes,
-this is L<DBI>'s C<prepare> method second argument.
+语句处理的属性.
+这是 L<DBI> 模块 C<prepare> 的方法的第二个参数.
 
 =item C<bind_type>
 
-Specify database bind data type.
+指定数据库绑定的数据类型.
 
   bind_type => [image => DBI::SQL_BLOB]
   bind_type => [[qw/image audio/] => DBI::SQL_BLOB]
 
-This is used to bind parameter by C<bind_param> of statment handle.
+
+这是 C<bind_param> 的语句句柄用于绑定参数的.
 
   $sth->bind_param($pos, $value, DBI::SQL_BLOB);
 
@@ -2844,17 +2846,13 @@ This is used to bind parameter by C<bind_param> of statment handle.
     [qw/title author/]  => sub { uc $_[0] }
   ]
 
-Filter. You can set subroutine or filter name
-registered by by C<register_filter>.
-This filter is executed before data is saved into database.
-and before type rule filter is executed.
+过滤器, 你可以设置一个子函数要么设置一个过滤器注册到 C<register_filter> 的过滤器名字. 这个过滤器执行在数据存储到数据库之前, 同时也工作在前面的类型过滤之前.
 
 =item C<query>
 
   query => 1
 
-C<execute> method return hash reference which contain SQL and column
-infromation
+C<execute> 方法返回哈希的引用，包含 SQL 和列信息
 
   my $sql = $query->{sql};
   my $columns = $query->{columns};
@@ -2863,35 +2861,33 @@ infromation
   
   reuse => $hash_ref
 
+如果上面的哈希的引用值设置了,就重用 query 的内容.
 Reuse query object if the hash reference variable is set.
   
   my $queries = {};
   $dbi->execute($sql, $param, reuse => $queries);
 
-This will improved performance when you want to execute same query repeatedly
-because generally creating query object is slow.
+这能很大的改进的性能, 当您想要执行多次相同的查询时, 因为一般创建查询对象很慢.
+This will improved performance when you want to execute same query repeatedly because generally creating query object is slow.
 
 =item C<primary_key>
 
   primary_key => 'id'
   primary_key => ['id1', 'id2']
 
-Priamry key. This is used for C<id> option.
+主键,这是使用 C<id> 的选项.
 
 =item C<select> EXPERIMETAL
 
   select => 1
 
-If you set C<select> to 1, this statement become select statement
-and return value is always L<DBIx::Custom::Result> object.
+如果设置 C<select> 为 1 , 这个语句会变成 select 的语句并总是返回  L<DBIx::Custom::Result> 的对象.
 
 =item C<table>
   
   table => 'author'
 
-If you want to omit table name in column name
-and enable C<into1> and C<into2> type filter,
-You must set C<table> option.
+如果你想在语句中省略表名中的列名称, 你需要设置 C<table> 的选项. 使用 type_rule 的需要启用.
 
   $dbi->execute("select * from book where title = :title and author = :author",
     {title => 'Perl', author => 'Ken', table => 'book');
@@ -2905,27 +2901,25 @@ You must set C<table> option.
 
   table_alias => {worker => 'user'} # {ALIAS => TABLE}
 
-Table alias. Key is alias table name, value is real table name, .
-If you set C<table_alias>, you can enable C<into1> and C<into2> type rule
-on alias table name.
+表别名, key 是表的别名, 值是真实的表名. 使用 type_rule 的需要启用.
 
 =item C<type_rule_off>
 
   type_rule_off => 1
 
-Turn C<into1> and C<into2> type rule off.
+关掉 C<into1>  和 C<into2> 的 type rule 功能.
 
 =item C<type_rule1_off>
 
   type_rule1_off => 1
 
-Turn C<into1> type rule off.
+关掉 C<into1>  的 type rule 功能.
 
 =item C<type_rule2_off>
 
   type_rule2_off => 1
 
-Turn C<into2> type rule off.
+关掉 C<into2> 的 type rule 功能.
 
 =back
 
@@ -2933,7 +2927,7 @@ Turn C<into2> type rule off.
 
   my $column_infos = $dbi->get_column_info(exclude_table => qr/^system_/);
 
-get column infomation except for one which match C<exclude_table> pattern.
+取得 infomation 的列, 除了  C<exclude_table> 模式外的.
 
   [
     {table => 'book', column => 'title', info => {...}},
@@ -2944,14 +2938,14 @@ get column infomation except for one which match C<exclude_table> pattern.
 
   my $table_infos = $dbi->get_table_info(exclude => qr/^system_/);
 
-get table infomation except for one which match C<exclude> pattern.
+取得表信息, 除了 C<exclude>  模式外的.
 
   [
     {table => 'book', info => {...}},
     {table => 'author', info => {...}}
   ]
 
-You can set this value to C<user_table_info>.
+你可以设置 C<user_table_info> 的值.
 
 =head2 helper
 
@@ -2964,7 +2958,7 @@ You can set this value to C<user_table_info>.
     ...
   );
 
-Register helper. These helper is called directly from L<DBIx::Custom> object.
+注册 helper. 这些 helper 可以在 L<DBIx::Custom> 对象中直接调用.
 
   $dbi->find_or_create;
 
@@ -2972,15 +2966,15 @@ Register helper. These helper is called directly from L<DBIx::Custom> object.
 
   $dbi->insert({title => 'Perl', author => 'Ken'}, table  => 'book');
 
-Execute insert statement. First argument is row data. Return value is
-affected row count.
+执行 insert 语句. 第一个参数是行数据, 返回值是被影响的行的数量.
 
+如果你想设置经常使用的行的数据, 使用标量引用参数的值就好了.
 If you want to set constant value to row data, use scalar reference
 as parameter value.
 
   {date => \"NOW()"}
 
-You can pass multiple parameters, this is very fast.
+你要传多个参数, 这也非常的方便.
 
   $dbi->insert(
     [
@@ -2990,13 +2984,11 @@ You can pass multiple parameters, this is very fast.
     table  => 'book'
   );
 
-In multiple insert, you can't use C<id> option.
-and only first parameter is used to create sql.
+这的多个 insert , 你没法使用 C<id>的选项并且只有一个首参数来创建  SQL .
 
 B<options>
 
-C<insert> method use all of C<execute> method's options,
-and use the following new ones.
+这个 C<insert> 的方法使用 C<execute> 方法的全部选项并有自己的下面这些.
 
 =over 4
 
@@ -3004,9 +2996,7 @@ and use the following new ones.
 
   bulk_insert => 1
 
-bulk insert is executed if database support bulk insert and 
-multiple parameters is passed to C<insert>.
-The SQL like the following one is executed.
+批量插入, 如果数据库支持批量插入会给多个参数传送传给 C<insert>. 这 SQL 看起来象下面这样执行.
 
   insert into book (id, title) values (?, ?), (?, ?);
 
@@ -3014,17 +3004,14 @@ The SQL like the following one is executed.
 
   ctime => 'created_time'
 
-Created time column name. time when row is created is set to the column.
-default time format is "YYYY-mm-dd HH:MM:SS", which can be changed by
-C<now> attribute.
+创建时间的列名. 这时间是当行被创建的时候设置上去的. 默认的格式是 "YYYY-mm-dd HH:MM:SS", 我们也可以使用 C<now> 的属性来修改这个参数.
 
 =item C<id>
 
   id => 4
   id => [4, 5]
 
-ID corresponding to C<primary_key>.
-You can insert a row by C<id> and C<primary_key>.
+ID 等同于 C<primary_key>. 你可以 insert 列中使用 C<id> 和 C<primary_key>.
 
   $dbi->insert(
     {title => 'Perl', author => 'Ken'}
@@ -3033,7 +3020,7 @@ You can insert a row by C<id> and C<primary_key>.
     table => 'book'
   );
 
-The above is same as the followin one.
+这个和下面是一样的.
 
   $dbi->insert(
     {id1 => 4, id2 => 5, title => 'Perl', author => 'Ken'},
@@ -3044,7 +3031,7 @@ The above is same as the followin one.
 
   prefix => 'or replace'
 
-prefix before table name section
+表名前的部分加一个前缀.
 
   insert or replace into book
 
@@ -3052,24 +3039,24 @@ prefix before table name section
 
   table => 'book'
 
-Table name.
+表名.
 
 =item C<mtime>
 
-This option is same as C<update> method C<mtime> option.
+这个选项和 C<update> 方法中的  C<mtime> 选项是一样的.
 
 =item C<wrap>
 
   wrap => {price => sub { "max($_[0])" }}
 
-placeholder wrapped string.
+占位符包裹的字符串.
 
-If the following statement
+如果有下面的语句.
 
   $dbi->insert({price => 100}, table => 'book',
     {price => sub { "$_[0] + 5" }});
 
-is executed, the following SQL is executed.
+在执行时, 下面的 SQL 会被执行.
 
   insert into book price values ( ? + 5 );
 
@@ -3081,14 +3068,13 @@ is executed, the following SQL is executed.
 
   $dbi->include_model('MyModel');
 
-Include models from specified namespace,
-the following layout is needed to include models.
+从指定的名字空间导入 models. 下面的层次是必须包含进来的 models.
 
   lib / MyModel.pm
       / MyModel / book.pm
                 / company.pm
 
-Name space module, extending L<DBIx::Custom::Model>.
+名字空间的模块, 扩展是由 L<DBIx::Custom::Model> 实现.
 
 B<MyModel.pm>
 
@@ -3097,7 +3083,7 @@ B<MyModel.pm>
   
   1;
 
-Model modules, extending name space module.
+模块的名字, 扩展的名字空间.
 
 B<MyModel/book.pm>
 
@@ -3113,14 +3099,14 @@ B<MyModel/company.pm>
   
   1;
   
-MyModel::book and MyModel::company is included by C<include_model>.
+MyModel::book 和 MyModel::company 是会被包含进 C<include_model>.
 
-You can get model object by C<model>.
+你可以通过 C<model> 取得 model 的对象.
 
   my $book_model = $dbi->model('book');
   my $company_model = $dbi->model('company');
 
-You can include full-qualified table name like C<main.book>
+可以包含完全限定的表名, 象  C<main.book>.
 
   lib / MyModel.pm
       / MyModel / main / book.pm
@@ -3128,13 +3114,13 @@ You can include full-qualified table name like C<main.book>
 
   my $main_book = $self->model('main.book');
 
-See L<DBIx::Custom::Model> to know model features.
+看  L<DBIx::Custom::Model> 有更多详细的内容.
 
 =head2 like_value
 
   my $like_value = $dbi->like_value
 
-Code reference which return a value for the like value.
+这个代码引用返回一个 like 的值.
 
   sub { "%$_[0]%" }
 
@@ -3142,30 +3128,29 @@ Code reference which return a value for the like value.
 
   my $mapper = $dbi->mapper(param => $param);
 
-Create a new L<DBIx::Custom::Mapper> object.
+创建一个新的 L<DBIx::Custom::Mapper> 的对象.
 
 =head2 merge_param
 
   my $param = $dbi->merge_param({key1 => 1}, {key1 => 1, key2 => 2});
 
-Merge parameters. The following new parameter is created.
+合并参数, 下面新的参数会被创建.
 
   {key1 => [1, 1], key2 => 2}
 
-If same keys contains, the value is converted to array reference.
+如果有相同的 key , 这些值会被转换成数组引用.
 
 =head2 model
 
   my $model = $dbi->model('book');
 
-Get a L<DBIx::Custom::Model> object
-create by C<create_model> or C<include_model>
+取得 L<DBIx::Custom::Model> 对象,是由 C<create_model> or C<include_model> 创建的.
 
 =head2 mycolumn
 
   my $column = $dbi->mycolumn(book => ['author', 'title']);
 
-Create column clause for myself. The follwoing column clause is created.
+我们创建一个自己的 column 子句., 下面的子句会被创建.
 
   book.author as author,
   book.title as title
@@ -3179,20 +3164,20 @@ Create column clause for myself. The follwoing column clause is created.
     option => {mysql_enable_utf8 => 1}
   );
 
-Create a new L<DBIx::Custom> object.
+创建 L<DBIx::Custom> 的对象.
 
 =head2 not_exists
 
   my $not_exists = $dbi->not_exists;
 
-DBIx::Custom::NotExists object, indicating the column is not exists.
+DBIx::Custom::NotExists 的对象, 表示此列不存在.
 This is used in C<param> of L<DBIx::Custom::Where> .
 
 =head2 order
 
   my $order = $dbi->order;
 
-Create a new L<DBIx::Custom::Order> object.
+创建一个 L<DBIx::Custom::Order> 的对象.
 
 =head2 q
 
@@ -3215,7 +3200,7 @@ Quote string by value of C<quote>.
     }
   );
   
-Register filters, used by C<filter> option of many methods.
+注册过滤器, 这是其它方法中使用 C<filter>  的选项.
 
 =head2 select
 
@@ -3225,16 +3210,15 @@ Register filters, used by C<filter> option of many methods.
     where  => {author => 'Ken'},
   );
   
-Execute select statement.
+执行 select 语句.
 
-You can pass odd number arguments. first argument is C<column>.
+您可以通过奇数参数. 第一个参数是 C<column>.
 
   my $result = $dbi->select(['author', 'title'], table => 'book');
 
 B<OPTIONS>
 
-C<select> method use all of C<execute> method's options,
-and use the following new ones.
+在 C<select> 方法中使用了 C<execute> 方法的全部选项并使用了下面的新的一些. 
 
 =over 4
 
@@ -3243,28 +3227,27 @@ and use the following new ones.
   column => 'author'
   column => ['author', 'title']
 
-Column clause.
+Clumn 子句
   
-if C<column> is not specified, '*' is set.
+如果 C<column> 没有指定, 默认是那就是 '*'.
 
   column => '*'
 
-You can specify hash of array reference.
+你可以指定数组的 hash 引用.
 
   column => [
     {book => [qw/author title/]},
     {person => [qw/name age/]}
   ]
 
-This is expanded to the following one by using C<colomn> method.
+这样如果展开就是下面的这样.
 
   book.author as "book.author",
   book.title as "book.title",
   person.name as "person.name",
   person.age as "person.age"
 
-You can specify array of array reference, first argument is
-column name, second argument is alias.
+你也可以指定数组的数组引用, 第一个参数是列名, 第二个参数是别名.
 
   column => [
     ['date(book.register_datetime)' => 'book.register_date']
@@ -3279,8 +3262,7 @@ Alias is quoted properly and joined.
   id => 4
   id => [4, 5]
 
-ID corresponding to C<primary_key>.
-You can select rows by C<id> and C<primary_key>.
+和 ID 对应的其实是 C<primary_key>. 你也可以 select 行的时候指定 C<id> 和 C<primary_key>.
 
   $dbi->select(
     primary_key => ['id1', 'id2'],
@@ -3288,7 +3270,7 @@ You can select rows by C<id> and C<primary_key>.
     table => 'book'
   );
 
-The above is same as the followin one.
+这个和下面使用的方法是一样.
 
   $dbi->select(
     where => {id1 => 4, id2 => 5},
@@ -3299,10 +3281,9 @@ The above is same as the followin one.
 
   param => {'table2.key3' => 5}
 
-Parameter shown before where clause.
+param 是给在 where 子句之前的.
   
-For example, if you want to contain named placeholder in join clause, 
-you can pass parameter by C<param> option.
+象下面的例子中, 如果你在 join 子句中想给名字替换成指定的参数, 你可以通过  C<param> 的选项.
 
   join  => ['inner join (select * from table2 where table2.key3 = :table2.key3)' . 
             ' as table2 on table1.key1 = table2.key1']
@@ -3311,7 +3292,7 @@ you can pass parameter by C<param> option.
 
   prefix => 'SQL_CALC_FOUND_ROWS'
 
-Prefix of column cluase
+column 子句的前缀字符.
 
   select SQL_CALC_FOUND_ROWS title, author from book;
 
@@ -3322,8 +3303,8 @@ Prefix of column cluase
     'left outer join location on company.location_id = location.id'
   ]
       
-Join clause. If column cluase or where clause contain table name like "company.name",
-join clausees needed when SQL is created is used automatically.
+Join 子句. 如果列子句或表名 where 子句包含象  "company.name" 的表名.
+join 的子句在 SQL 创建的时候自动使用.
 
   $dbi->select(
     table => 'book',
@@ -3335,16 +3316,14 @@ join clausees needed when SQL is created is used automatically.
     ]
   );
 
-In above select, column and where clause contain "company" table,
-the following SQL is created
+根据上面的 Select 的内容, 列和 where 子句 包含 "company"  的表, 会生成下面这样的 SQL 语句.
 
   select company.location_id as location_id
   from book
     left outer join company on book.company_id = company.id
   where company.name = ?;
 
-You can specify two table by yourself. This is useful when join parser can't parse
-the join clause correctly.
+你自己可以指定二个表,这常常在 join 解析的时候可以用到.
 
   $dbi->select(
     table => 'book',
@@ -3362,7 +3341,7 @@ the join clause correctly.
 
   table => 'book'
 
-Table name.
+列名.
 
 =item C<where>
   
@@ -3395,8 +3374,7 @@ Table name.
   where => 'title is null'
   #  -> where title is null
 
-Where clause.
-See also L<DBIx::Custom::Where> to know how to create where clause.
+Where 子句. 你可以看看 L<DBIx::Custom::Where> 中有更加多的 where 子句.
   
 =back
 
@@ -3404,8 +3382,7 @@ See also L<DBIx::Custom::Where> to know how to create where clause.
 
   $dbi->setup_model;
 
-Setup all model objects.
-C<columns> of model object is automatically set, parsing database information.
+设置全部的 model 对象. C<columns> 的 model 对象会自动设置.
 
 =head2 type_rule
 
@@ -3678,33 +3655,31 @@ You can use this in insert statement.
 Create a new L<DBIx::Custom::Where> object.
 See L<DBIx::Custom::Where> to know how to create where clause.
 
-=head1 ENVIRONMENTAL VARIABLES
+=head1 环境变量
 
 =head2 DBIX_CUSTOM_DEBUG
 
-If environment variable C<DBIX_CUSTOM_DEBUG> is set to true,
-executed SQL and bind values are printed to STDERR.
+如果环境变量中 C<DBIX_CUSTOM_DEBUG> 是设置为真, 在执行 SQL 和 bind 值时会打印相关的语句到 STDERR.
 
 =head2 DBIX_CUSTOM_DEBUG_ENCODING
 
-DEBUG output encoding. Default to UTF-8.
+DEBUG 输出默认的编码, 不写的话是 UTF-8.
 
 =head2 DBIX_CUSTOM_DISABLE_MODEL_EXECUTE
 
-If you set DBIX_CUSTOM_DISABLE_MODEL_EXECUTE to 1,
-L<DBIx::Custom::Model> execute method call L<DBIx::Custom> execute.
+如果给 DBIX_CUSTOM_DISABLE_MODEL_EXECUTE 设置为 1, 这个  L<DBIx::Custom::Model> 执行的方法会调用 L<DBIx::Custom> 来执行.
 
 =head2 DBIX_CUSTOM_SUPPRESS_DEPRECATION
 
   $ENV{DBIX_CUSTOM_SUPPRESS_DEPRECATION} = '0.25';
 
-Suppress deprecation warnings before specified version.
+禁用弃用的版本警告.
 
 =head2 DBIX_CUSTOM_TAG_PARSE
 
-If you set DBIX_CUSTOM_TAG_PARSE to 0, tag parsing is off.
+如果设置 DBIX_CUSTOM_TAG_PARSE  为 0 , 会关掉标签解析.
 
-=head1 DEPRECATED FUNCTIONALITY
+=head1 弃用的功能 
 
 L<DBIx::Custom>
 
