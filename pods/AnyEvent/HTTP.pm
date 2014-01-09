@@ -127,11 +127,11 @@ message. Currently the following status codes are used:
 
 =item 595 - errors during connection etsbalishment, proxy handshake.
 
-=item 596 - errors during TLS negotiation, request sending and header processing.
+=item 596 - 错误发生面 TLS 协商过程, 请求发送中和 header 处理过程中.
 
-=item 597 - errors during body receiving or processing.
+=item 597 - 错误发生面 body 接收和处理的过程中.
 
-=item 598 - user aborted request via C<on_header> or C<on_body>.
+=item 598 - 用户通过  C<on_header> 或 C<on_body> 的过程中断.
 
 =item 599 - other, usually nonretryable, errors (garbled URL etc.).
 
@@ -264,21 +264,13 @@ but fast) host => IP address caching or even socks protocol support.
 
 =item on_header => $callback->($headers)
 
-When specified, this callback will be called with the header hash as soon
-as headers have been successfully received from the remote server (not on
-locally-generated errors).
+当指定时, 这个回调会在 header 头只要当正常的从远程的服务器上接收到后就调用.
 
-It has to return either true (in which case AnyEvent::HTTP will continue),
-or false, in which case AnyEvent::HTTP will cancel the download (and call
-the finish callback with an error code of C<598>).
+这个时候必须返回真 (只有这样 AnyEvent  才会接着连接). 如果是假, 这时 AnyEvent::HTTP 会取消下载(并调用完成的回调响应 C<598>).
 
-This callback is useful, among other things, to quickly reject unwanted
-content, which, if it is supposed to be rare, can be faster than first
-doing a C<HEAD> request.
+这个回调非常有用, 比如, 要迅速拒绝不想要的内容, 如果这个内容我们确认是不支持的. 可能比做一次 C<HEAD> 请求更加快.
 
-The downside is that cancelling the request makes it impossible to re-use
-the connection. Also, the C<on_header> callback will not receive any
-trailer (headers sent after the response body).
+不太方便的地方是, 当这个地方返回假会让这个连接没法重用. 此外, 使用 C<on_header> 回调后不会收到任何预告. 
 
 Example: cancel the request unless the content-type is "text/html".
 
@@ -1237,42 +1229,33 @@ timestamp, or C<undef> if the date cannot be parsed.
 
 =item $AnyEvent::HTTP::MAX_RECURSE
 
-The default value for the C<recurse> request parameter (default: C<10>).
+默认的  C<recurse> 请求的数量  (default: C<10>).
 
 =item $AnyEvent::HTTP::TIMEOUT
 
-The default timeout for connection operations (default: C<300>).
+连接操作的默认超时 (default: C<300>).
 
 =item $AnyEvent::HTTP::USERAGENT
 
-The default value for the C<User-Agent> header (the default is
-C<Mozilla/5.0 (compatible; U; AnyEvent-HTTP/$VERSION; +http://software.schmorp.de/pkg/AnyEvent)>).
+默认的 C<User-Agent> 的 header.
+
+(the default is C<Mozilla/5.0 (compatible; U; AnyEvent-HTTP/$VERSION; +http://software.schmorp.de/pkg/AnyEvent)>).
 
 =item $AnyEvent::HTTP::MAX_PER_HOST
 
-The maximum number of concurrent connections to the same host (identified
-by the hostname). If the limit is exceeded, then the additional requests
-are queued until previous connections are closed. Both persistent and
-non-persistent connections are counted in this limit.
+并发连接到同一个主机的最大数目 (由主机名标识). 如果超过限制，那么额外的请求进行排队，直到以前的连接被关闭. 持久性和非持久性连接都算在这个限制.
 
-The default value for this is C<4>, and it is highly advisable to not
-increase it much.
+默认值是 C<4>, 强烈建议你不要增加这个参数.
 
-For comparison: the RFC's recommend 4 non-persistent or 2 persistent
-connections, older browsers used 2, newers (such as firefox 3) typically
-use 6, and Opera uses 8 because like, they have the fastest browser and
-give a shit for everybody else on the planet.
+为了方便比较: RFC 建议是使用 4 个非持久性或 2 个持久连接, 在旧的一些浏览器是使用 2 个. 新的象 (Firefox 3 以后)是使用 6 个. 但 Opera 是使用 8 个. 
 
 =item $AnyEvent::HTTP::PERSISTENT_TIMEOUT
 
-The time after which idle persistent conenctions get closed by
-AnyEvent::HTTP (default: C<3>).
+这个是指闲置多久后这个连接会被 AnyEvent::HTTP 关掉. (default: C<3>).
 
 =item $AnyEvent::HTTP::ACTIVE
 
-The number of active connections. This is not the number of currently
-running requests, but the number of currently open and non-idle TCP
-connections. This number can be useful for load-leveling.
+活动的连接数, 这是指目前打开的和非空闲的 TCP 连接数. 这个数字对于负载均衡相关有用.
 
 =back
 

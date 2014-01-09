@@ -386,52 +386,31 @@ L<C<svp()>|/"svp"> for the goods.
 
 =head1 Usage
 
-Unlike L<Apache::DBI> and L<C<connect_cached()>|DBI/connect_cached>,
-DBIx::Connector doesn't cache database handles. Rather, for a given
-connection, it makes sure that the connection is just there whenever you want
-it, to the extent possible. The upshot is that it's safe to create a
-connection and then keep it around for as long as you need it, like so:
+不同于 L<Apache::DBI> 和 L<C<connect_cached()>|DBI/connect_cached>, DBIx::Connector 并不会缓存数据库句柄. 而是, 对于给定的连接, 只要你想使用, 它就能保证连接一定存在(尽可能). 它主要实现是在安全的情况下创建连接, 并且保持这个连接,只要你需要使用它. 象下面这样创建.
 
   my $conn = DBIx::Connector->new(@args);
 
-You can store the connection somewhere in your app where you can easily access
-it, and for as long as it remains in scope, it will try its hardest to
-maintain a database connection. Even across C<fork>s (especially with DBI
-1.614 and higher) and new threads, and even calls to
-C<< $conn->dbh->disconnect >>. When you don't need it anymore, let it go out
-of scope and the database connection will be closed.
+这样你就能给连接存储在你应用程序当中, 在你的名字空间可以访问到的范围, 都很容易的访问到它, 由它来管理最难维护的数据库连接. 就算是在 fork （特别在DBI1.614及更高版本）和新的线程和调用 C<< $conn->dbh->disconnect >> 都没问题. 当你不需要使用它, 只需要离开这个名字空间的范围数据库就会自动关闭.
 
-The upshot is that your code is responsible for hanging onto a connection for
-as long as it needs it. There is no magical connection caching like in
-L<Apache::DBI|Apache::DBI> and L<C<connect_cached()>|DBI/connect_cached>.
+最终效果就是, 当你的代码只要需要连接, 就会挂到一个数据库的连接当中. 但这并没有象  L<Apache::DBI|Apache::DBI> and L<C<connect_cached()>|DBI/connect_cached> 当中那种使用神奇的连接缓存.
 
-=head2 Execution Methods
+=head2 Execution Methods 执行的方法
 
-The real utility of DBIx::Connector comes from the use of the execution
-methods, L<C<run()>|/"run">, L<C<txn()>|/"txn">, or L<C<svp()>|/"svp">.
-Instead of this:
+这个 DBIx::Connector 的实际功能来源于执行的方法 L<C<run()>|/"run">, L<C<txn()>|/"txn">, or L<C<svp()>|/"svp">. 代替下面这个:
 
   $conn->dbh->do($query);
 
-Try this:
+试试这个:
 
   $conn->run(sub { $_->do($query) }); # returns retval from the sub {...}
 
-The difference is that the C<run()> optimistically assumes that an existing
-database handle is connected and executes the code reference without pinging
-the database. The vast majority of the time, the connection will of course
-still be open. You therefore save the overhead of a ping query every time you
-use C<run()> (or C<txn()>).
+这个不同之处在于 C<run()> 方法会乐观地假设现有数据库句柄是连接的并执行这个代码引用, 而无需执行 ping 数据库来检查死活. 因为绝大多数时候, 这个连接还是会有效能正常的使用. 所以你每次使用  C<run()> (or C<txn()>) 的时候都节省一个 ping 查询的开销.
 
-Of course, if a block passed to C<run()> dies because the DBI isn't actually
-connected to the database you'd need to catch that failure and try again.
-DBIx::Connector provides a way to overcome this issue: connection modes.
+当然, 如果使用 C<run()> 时因为 DBI 上的数据库连接因为一些故障并不真的存在时会在次尝试. 这个 DBIx::Connector 也提供了另一种方式来解决这个问题, 就是: 连接模式 connection modes.
 
-=head3 Connection Modes
+=head3 Connection Modes 连接模式
 
-When calling L<C<run()>|/"run">, L<C<txn()>|/"txn">, or L<C<svp()>|/"svp">,
-each executes within the context of a "connection mode." The supported modes
-are:
+当调用  L<C<run()>|/"run">, L<C<txn()>|/"txn">, or L<C<svp()>|/"svp">, 时都可以使用这个内部的连接模式. 所支持的模式如下:
 
 =over
 
@@ -638,48 +617,31 @@ for the drivers for details:
 
   my $dbh = DBIx::Connector->connect($dsn, $username, $password, \%attr);
 
-Syntactic sugar for:
+语法糖:
 
   my $dbh = DBIx::Connector->new(@args)->dbh;
 
-Though there's probably not much point in that, as you'll generally want to
-hold on to the DBIx::Connector object. Otherwise you'd just use the L<DBI>,
-no?
+这个地方这个可能没有太多的意义, 因为通常你想使用 DBIx::Connector 的对象, 但如果你只想使用 L<DBI> 的话.
 
-=head2 Instance Methods
+=head2 Instance Methods 实例方法
 
 =head3 C<dbh>
 
   my $dbh = $conn->dbh;
 
-Returns the connection's database handle. It will use a an existing handle if
-there is one, if the process has not been C<fork>ed or a new thread spawned,
-and if the database is pingable. Otherwise, it will instantiate, cache, and
-return a new handle.
+反正一个数据库连接的句柄. 如果存在现有的,这会提供现有的句柄给你. 如果进程是 C<fork> 了以后或者产生了新线程, 这时数据库是可 ping 的, 就会实例代一个新的句柄, 并缓存起来并返回.
 
-When called from blocks passed to L<C<run()>|/"run">, L<C<txn()>|/"txn">, and
-L<C<svp()>|/"svp">, C<dbh()> assumes that the pingability of the database is
-handled by those methods and skips the C<ping()>. Otherwise, it performs all
-the same validity checks. The upshot is that it's safe to call C<dbh()> inside
-those blocks without the overhead of multiple C<ping>s. Indeed, it's
-preferable to do so if you're doing lots of non-database processing in those
-blocks.
+当代码块是通过 L<C<run()>|/"run">, L<C<txn()>|/"txn">, 或者 L<C<svp()>|/"svp"> 调用, 这时 C<dbh()> 句柄会假定数据库的 ping 的死活检查是通过其它的方法来检查, 并跳过 C<ping> 的检查. 事实上，这最好这么做，所以如果你正在做大量的非数据库本身需要处理的那些, 时间都会用在死活检查上.
 
 =head3 C<run>
 
   $conn->run(ping => sub { $_->do($query) });
 
-Simply executes the block, setting C<$_> to and passing in the database
-handle. Returns the value returned by the block in scalar or array context as
-appropriate (and the block can use C<wantarray> to decide what to do).
+简单的执行这个块的代码, 设置 C<$_> 为数据库的句柄. 根据不同的环境返回块的值为标量或者数组.
 
-An optional first argument sets the connection mode, overriding that set in
-the C<mode()> accessor, and may be one of C<ping>, C<fixup>, or C<no_ping>
-(the default). See L</"Connection Modes"> for further explication.
+有个可选的第一个参数, 就是设置连接的模式, 这会覆盖原来的设置. 这可以选择的参数有  C<ping>, C<fixup>, 或 C<no_ping>(默认) 中任何一个.
 
-For convenience, you can nest calls to C<run()> (or C<txn()> or C<svp()>),
-although the connection mode will be invoked to check the connection (or not)
-only in the outer-most block method call.
+为了方便, 你也可以嵌套调用到 C<run()> (or C<txn()> or C<svp()>), 这样连接模式用于检查连接的调用只会在最外层的块中调用并执行.
 
   $conn->txn(fixup => sub {
       my $dbh = shift;
@@ -692,21 +654,16 @@ only in the outer-most block method call.
       });
   });
 
-All code executed inside the top-level call to C<txn()> will be executed in a
-single transaction. If you'd like subtransactions, nest L<C<svp()>|/svp>
-calls.
+顶层调用 C<txn()> 会给所有执行的代码都放到一个事务中执行. 如果你想使用子事务, 你可以使用 L<C<svp()>|/svp>  的调用.
 
-It's preferable to use C<dbh()> to fetch the database handle from within the
-block if your code is doing lots of non-database stuff (shame on you!):
+如果你的代码块要做大量非数据库的操作, 你最好从 C<dbh()> 中来取得句柄:
 
   $conn->run(ping => sub {
       parse_gigabytes_of_xml(); # Get this out of the transaction!
       $conn->dbh->do($query);
   });
 
-This is because C<dbh()> will better ensure that the database handle is active
-and C<fork>- and thread-safe, although it will never C<ping()> the database
-when called from inside a C<run()>, C<txn()> or C<svp()> block.
+因为 C<dbh()> 会更加好的保证数据库句柄是活着的并且保证 C<fork> 和线程安全. 尽管它在 C<run()>, C<txn()> or C<svp()> 内部调用的时候并不会 C<ping()> 数据库.
 
 =head3 C<txn>
 

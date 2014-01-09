@@ -361,7 +361,7 @@ L<Plack> 为你提供了许多服务器和协议适配器，例如  C<FCGI>, C<S
 
   app->start;
 
-因为记时器和其它的事件 watchers 一样独立于应用，错误会自动的记录到日志，如果你想自己完成回调，可以订阅 L<Mojo::Reactor/"error"> 的回调。
+因为记时器和其它的事件 watchers 独立于应用，错误不会自动的记录到日志，如果你想修改，可以要象下面一样订阅 L<Mojo::Reactor/"error"> 的回调。
 
   # Forward error messages to the application log
   Mojo::IOLoop->singleton->reactor->on(error => sub {
@@ -572,7 +572,6 @@ L<Mojolicious> 中包含了基于 L<Mojo::EventEmitter> 的一些非常复杂的
 =head2 事件循环 
 
 在内部的 L<Mojo::IOLoop> 的事件环可以使用多种不同的后端， 例如，安装了 L<EV>  就会自动的使用。也可以使用其它的也能正常工作.
-Internally the L<Mojo::IOLoop> event loop can use multiple reactor backends, L<EV> for example will be automatically used if installed. Which in turn allows other event loops like L<IO::Async> to just work.
 
   use Mojolicious::Lite;
   use EV;

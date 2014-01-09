@@ -5,8 +5,9 @@ use Smart::Comments;
 
 app->secret('foo')->config(hypnotoad => {listen => ['http://*:8000']});
 
-
+unshift @INC, '/data/mojo/mojo/pods';
 plugin 'PODRenderer';
+
 
 
 hook before_dispatch => sub {

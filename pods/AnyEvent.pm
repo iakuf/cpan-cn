@@ -543,100 +543,60 @@ program is otherwise idle:
    $cv->send (<list>);
    my @res = $cv->recv;
 
-If you are familiar with some event loops you will know that all of them
-require you to run some blocking "loop", "run" or similar function that
-will actively watch for new events and call your callbacks.
+如果你了解一些事件循环, 你可能会知道, 所有的这些事件程序都需要你运行一些阻塞的  "loop", "run" 或类似的功能, 这个功能会关注(watch)你的活动的事件, 并在合适的时候调用回调.
 
-AnyEvent is slightly different: it expects somebody else to run the event
-loop and will only block when necessary (usually when told by the user).
+AnyEvent 有点不同: 它期望其它人来运行事件循环, 只在必要的时候才会 block(通常由用户通知).
 
-The tool to do that is called a "condition variable", so called because
-they represent a condition that must become true.
+实现这个功能的东西叫 "状态变量 condition variable". 因为他们代表条件必须为真.
 
-Now is probably a good time to look at the examples further below.
+我们下面会进一步来讲这个.
 
-Condition variables can be created by calling the C<< AnyEvent->condvar
->> method, usually without arguments. The only argument pair allowed is
-C<cb>, which specifies a callback to be called when the condition variable
-becomes true, with the condition variable as the first argument (but not
-the results).
+可以使用 C<< AnyEvent->condvar >> 方法来创造状态变量, 通常不需要参数, 如果有参数的话, 就只有 C<cb> 这个回调的参数对, 它用于指定了一个回调, 当状态变量为真的时候, 状态变量的对象作为第一个参数(而不是结果).
 
-After creation, the condition variable is "false" until it becomes "true"
-by calling the C<send> method (or calling the condition variable as if it
-were a callback, read about the caveats in the description for the C<<
-->send >> method).
+创建状态变量的对象后, 默认条件是假, 直到它由 C<send> 方法调用变成真(或者调用状态变量就当它是回调一样, 详细说明看 C<< ->send > 的方法);
 
-Since condition variables are the most complex part of the AnyEvent API, here are
-some different mental models of what they are - pick the ones you can connect to:
+由于这个状态变量是 AnyEvent 中最复杂的部分, 这有一些不同的模型, 你可以直接看看:
 
 =over 4
 
-=item * Condition variables are like callbacks - you can call them (and pass them instead
-of callbacks). Unlike callbacks however, you can also wait for them to be called.
+=item * 状态变量就象回调 - 你可以调用它们(替换那个回调). 不同于回调的地方在于, 你可以等待它们直到被调用. 
 
-=item * Condition variables are signals - one side can emit or send them,
-the other side can wait for them, or install a handler that is called when
-the signal fires.
+=item * 状态变量是一个信号 - 一边可以用于发送或者发出, 另一侧可以等待或者是一个处理程序, 它信号发生时.
 
-=item * Condition variables are like "Merge Points" - points in your program
-where you merge multiple independent results/control flows into one.
+=item * 状态变量象一个合并点 "Merge Points" - 这个点用于在程序中合并多个独立的 results/control 流.
 
-=item * Condition variables represent a transaction - functions that start
-some kind of transaction can return them, leaving the caller the choice
-between waiting in a blocking fashion, or setting a callback.
+=item * 状态变量代表一个事务处理 - 开始并返回某种事务处理的功能, 当离开调用的时候选择等待阻塞的方式要么设置一个回调.
 
-=item * Condition variables represent future values, or promises to deliver
-some result, long before the result is available.
+=item * 状态变量代表以后的值, 或者承诺提供一些结果, 之前很久的结果可用的.
 
 =back
 
-Condition variables are very useful to signal that something has finished,
-for example, if you write a module that does asynchronous http requests,
-then a condition variable would be the ideal candidate to signal the
-availability of results. The user can either act when the callback is
-called or can synchronously C<< ->recv >> for the results.
+状态变量对于一个任务完成时是一个非常有用的信号, 例如, 如果你写一个模块异步的 http 请求, 这个状态变量理想的变量信号是得到可用的结果. 当用户有了这个时可以调用回调或同步的通过 C<< ->recv >> 得到结果.
 
-You can also use them to simulate traditional event loops - for example,
-you can block your main program until an event occurs - for example, you
-could C<< ->recv >> in your main program until the user clicks the Quit
-button of your app, which would C<< ->send >> the "quit" event.
+你也可以使用这个来模拟传统的事件程序 - 例如, 你可以在你的应用 app  的主程序中 C<< ->recv >> 直到用户按下退出的按钮, 你就通过 C<< ->send >> 得到  "quit" 的事件.
 
-Note that condition variables recurse into the event loop - if you have
-two pieces of code that call C<< ->recv >> in a round-robin fashion, you
-lose. Therefore, condition variables are good to export to your caller, but
-you should avoid making a blocking wait yourself, at least in callbacks,
-as this asks for trouble.
+需要注意的是条件变量递归访问在事件循环中 - 如果你有两段代码，轮循机制方式调用 C<< ->recv >>. 这时, 状态变量是一个非常好的帮你导出你的 caller 的方式. 但是你应该避免的阻塞等待自己.最少回调时要这样, 这比较麻烦. 
 
-Condition variables are represented by hash refs in perl, and the keys
-used by AnyEvent itself are all named C<_ae_XXX> to make subclassing
-easy (it is often useful to build your own transaction class on top of
-AnyEvent). To subclass, use C<AnyEvent::CondVar> as base class and call
-its C<new> method in your own C<new> method.
+状态变量其实就是 perl 的哈希引用, 这个 AnyEvent 它自己使用的 keys 的全部的名字都是 C<_ae_XXX> 这为我们创建子类非常容易(这对于在 AnyEvent 上创建自己的事件类非常有用). 在子类中, 使用 C<AnyEvent::CondVar>
+做为基类在你自己的 C<new> 方法调用它的 C<new> 方法.
 
-There are two "sides" to a condition variable - the "producer side" which
-eventually calls C<< -> send >>, and the "consumer side", which waits
-for the send to occur.
+这是状态变量有二侧 - 这个"生产者"会调用 C<< -> send >>, 另一个"消费者" 用于等待 send 的发生.
 
-Example: wait for a timer.
+例如: 等待 timer.
 
-   # condition: "wait till the timer is fired"
+   # 条件是: "等待直到 timer 出现"
    my $timer_fired = AnyEvent->condvar;
 
-   # create the timer - we could wait for, say
-   # a handle becomign ready, or even an
-   # AnyEvent::HTTP request to finish, but
-   # in this case, we simply use a timer:
+   # 创建一个 timer - 我们等待直到这个功能的处理完成或者 AnyEvent::HTTP 的请求完成, 但在这个例子中,我们只使用简单的 timer:
    my $w = AnyEvent->timer (
       after => 1,
       cb    => sub { $timer_fired->send },
    );
 
-   # this "blocks" (while handling events) till the callback
-   # calls ->send
+   # 在这是 "blocks" (当处理事件的时候) 直接直到回调调用 ->send
    $timer_fired->recv;
 
-Example: wait for a timer, but take advantage of the fact that condition
-variables are also callable directly.
+例如: 等待 timer, 但这给相当于给状态变量直接可以调用 
 
    my $done = AnyEvent->condvar;
    my $delay = AnyEvent->timer (after => 5, cb => $done);
@@ -671,7 +631,7 @@ results are available:
 Flag the condition as ready - a running C<< ->recv >> and all further calls to C<recv> will (eventually) return after this method has been called. If nobody is waiting the send will be remembered.
 
 If a callback has been set on the condition variable, it is called immediately from within send.
-如果回调是有设置条件变量的话，它调用会从内部发送 send 。
+如果回调是有设置状态变量的话，它调用会从内部发送 send 。
 
 任何给 C<send> 的调用的参数，都会成接下来 C<< ->recv >> 调用的返回。
 future C<< ->recv >> calls.
@@ -690,7 +650,7 @@ This can be used to signal any errors to the condition variable user/consumer. D
 
 =item $cv->end
 
-这二个方法是联合绑定起来使用的.例如, 我们使用条件变量的方式并行的 ping 一堆主机。
+这二个方法是联合绑定起来使用的.例如, 我们使用状态变量的方式并行的 ping 一堆主机。
 
 每调用一次 C<< ->begin >> 会增加一个计数器，任何 C<< ->end >> 的调用会减少它。如果记数器在 C<< ->end >> 的时候为 C<0> 时,这个最后的回调会通过 C<begin> 中的内容来执行, 并且会给 condvar 做为第一个参数传送过去. 这个回调会假设调用  C<< ->send >>, 但这不是必须的。 如果没有组回调, 这个 C<send> 会不带任何参数.
 
@@ -745,28 +705,21 @@ This can be used to signal any errors to the condition variable user/consumer. D
 
 =head3 METHODS FOR CONSUMERS
 
-These methods should only be used by the consuming side, i.e. the
-code awaits the condition.
+These methods should only be used by the consuming side, i.e. the code awaits the condition.
 
 =over 4
 
 =item $cv->recv
 
-Wait (blocking if necessary) until the C<< ->send >> or C<< ->croak
->> methods have been called on C<$cv>, while servicing other watchers
-normally.
+等待 (如果必要则阻塞) 直到  C<< ->send >> 或者 C<< ->croak >> 方法在 C<$cv> 上被调用, 而其他 watcher 服务正常.
 
-You can only wait once on a condition - additional calls are valid but
-will return immediately.
+你一次只能等一个条件 - 其他调用是有效的，但将立即返回。
 
-If an error condition has been set by calling C<< ->croak >>, then this
-function will call C<croak>.
+如果错误的条件成立会调用 C<< ->croak >>.
 
-In list context, all parameters passed to C<send> will be returned,
-in scalar context only the first one will be returned.
+在列表上下文, 全部的参数会通过 C<send> 返回, 在标题环境只有第一个参数被返回.
 
-Note that doing a blocking wait in a callback is not supported by any
-event loop, that is, recursive invocation of a blocking C<< ->recv
+Note that doing a blocking wait in a callback is not supported by any event loop, that is, recursive invocation of a blocking C<< ->recv
 >> is not allowed, and the C<recv> call will C<croak> if such a
 condition is detected. This condition can be slightly loosened by using
 L<Coro::AnyEvent>, which allows you to do a blocking C<< ->recv >> from
@@ -780,26 +733,19 @@ condition variables with some kind of request results and supporting
 callbacks so the caller knows that getting the result will not block,
 while still supporting blocking waits if the caller so desires).
 
-You can ensure that C<< ->recv >> never blocks by setting a callback and
-only calling C<< ->recv >> from within that callback (or at a later
-time). This will work even when the event loop does not support blocking
-waits otherwise.
+你可以通过设置一个 C<< ->recv >> 内部的回调来确保 C<< ->recv >> 从不 blocks. 这会在不支持 block 的事件循环中很好的工作, 否则等待.
 
 =item $bool = $cv->ready
 
-Returns true when the condition is "true", i.e. whether C<send> or
-C<croak> have been called.
+当状态变量为真的时候, 返回真. 通常在 C<send> 或者 C<croak> 被调用时.
 
 =item $cb = $cv->cb ($cb->($cv))
 
-This is a mutator function that returns the callback set and optionally
-replaces it before doing so.
+这是一个赋值函数功能用于返回回调集. 替换它需要在调用它之前.
 
-The callback will be called when the condition becomes "true", i.e. when
-C<send> or C<croak> are called, with the only argument being the
-condition variable itself. If the condition is already true, the
-callback is called immediately when it is set. Calling C<recv> inside
-the callback or at any later time is guaranteed not to block.
+在这人回调会被调用, 当条件变成真的时候. 比如, 当 C<send> 或者 C<croak> 的调用的时候, 唯一的参数状态变量本身. 
+
+如果状态变量是真, 这个回调并且设置了, 就会立即调用. 调用 C<recv> 内部的回调后在之后的时候内都不会 block.
 
 =back
 
@@ -1026,56 +972,38 @@ enourmously.
 
 =back
 
-=head1 WHAT TO DO IN A MODULE
+=head1 如果它在模块中时要注意什么
 
 如果你是一个模块的作者，你需要 C<use AnyEvent> 并自由调用 AnyEvent 的方法，你不要载入指定的事件模块.
 
 当你在你的模块内创建 watchers 时要非常小心 - AnyEvent 会使用首先调用的模块的事件模块，所以如果你在你的模块中强行指定用户的事件模块时会载入你指定的模块.
-Be careful when you create watchers in the module body - AnyEvent will decide which event module to use as soon as the first method is called, so by calling AnyEvent in your module body you force the user of your module to load the event module first.
 
-Never call C<< ->recv >> on a condition variable unless you I<know> that the C<< ->send >> method has been called on it already. This is because it will stall the whole program, and the whole point of using events is to stay interactive.
+不要在状态变量上调用 C<< ->recv >>, 除非你非常清楚 C<< ->send >> 方法会被已调用. 因为这会使整个程序停滞, 使用事件最主要是可以互动.
 
-It is fine, however, to call C<< ->recv >> when the user of your module requests it (i.e. if you create a http request object ad have a method called C<results> that returns the results, it may call C<< ->recv >> freely, as the user of your module knows what she is doing. Always).
+这是要非常注意的, 但是, 当用户模块调用 C<< ->recv >> 时(如果你创建一个 http 请求的对象有一个方法调用 C<results> 用于返回结果), 它可能会直接调用 C<< ->recv >> . 这需要你的模块和用户知道他在做什么.
 
-=head1 WHAT TO DO IN THE MAIN PROGRAM
+=head1 怎么在我的主程序中使用它 
 
-There will always be a single main program - the only place that should
-dictate which event model to use.
+单一个程序 - 在一个唯一的地方需要规定使用的事件模型.
 
-If the program is not event-based, it need not do anything special, even
-when it depends on a module that uses an AnyEvent. If the program itself
-uses AnyEvent, but does not care which event loop is used, all it needs
-to do is C<use AnyEvent>. In either case, AnyEvent will choose the best
-available loop implementation.
+如果程序不是基于事件的, 这时并不需要特别的东西, 就算它使用依赖 AnyEvent 的模块. 如果程序本身就使用 AnyEvent, 也不用关心事件循环使用, 它需要做的就是 C<use AnyEvent>. 在这二种情况下 AnyEvent 都会是最好的循环的实现.
 
-If the main program relies on a specific event model - for example, in
-Gtk2 programs you have to rely on the Glib module - you should load the
-event module before loading AnyEvent or any module that uses it: generally
-speaking, you should load it as early as possible. The reason is that
-modules might create watchers when they are loaded, and AnyEvent will
-decide on the event model to use as soon as it creates watchers, and it
-might choose the wrong one unless you load the correct one yourself.
+如果主程序依赖于一个特定的事件模型 - 例如 Gtk2 的程序中, 你只能使用 Glib 的模型 - 这时你应该在事件模块加载之前加载 AnyEvent 或任何使用它的模块：一般来说，你应该载入尽早.
+主要原因时, 模块可能会在加载时创造 watchers, 这时 AnyEvent 会决定使用自己, 因为创建了 watcher, 这时可能选择错了事件模型, 除非你自己正确的加载.
 
-You can chose to use a pure-perl implementation by loading the
-C<AnyEvent::Loop> module, which gives you similar behaviour
-everywhere, but letting AnyEvent chose the model is generally better.
+当然你也可以使用纯 Perl 实现的 C<AnyEvent::Loop> 模块, 但是通常 AnyEvent 自己选择的模型一定会更加好.
 
-=head2 MAINLOOP EMULATION
+=head2 MAINLOOP EMULATION 模拟其它事件的 MAINLOOP
 
-Sometimes (often for short test scripts, or even standalone programs who
-only want to use AnyEvent), you do not want to run a specific event loop.
+一些时候(通常是测试脚本或单独的使用 AnyEvent 的程序), 你想运行指定的 event loop.
 
-In that case, you can use a condition variable like this:
+在这种情况, 你可以使用状态变量象下面这样:
 
    AnyEvent->condvar->recv;
 
-This has the effect of entering the event loop and looping forever.
+进入事件循环，永远循环的效果.
 
-Note that usually your program has some exit condition, in which case
-it is better to use the "traditional" approach of storing a condition
-variable somewhere, waiting for it, and sending it when the program should
-exit cleanly.
-
+平时注意你的程序一定有某些的退出条件, 在这种情况下, 它是使用"传统"的方式存储状态变量的地方, 等待, 直到 send 时应该干净地退出.
 
 =head1 OTHER MODULES
 

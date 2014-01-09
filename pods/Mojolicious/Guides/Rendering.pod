@@ -509,6 +509,131 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 这是一种非常高级的模板重用
 
+=head2 表单验证 Form validation
+
+你可以使用  L<Mojolicious::Controller/"validation"> 来验证你的 GET/POST 所提交给你的应用的参数. 这个对象所检查的甩的未知的字段都会被忽略, 所以你需要注表那些是可选 (optional) 和必须 (required). 然后才能对这些值进行检查.
+
+Every check is performed right away, so you can use the results immediately to build more advanced validation logic with methods like L<Mojolicious::Validator::Validation/"is_valid">.
+
+  use Mojolicious::Lite;
+
+  get '/' => sub {
+    my $self = shift;
+
+    # 检查是否有提交的参数. 
+    my $validation = $self->validation;
+    return $self->render unless $validation->has_data;
+
+    # 验证参数 ("pass_again" 依赖 "pass" 才能存在)
+    $validation->required('user')->size(1, 20)->like(qr/^[e-t]+$/);
+    $validation->required('pass_again')->equal_to('pass')
+      if $validation->optional('pass')->size(7, 500)->is_valid;
+
+    # 如果验证成功就渲染结果
+    $self->render('thanks') unless $validation->has_error;
+  } => 'index';
+
+  app->start;
+  __DATA__
+
+  @@ index.html.ep
+  <!DOCTYPE html>
+  <html>
+    <head>
+      %= stylesheet begin
+        label.field-with-error { color: #dd7e5e }
+        input.field-with-error { background-color: #fd9e7e }
+      % end
+    </head>
+    <body>
+      %= form_for index => begin
+        %= label_for user => 'Username (required, 1-20 characters, only e-t)'
+        <br>
+        %= text_field 'user'
+        %= submit_button
+        <br>
+        %= label_for pass => 'Password (optional, 7-500 characters)'
+        <br>
+        %= password_field 'pass'
+        <br>
+        %= label_for pass_again => 'Password again (equal to the value above)'
+        <br>
+        %= password_field 'pass_again'
+      % end
+    </body>
+  </html>
+
+  @@ thanks.html.ep
+  <!DOCTYPE html>
+  <html><body>Thank you <%= validation->param('user') %>.</body></html>
+
+上面的 form 元素是由 L<Mojolicious::Plugin::TagHelpers> 这个 helper 生成.
+Form elements generated with tag helpers from L<Mojolicious::Plugin::TagHelpers> will automatically remember their previous values and add the class C<field-with-error> for fields that failed validation to make styling with CSS easier.
+
+  <label class="field-with-error" for="user">
+    Username (required, only characters e-t)
+  </label>
+  <input class="field-with-error" type="text" name="user" value="sri" />
+
+For a full list of available checks see also
+L<Mojolicious::Validator/"CHECKS">.
+
+=head2 Adding form validation checks
+
+Validation checks can be registered with L<Mojolicious::Validator/"add_check">
+and return a false value if they were successful. A true value may be used to
+pass along additional information which can then be retrieved with
+L<Mojolicious::Validator::Validation/"error">.
+
+  use Mojolicious::Lite;
+
+  # Add "range" check
+  app->validator->add_check(range => sub {
+    my ($validation, $name, $value, $min, $max) = @_;
+    return $value < $min || $value > $max;
+  });
+
+  get '/' => 'form';
+
+  post '/test' => sub {
+    my $self = shift;
+
+    # Validate parameters with custom check
+    my $validation = $self->validation;
+    $validation->required('number')->range(3, 23);
+
+    # Render form again if validation failed
+    return $self->render('form') if $validation->has_error;
+
+    # Prevent double submit with redirect
+    $self->flash(number => $validation->param('number'));
+    $self->redirect_to('form');
+  };
+
+  app->start;
+  __DATA__
+
+  @@ form.html.ep
+  <!DOCTYPE html>
+  <html>
+    <body>
+      % if (my $number = flash 'number') {
+        <p>Thanks, the number <%= $number %> was valid.</p>
+      % }
+      %= form_for test => begin
+        % if (my $err = validation->error('number')) {
+          <p>
+            %= 'Value is required.' if $err->[0] eq 'required'
+            %= 'Value needs to be between 3 and 23.' if $err->[0] eq 'range'
+          </p>
+        % }
+        %= text_field 'number'
+        %= submit_button
+      % end
+    </html>
+  </html>
+
+
 =head2 记忆模板的块 
 
 编译模板缓存在内存中, 我们可以多走一步，使用  L<Mojolicious::Plugin::DefaultHelpers/"memorize"> 来防止模板块每次都被执行。
