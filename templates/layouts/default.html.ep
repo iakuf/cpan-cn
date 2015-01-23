@@ -4,14 +4,14 @@
     <title>
       Mojolicious - Perl real-time web framework
     </title>
-    %= stylesheet '/css/prettify-mojo.css'
-    %= javascript '/js/prettify.js'
+    %= stylesheet '/mojo/prettify/prettify-mojo-dark.css'
+    %= javascript '/mojo/prettify/run_prettify.js'
     %= stylesheet begin
       a { color: inherit }
       a:hover { color: #2a2a2a }
       a img { border: 0 }
       body {
-        background-color: #f5f6f8;
+        background: url(/mojo/pinstripe-light.png);
         color: #445555;
         font: 0.9em 'Helvetica Neue', Helvetica, sans-serif;
         font-weight: normal;
@@ -19,16 +19,18 @@
         margin: 0;
       }
       pre {
-        background: url(<%= url_for '/mojolicious-pinstripe.gif' %>);
-        -moz-border-radius: 5px;
-        border-radius: 5px;
-        color: #eee;
-        font: 0.8em Consolas, Menlo, Monaco, Courier, monospace;
-        line-height: 1.7em;
-        text-align: left;
-        text-shadow: #333 0 1px 0;
+        background: url(/mojo/stripes.png);
+        border: 1px solid #d1d1d1;
+        border-radius: 3px;
+        box-shadow: 0 1px #fff, inset -1px 1px 4px rgba(0, 0, 0, 0.1);
+        color: #4d4d4c;
+        font: 0.9em Consolas, Menlo, Monaco, Courier, monospace;
+        line-height: 1.5em;
+        padding: 1em;
         padding-bottom: 1.5em;
         padding-top: 1.5em;
+        text-align: left;
+        text-shadow: #eee 0 1px 0;
         white-space: pre-wrap;
       }
       #footer {
@@ -37,7 +39,6 @@
       }
     %= end
     %= content 'header'
-    %= include 'analytics'
   </head>
   <body onload="prettyPrint()"><%= content %></body>
 </html>

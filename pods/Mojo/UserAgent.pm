@@ -511,18 +511,20 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
 =head1 SYNOPSIS
 
   use Mojo::UserAgent;
-  my $ua = Mojo::UserAgent->new;
+
+  # 如果方法后面直接跟一个哈希引用, 表示所要发送的定制的 header
 
   # 对 Unicode snowman 发关 hello 的参数，并加上 "Do Not Track" 的 header 
-  # get 方法第二个参数引用是 header 部分要加入的内容 
+  my $ua = Mojo::UserAgent->new;
   say $ua->get('www.☃.net?hello=there' => {DNT => 1})->res->body;
 
-  # 对 Form POST 进行异常处理, 注意，如果 POST 后面跟了二个引用，第一个是表示要发送的 Header,第二个是 body 的参数
+  # 对 Form POST 进行异常处理
   my $tx = $ua->post('search.cpan.org/search' => form => {q => 'mojo'});
   if (my $res = $tx->success) { say $res->body }
   else {
     my ($err, $code) = $tx->error;
-    say $code ? "$code response: $err" : "Connection error: $err";
+    die "$err->{code} response: $err->{message}" if $err->{code};
+    die "Connection error: $err->{message}";
   }
 
   # 使用 Basic authentication 发出的 JSON 的 API 请求
@@ -530,11 +532,10 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
     ->res->json('/results/0/text');
 
   # 从 HTML 和 XML 的资源中提取数据
-  say $ua->get('mojolicio.us')->res->dom->html->head->title->text;
+  say $ua->get('www.perl.org')->res->dom->html->head->title->text;
 
-  # 对这个新闻站点剥下最新的头条信息
-  say $ua->max_redirects(5)->get('www.reddit.com/r/perl/')
-    ->res->dom('p.title > a.title')->pluck('text')->shuffle;
+  # 对这个新闻站点剥下最新的头条信息, 这使用了 CSS 的选择器
+  say $ua->get('perlnews.org')->res->dom('h2 > a')->text->shuffle;
 
   # IPv6 PUT request with content
   my $tx
@@ -549,21 +550,10 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
   my $tx = $ua->cert('tls.crt')->key('tls.key')
     ->post('https://mojolicio.us' => json => {top => 'secret'});
 
-  # Blocking parallel requests (does not work inside a running event loop)
-  my $delay = Mojo::IOLoop->delay;
-  for my $url ('mojolicio.us', 'cpan.org') {
-    my $end = $delay->begin(0);
-    $ua->get($url => sub {
-      my ($ua, $tx) = @_;
-      $end->($tx->res->dom->at('title')->text);
-    });
-  }
-  my @titles = $delay->wait;
-
-  # Non-blocking parallel requests (does work inside a running event loop)
+  # 非阻塞并发请求
   my $delay = Mojo::IOLoop->delay(sub {
     my ($delay, @titles) = @_;
-    ...
+    say for @titles;
   });
   for my $url ('mojolicio.us', 'cpan.org') {
     my $end = $delay->begin(0);
@@ -572,37 +562,37 @@ Mojo::UserAgent - Non-blocking I/O HTTP and WebSocket user agent
       $end->($tx->res->dom->at('title')->text);
     });
   }
-  $delay->wait unless Mojo::IOLoop->is_running;
+  $delay->wait;
 
-  # Non-blocking WebSocket connection sending and receiving JSON text messages
-  use Mojo::JSON 'j';
-  $ua->websocket('ws://localhost:3000/echo.json' => sub {
+  # Non-blocking WebSocket connection sending and receiving JSON messages
+  $ua->websocket('ws://example.com/echo.json' => sub {
     my ($ua, $tx) = @_;
     say 'WebSocket handshake failed!' and return unless $tx->is_websocket;
-    $tx->on(text => sub {
-      my ($tx, $bytes) = @_;
-      my $hash = j($bytes);
+    $tx->on(json => sub {
+      my ($tx, $hash) = @_;
       say "WebSocket message via JSON: $hash->{msg}";
       $tx->finish;
     });
-    $tx->send({text => j({msg => 'Hello World!'})});
+    $tx->send({json => {msg => 'Hello World!'}});
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 =head1 DESCRIPTION
 
-L<Mojo::UserAgent> is a full featured non-blocking I/O HTTP and WebSocket user
-agent, with C<IPv6>, C<TLS>, C<SNI>, C<IDNA>, C<Comet> (long polling), C<gzip>
-compression and multiple event loop support.
+L<Mojo::UserAgent> 是一个全功能的非阻塞 I/O HTTP 和 WebSocket 的用户代理, 支持 IPv6, TLS, SNI, IDNA, Comet (long polling), keep-alive, connection
+pooling, timeout, cookie, multipart, proxy, gzip 压缩和多种事件循环支持.
 
-可以在 L<Mojo::IOLoop> 中显示的使用 L<EV> (4.0+), L<IO::Socket::IP> (0.16+) 和  L<IO::Socket::SSL> (1.75+) 来替换。单独的特性象  MOJO_NO_IPV6 和 MOJO_NO_TLS 可以通过环境变量来禁用.
+如果一个新的进程 fork 产生时, 全部的连接相关的信息会被 reset. 所以这个允许多个进程安全的共享 L<Mojo::UserAgent> 对象.
+
+
+
+为了更好的可扩展性 (epoll, kqueue) 和支持 IPv6 与 TLS, 可以在 L<Mojo::IOLoop> 中可选的模块 L<EV> (4.0+), L<IO::Socket::IP> (0.20+) 和  L<IO::Socket::SSL> (1.84+) 会自动的发现. 单独的特性象  MOJO_NO_IPV6 和 MOJO_NO_TLS 可以通过环境变量来禁用.
 
 看 L<Mojolicious::Guides::Cookbook> 有更多信息.
 
-=head1 EVENTS
+=head1 事件
 
-L<Mojo::UserAgent> inherits all events from L<Mojo::EventEmitter> and can emit
-the following new ones.
+L<Mojo::UserAgent> 继承全部的 L<Mojo::EventEmitter> 的事件, 并支持下面这些.
 
 =head2 error
 
@@ -611,7 +601,7 @@ the following new ones.
     ...
   });
 
-Emitted if an error occurs that can't be associated with a transaction.
+当如果有错误时, 整个事件就不在处理.
 
   $ua->on(error => sub {
     my ($ua, $err) = @_;
@@ -625,15 +615,14 @@ Emitted if an error occurs that can't be associated with a transaction.
     ...
   });
 
-Emitted whenever a new transaction is about to start, this includes
-automatically prepared proxy C<CONNECT> requests and followed redirects.
+当任何新的事务处理即将开始的时候, 但并没发出请求, 这包含自动的准备 proxy 的 C<CONNECT> 请求和随后的重定向.
 
   $ua->on(start => sub {
     my ($ua, $tx) = @_;
     $tx->req->headers->header('X-Bender' => 'Bite my shiny metal ass!');
   });
 
-=head1 ATTRIBUTES
+=head1 属性
 
 L<Mojo::UserAgent> implements the following attributes.
 
@@ -642,8 +631,7 @@ L<Mojo::UserAgent> implements the following attributes.
   my $ca = $ua->ca;
   $ua    = $ua->ca('/etc/tls/ca.crt');
 
-Path to TLS certificate authority file, defaults to the value of the
-MOJO_CA_FILE environment variable. Also activates hostname verification.
+指定 TLS 证书授权文件所在路径, 默认是 MOJO_CA_FILE 环境变量的值. 这也会也激活主机名验证.
 
   # Show certificate authorities for debugging
   IO::Socket::SSL::set_defaults(
@@ -654,161 +642,117 @@ MOJO_CA_FILE environment variable. Also activates hostname verification.
   my $cert = $ua->cert;
   $ua      = $ua->cert('/etc/tls/client.crt');
 
-Path to TLS certificate file, defaults to the value of the MOJO_CERT_FILE
-environment variable.
+指定 TLS 证书文件所在路径, 默认是 MOJO_CERT_FILE 环境变量的值.
 
 =head2 connect_timeout
 
   my $timeout = $ua->connect_timeout;
   $ua         = $ua->connect_timeout(5);
 
-Maximum amount of time in seconds establishing a connection may take before
-getting canceled, defaults to the value of the MOJO_CONNECT_TIMEOUT
-environment variable or C<10>.
+最大的建立连接所需要的秒数, 如果超过会被取消, 默认是 MOJO_CONNECT_TIMEOUT 环境变量的值或者是 C<10>.
 
 =head2 cookie_jar
 
   my $cookie_jar = $ua->cookie_jar;
   $ua            = $ua->cookie_jar(Mojo::UserAgent::CookieJar->new);
 
-Cookie jar to use for this user agents requests, defaults to a
-L<Mojo::UserAgent::CookieJar> object.
+用于该用户代理的请求的 Cookie jar, 默认是 L<Mojo::UserAgent::CookieJar> 对象.
 
   # Disable cookie jar
   $ua->cookie_jar(0);
-
-=head2 http_proxy
-
-  my $proxy = $ua->http_proxy;
-  $ua       = $ua->http_proxy('http://sri:secret@127.0.0.1:8080');
-
-Proxy server to use for HTTP and WebSocket requests.
-
-=head2 https_proxy
-
-  my $proxy = $ua->https_proxy;
-  $ua       = $ua->https_proxy('http://sri:secret@127.0.0.1:8080');
-
-Proxy server to use for HTTPS and WebSocket requests.
 
 =head2 inactivity_timeout
 
   my $timeout = $ua->inactivity_timeout;
   $ua         = $ua->inactivity_timeout(15);
 
-Maximum amount of time in seconds a connection can be inactive before getting
-closed, defaults to the value of the MOJO_INACTIVITY_TIMEOUT environment
-variable or C<20>. Setting the value to C<0> will allow connections to be
-inactive indefinitely.
+最大的连接上去但不活跃的时间, 超过会被关闭. 默认为 MOJO_INACTIVITY_TIMEOUT 环境变量的值或者是 C<20>. 如果设置成 0 的值会允许连接无限期地处于非活动状态.
 
 =head2 ioloop
 
   my $loop = $ua->ioloop;
   $ua      = $ua->ioloop(Mojo::IOLoop->new);
 
-Event loop object to use for blocking I/O operations, defaults to a
-L<Mojo::IOLoop> object.
+事件循环对象用于阻塞 I/O 操作, 默认的是 L<Mojo::IOLoop>  对象.
 
 =head2 key
 
   my $key = $ua->key;
   $ua     = $ua->key('/etc/tls/client.crt');
 
-Path to TLS key file, defaults to the value of the MOJO_KEY_FILE environment
-variable.
+TLS 密钥文件的路径, 默认为 MOJO_KEY_FILE 环境变量的值.
 
 =head2 local_address
 
   my $address = $ua->local_address;
   $ua         = $ua->local_address('127.0.0.1');
 
-Local address to bind to.
+本地绑定的地址.
 
 =head2 max_connections
 
   my $max = $ua->max_connections;
   $ua     = $ua->max_connections(5);
 
-Maximum number of keep alive connections that the user agent will retain
-before it starts closing the oldest cached ones, defaults to C<5>.
+在开始关掉老的缓存的连接之前用户代理的 UA 能保持最大活动连接的数量. 默认为 C<5>.
 
 =head2 max_redirects
 
   my $max = $ua->max_redirects;
   $ua     = $ua->max_redirects(3);
 
-Maximum number of redirects the user agent will follow before it fails,
-defaults to the value of the MOJO_MAX_REDIRECTS environment variable or C<0>.
+用户代理所能保持的最大的重定向的数量, 超出就会 fail. 默认是 MOJO_MAX_REDIRECTS 环境变量的值或者 C<0>.
 
-=head2 name
+=head2 proxy
 
-  my $name = $ua->name;
-  $ua      = $ua->name('Mojolicious');
+  my $proxy = $ua->proxy;
+  $ua       = $ua->proxy(Mojo::UserAgent::Proxy->new);
 
-Value for C<User-Agent> request header, defaults to C<Mojolicious (Perl)>.
+代理管理, 默认是使用 L<Mojo::UserAgent::Proxy> 的对象
 
-=head2 no_proxy
-
-  my $no_proxy = $ua->no_proxy;
-  $ua          = $ua->no_proxy([qw(localhost intranet.mojolicio.us)]);
-
-Domains that don't require a proxy server to be used.
+  # 自动发现代理服务从环境变量
+  $ua->proxy->detect;
 
 =head2 request_timeout
 
   my $timeout = $ua->request_timeout;
   $ua         = $ua->request_timeout(5);
 
-Maximum amount of time in seconds establishing a connection, sending the
-request and receiving a whole response may take before getting canceled,
-defaults to the value of the MOJO_REQUEST_TIMEOUT environment variable or
-C<0>. Setting the value to C<0> will allow the user agent to wait
-indefinitely. The timeout will reset for every followed redirect.
+建议的连接所能保持最大的秒数, 发送请求并且等着接收时连接所能保持最秒数. 超过就会关闭. 默认使用 MOJO_REQUEST_TIMEOUT 环境变量的值或者 C<0>. 设置这个值为 C<0> 会无限期地等待直到接收. 这个超时会在每次重定向时重新 reset.
 
   # Total limit of 5 seconds, of which 3 seconds may be spent connecting
   $ua->max_redirects(0)->connect_timeout(3)->request_timeout(5);
+
+=head2 server
+
+  my $server = $ua->server;
+  $ua        = $ua->server(Mojo::UserAgent::Server->new);
+
+应用服务器相对的 URL 会被 L<Mojo::UserAgent::Server> 对象处理.
+
+  # Introspect
+  say for @{$ua->server->app->secrets};
+
+  # Change log level
+  $ua->server->app->log->level('fatal');
+
+  # Port currently used for processing relative URLs blocking
+  say $ua->server->url->port;
+
+  # Port currently used for processing relative URLs non-blocking
+  say $ua->server->nb_url->port;
 
 =head2 transactor
 
   my $t = $ua->transactor;
   $ua   = $ua->transactor(Mojo::UserAgent::Transactor->new);
 
-Transaction builder, defaults to a L<Mojo::UserAgent::Transactor> object.
+Transaction 默认是 L<Mojo::UserAgent::Transactor> 对象.
 
 =head1 METHODS
 
 L<Mojo::UserAgent> inherits all methods from L<Mojo::EventEmitter> and
 implements the following new ones.
-
-=head2 app
-
-  my $app = Mojo::UserAgent->app;
-            Mojo::UserAgent->app(MyApp->new);
-  my $app = $ua->app;
-  $ua     = $ua->app(MyApp->new);
-
-Application relative URLs will be processed with, instance specific
-applications override the global default.
-
-  # Introspect
-  say $ua->app->secret;
-
-  # Change log level
-  $ua->app->log->level('fatal');
-
-  # Change application behavior
-  $ua->app->defaults(testing => 'oh yea!');
-
-=head2 app_url
-
-  my $url = $ua->app_url;
-  my $url = $ua->app_url('http');
-  my $url = $ua->app_url('https');
-
-Get absolute L<Mojo::URL> object for C<app> and switch protocol if necessary.
-
-  # Port currently used for processing relative URLs
-  say $ua->app_url->port;
 
 =head2 build_tx
 
@@ -819,8 +763,7 @@ Get absolute L<Mojo::URL> object for C<app> and switch protocol if necessary.
   my $tx = $ua->build_tx(
     PUT => 'http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Generate L<Mojo::Transaction::HTTP> object with
-L<Mojo::UserAgent::Transactor/"tx">.
+L<Mojo::UserAgent::Transactor/"tx"> 用于生成 L<Mojo::Transaction::HTTP> 对象.
 
   # Request with cookie
   my $tx = $ua->build_tx(GET => 'kraih.com');
@@ -832,8 +775,7 @@ L<Mojo::UserAgent::Transactor/"tx">.
   my $tx = $ua->build_websocket_tx('ws://localhost:3000');
   my $tx = $ua->build_websocket_tx('ws://localhost:3000' => {DNT => 1});
 
-Generate L<Mojo::Transaction::HTTP> object with
-L<Mojo::UserAgent::Transactor/"websocket">.
+L<Mojo::UserAgent::Transactor/"websocket"> 用于生成 L<Mojo::Transaction::HTTP> 对象.
 
 =head2 delete
 
@@ -844,24 +786,13 @@ L<Mojo::UserAgent::Transactor/"websocket">.
   my $tx = $ua->delete(
     'http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<DELETE> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+执行阻塞的 HTTP C<DELETE> 请求并返回 L<Mojo::Transaction::HTTP> 的对象, 使用 L<Mojo::UserAgent::Transactor/"tx"> 相同的参数 ( 除了方法 ). 你可以在后面加入回调来执行请求非阻塞的请求.
 
   $ua->delete('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
     say $tx->res->body;
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
-
-=head2 detect_proxy
-
-  $ua = $ua->detect_proxy;
-
-Check environment variables HTTP_PROXY, http_proxy, HTTPS_PROXY, https_proxy,
-NO_PROXY and no_proxy for proxy information. Automatic proxy detection can be
-enabled with the MOJO_PROXY environment variable.
 
 =head2 get
 
@@ -870,10 +801,7 @@ enabled with the MOJO_PROXY environment variable.
   my $tx = $ua->get('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->get('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<GET> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+同上, 执行的是 HTTP C<GET> 的请求.
 
   $ua->get('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
@@ -888,10 +816,7 @@ append a callback to perform requests non-blocking.
   my $tx = $ua->head('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->head('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<HEAD> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+同上, 执行的是 HTTP C<HEAD> 的请求.
 
   $ua->head('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
@@ -899,27 +824,18 @@ append a callback to perform requests non-blocking.
   });
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-=head2 need_proxy
-
-  my $success = $ua->need_proxy('intranet.mojolicio.us');
-
-Check if request for domain would use a proxy server.
-
 =head2 options
 
-  my $tx = $ua->options('kraih.com');
-  my $tx = $ua->options('http://kraih.com' => {DNT => 1} => 'Hi!');
+  my $tx = $ua->options('example.com');
+  my $tx = $ua->options('http://example.com' => {DNT => 1} => 'Hi!');
   my $tx = $ua->options(
-    'http://kraih.com' => {DNT => 1} => form => {a => 'b'});
+    'http://example.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->options(
-    'http://kraih.com' => {DNT => 1} => json => {a => 'b'});
+    'http://example.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<OPTIONS> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+同上, 执行的是 HTTP C<OPTIONS> 的请求.
 
-  $ua->options('http://kraih.com' => sub {
+  $ua->options('http://example.com' => sub {
     my ($ua, $tx) = @_;
     say $tx->res->body;
   });
@@ -932,10 +848,7 @@ append a callback to perform requests non-blocking.
   my $tx = $ua->patch('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->patch('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<PATCH> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+同上, 执行的是 HTTP C<PATCH> 的请求.
 
   $ua->patch('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
@@ -950,9 +863,7 @@ append a callback to perform requests non-blocking.
   my $tx = $ua->post('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->post('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-这个是执行阻塞的 HTTP C<POST> 的请求，第二个参数的哈希引用是要传送过去的定制的 HTTP 头，第三个参数是传送的参数和内容。这个会返回一个  L<Mojo::Transaction::HTTP> 的对象。
-
-本方法取得的参数是和  L<Mojo::UserAgent::Transactor/"tx"> 一样。你可以追加一个回调来执行非阻塞的请求。
+同上, 执行的是 HTTP C<POST> 的请求.
 
   $ua->post('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
@@ -967,10 +878,7 @@ append a callback to perform requests non-blocking.
   my $tx = $ua->put('http://kraih.com' => {DNT => 1} => form => {a => 'b'});
   my $tx = $ua->put('http://kraih.com' => {DNT => 1} => json => {a => 'b'});
 
-Perform blocking HTTP C<PUT> request and return resulting
-L<Mojo::Transaction::HTTP> object, takes the same arguments as
-L<Mojo::UserAgent::Transactor/"tx"> (except for the method). You can also
-append a callback to perform requests non-blocking.
+同上, 执行的是 HTTP C<PUT> 的请求.
 
   $ua->put('http://kraih.com' => sub {
     my ($ua, $tx) = @_;
@@ -982,8 +890,7 @@ append a callback to perform requests non-blocking.
 
   my $tx = $ua->start(Mojo::Transaction::HTTP->new);
 
-Perform blocking request. You can also append a callback to perform requests
-non-blocking.
+执行阻塞的请求. 你可以在后面加一个回调来执行非阻塞的请求.
 
   my $tx = $ua->build_tx(GET => 'http://kraih.com');
   $ua->start($tx => sub {
@@ -1020,8 +927,7 @@ L<Mojo::Transaction::HTTP> object.
 
 =head1 DEBUGGING
 
-You can set the MOJO_USERAGENT_DEBUG environment variable to get some advanced
-diagnostics information printed to C<STDERR>.
+你可以打开 MOJO_USERAGENT_DEBUG 的环境变量来进行高级的调试信息, 默认会输出到标准错误.
 
   MOJO_USERAGENT_DEBUG=1
 

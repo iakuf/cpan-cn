@@ -389,26 +389,28 @@ Mojo::DOM - 基于 CSS 选择器的简单的 HTML/XML DOM 解析模块
   use Mojo::DOM;
 
   # 解析
-  my $dom = Mojo::DOM->new('<div><p id="a">A</p><p id="b">B</p></div>');
+  my $dom = Mojo::DOM->new('<div><p id="a">Test</p><p id="b">123</p></div>');
 
   # 查找
   say $dom->at('#b')->text;
-  say $dom->find('p')->pluck('text');
+  say $dom->find('p')->text;
+  say $dom->find('[id]')->attr('id');
 
   # Walk
   say $dom->div->p->[0]->text;
   say $dom->div->children('p')->first->{id};
 
   # 迭代
-  $dom->find('p[id]')->each(sub { say shift->{id} });
+  $dom->find('p[id]')->reverse->each(sub { say $_->{id} });
 
   # 循环
   for my $e ($dom->find('p[id]')->each) {
-    say $e->text;
+      say $e->{id}, ':', $e->text;
   }
 
   # 修改
-  $dom->div->p->[1]->append('<p id="c">C</p>');
+  $dom->div->p->last->append('<p id="c">456</p>');
+  $dom->find(':not(p)')->strip;
 
   # 渲染
   say $dom;
@@ -443,12 +445,11 @@ XML 的检测也可以通过 C<xml> 的方法来禁用.
 
 L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面的方法.
 
-=head2 new
+=head2 all_contents
 
-  my $dom = Mojo::DOM->new;
-  my $dom = Mojo::DOM->new('<foo bar="baz">test</foo>');
+  my $collection = $dom->all_contents;
 
-如果必要, 会构建一个新的基本数组的  L<Mojo::DOM>  对象和解析 HTML/XML 的文档.
+返回一个 L<Mojo::Collection> 对象包含有着全部的 DOM 结构的节点的 L<Mojo::DOM> 对象.
 
 =head2 all_text
 
@@ -463,14 +464,30 @@ L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面�
   # "foo\nbarbaz\n"
   $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->all_text(0);
 
+=head2 ancestors
+
+  my $collection = $dom->ancestors;
+  my $collection = $dom->ancestors('div > p');
+
+通过 CSS 选择器找出这个节点所有的祖先, 使用 L<Mojo::Collection> 对象来包含这些元素的 L<Mojo::DOM> 对象. 
+
+全部的选择的内容是在 L<Mojo::DOM::CSS/"SELECTORS"> 中都支持的.
+
+  # List types of ancestor elements
+  say $dom->ancestors->type;
+
 =head2 append
 
-  $dom = $dom->append('<p>Hi!</p>');
+  $dom = $dom->append('<p>I ♥ Mojolicious!</p>');
 
-附加元素
+附加 HTML/XML 片段到这个节点
 
-  # "<div><h1>A</h1><h2>B</h2></div>"
-  $dom->parse('<div><h1>A</h1></div>')->at('h1')->append('<h2>B</h2>')->root;
+  # "<div><h1>Test</h1><h2>123</h2></div>"
+  $dom->parse('<div><h1>Test</h1></div>')->at('h1')
+    ->append('<h2>123</h2>')->root;
+
+  # "<p>Test 123</p>"
+  $dom->parse('<p>Test</p>')->at('p')->contents->first->append(' 123')->root;
 
 =head2 append_content
 
@@ -485,7 +502,7 @@ L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面�
 
   my $result = $dom->at('html title');
 
-查找并返回  CSS 选择器匹配的第一个元素，返回的内容是 L<Mojo::DOM> 的对象，如果没有发现会返回 C<undef>。支持所有 L<Mojo::DOM::CSS> 的选择。
+查找并返回  CSS 选择器匹配的第一个元素，返回的内容是 L<Mojo::DOM> 的对象，如果没有发现会返回 C<undef>。支持所有 L<Mojo::DOM::CSS/"SELECTORS"> 的选择。
 
   # 查找命名空间内定义的第一个 "svg" 元素 
   my $namespace = $dom->at('[xmlns\:svg]')->{'xmlns:svg'};
@@ -499,31 +516,60 @@ L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面�
 
 元素属性
 
-=head2 charset
-
-  my $charset = $dom->charset;
-  $dom        = $dom->charset('UTF-8');
-
-使用指定的字符集编码和解码 HTML/XML。
+  # 列出 id 的属性
+  say $dom->find('*')->attr('id')->compact;
 
 =head2 children
 
   my $collection = $dom->children;
-  my $collection = $dom->children('div');
+  my $collection = $dom->children('div > p');
 
 返回一个 L<Mojo::Collection> 包含元素子内容的 L<Mojo::DOM> 对象, 类似 C<find>.
 
   # 显示随机的子元素类型
   say $dom->children->shuffle->first->type;
 
-=head2 content_xml
 
-  my $xml = $dom->content_xml;
+=d2 content
 
-渲染 XML 元素的内容成 XML 格式。请注意，如果字符集被定义 XML 将被编码。
+  my $str = $dom->content;
+  $dom    = $dom->content('<p>I ♥ Mojolicious!</p>');
 
-  # "<b>test</b>"
-  $dom->parse('<div><b>test</b></div>')->div->content_xml;
+Return this node's content or replace it with HTML/XML fragment (for C<root>
+and C<tag> nodes) or raw content.
+
+  # "<b>Test</b>"
+  $dom->parse('<div><b>Test</b></div>')->div->content;
+
+  # "<div><h1>123</h1></div>"
+  $dom->parse('<div><h1>Test</h1></div>')->at('h1')->content('123')->root;
+
+  # "<p><i>123</i></p>"
+  $dom->parse('<p>Test</p>')->at('p')->content('<i>123</i>')->root;
+
+  # "<div><h1></h1></div>"
+  $dom->parse('<div><h1>Test</h1></div>')->at('h1')->content('')->root;
+
+  # " Test "
+  $dom->parse('<!-- Test --><br>')->contents->first->content;
+
+  # "<div><!-- 123 -->456</div>"
+  $dom->parse('<div><!-- Test -->456</div>')->at('div')
+    ->contents->first->content(' 123 ')->root;
+
+=head2 contents
+
+  my $collection = $dom->contents;
+
+Return a L<Mojo::Collection> object containing the child nodes of this element
+as L<Mojo::DOM> objects.
+
+  # "<p><b>123</b></p>"
+  $dom->parse('<p>Test<b>123</b></p>')->at('p')->contents->first->remove;
+
+  # "<!-- Test -->"
+  $dom->parse('<!-- Test --><b>123</b>')->contents->first;
+
 
 =head2 find
 
@@ -536,6 +582,14 @@ L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面�
 
   # 从多个元素中提取信息
   my @headers = $dom->find('h1, h2, h3')->pluck('text')->each;
+
+=head2 match
+
+  my $result = $dom->match('html title');
+
+Match the CSS selector against this element and return it as a L<Mojo::DOM>
+object or return C<undef> if it didn't match. All selectors from
+L<Mojo::DOM::CSS/"SELECTORS"> are supported.
 
 =head2 namespace
 
@@ -557,6 +611,24 @@ L<Mojo::DOM> 继承所有的 L<Mojo::Base> 的方法，并自己实现了下面�
 
   # "<h2>B</h2>"
   $dom->parse('<div><h1>A</h1><h2>B</h2></div>')->at('h1')->next;
+
+=head2 next_sibling
+
+  my $sibling = $dom->next_sibling;
+
+Return L<Mojo::DOM> object for next sibling node or C<undef> if there are no
+more siblings.
+
+  # "456"
+  $dom->parse('<p><b>123</b><!-- Test -->456</p>')->at('b')
+    ->next_sibling->next_sibling;
+
+=head2 node
+
+  my $type = $dom->node;
+
+This node's type, usually C<cdata>, C<comment>, C<doctype>, C<pi>, C<raw>,
+C<root>, C<tag> or C<text>.
 
 =head2 parent
 
@@ -601,6 +673,17 @@ Parse HTML/XML document with L<Mojo::DOM::HTML>.
   # "<h1>A</h1>"
   $dom->parse('<div><h1>A</h1><h2>B</h2></div>')->at('h2')->previous;
 
+=head2 previous_sibling
+
+  my $sibling = $dom->previous_sibling;
+
+Return L<Mojo::DOM> object for previous sibling node or C<undef> if there are
+no more siblings.
+
+  # "123"
+  $dom->parse('<p>123<!-- Test --><b>456</b></p>')->at('b')
+    ->previous_sibling->previous_sibling;
+
 =head2 remove
 
   my $old = $dom->remove;
@@ -622,23 +705,44 @@ Parse HTML/XML document with L<Mojo::DOM::HTML>.
   # "<div></div>"
   $dom->parse('<div><h1>A</h1></div>')->at('h1')->replace('')->root;
 
-=head2 replace_content
-
-  $dom = $dom->replace_content('test');
-
-替换内容
-
-  # "<div><h1>B</h1></div>"
-  $dom->parse('<div><h1>A</h1></div>')->at('h1')->replace_content('B')->root;
-
-  # "<div><h1></h1></div>"
-  $dom->parse('<div><h1>A</h1></div>')->at('h1')->replace_content('')->root;
-
 =head2 root
 
   my $root = $dom->root;
 
 返回 L<Mojo::DOM> 对象的 root 节点.
+
+=head2 root
+
+  my $root = $dom->root;
+
+Return L<Mojo::DOM> object for root node.
+
+=head2 siblings
+
+  my $collection = $dom->siblings;
+  my $collection = $dom->siblings('div > p');
+
+Find all sibling elements of this node matching the CSS selector and return a
+L<Mojo::Collection> object containing these elements as L<Mojo::DOM> objects.
+All selectors from L<Mojo::DOM::CSS/"SELECTORS"> are supported.
+
+  # List types of sibling elements
+  say $dom->siblings->type;
+
+=head2 strip
+
+  my $parent = $dom->strip;
+
+Remove this element while preserving its content and return L</"parent">.
+
+  # "<div>Test</div>"
+  $dom->parse('<div><h1>Test</h1></div>')->at('h1')->strip;
+
+=head2 tap
+
+  $dom = $dom->tap(sub {...});
+
+Alias for L<Mojo::Base/"tap">.
 
 =head2 text
 
@@ -647,47 +751,14 @@ Parse HTML/XML document with L<Mojo::DOM::HTML>.
 
 提取元素的文本内容（不包括子元素），默认启用智能空白微调。
 
-  # "foo baz"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->text;
+=head2 to_string
 
-  # "foo\nbaz\n"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->text(0);
+  my $str = $dom->to_string;
 
-=head2 text_after
+Render this node and its content to HTML/XML.
 
-  my $trimmed   = $dom->text_after;
-  my $untrimmed = $dom->text_after(0);
-
-提取紧跟着后面元素的文本内容, 默认启用智能空白微调。
-
-  # "baz"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_after;
-
-  # "baz\n"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_after(0);
-
-=head2 text_before
-
-  my $trimmed   = $dom->text_before;
-  my $untrimmed = $dom->text_before(0);
-
-提取元素前面的文件内容，默认启用智能空白微调。
-
-  # "foo"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_before;
-
-  # "foo\n"
-  $dom->parse("<div>foo\n<p>bar</p>baz\n</div>")->div->p->text_before(0);
-
-=head2 to_xml
-
-  my $xml = $dom->to_xml;
-  my $xml = "$dom";
-
-返回元素的内容成一个 XML 的结构，注意如果设置了 C<charset> 会被编码成这个.
-
-  # "<b>test</b>"
-  $dom->parse('<div><b>test</b></div>')->div->b->to_xml;
+  # "<b>Test</b>"
+  $dom->parse('<div><b>Test</b></div>')->div->b->to_string;
 
 =head2 tree
 
@@ -706,27 +777,113 @@ Parse HTML/XML document with L<Mojo::DOM::HTML>.
   # 列出全面的子元素
   say $dom->children->pluck('type');
 
+=head2 val
+
+  my $collection = $dom->val;
+
+Extract values from C<button>, C<input>, C<option>, C<select> or C<textarea>
+element and return a L<Mojo::Collection> object containing these values. In
+the case of C<select>, find all C<option> elements it contains that have a
+C<selected> attribute and extract their values.
+
+  # "b"
+  $dom->parse('<input name="a" value="b">')->at('input')->val;
+
+  # "c"
+  $dom->parse('<option value="c">Test</option>')->at('option')->val;
+
+  # "d"
+  $dom->parse('<option>d</option>')->at('option')->val;
+
+=head2 wrap
+
+  $dom = $dom->wrap('<div></div>');
+
+Wrap HTML/XML fragment around this node, placing it as the last child of the
+first innermost element.
+
+  # "<p>123<b>Test</b></p>"
+  $dom->parse('<b>Test</b>')->at('b')->wrap('<p>123</p>')->root;
+
+  # "<div><p><b>Test</b></p>123</div>"
+  $dom->parse('<b>Test</b>')->at('b')->wrap('<div><p></p>123</div>')->root;
+
+  # "<p><b>Test</b></p><p>123</p>"
+  $dom->parse('<b>Test</b>')->at('b')->wrap('<p></p><p>123</p>')->root;
+
+  # "<p><b>Test</b></p>"
+  $dom->parse('<p>Test</p>')->at('p')->contents->first->wrap('<b>')->root;
+
+=head2 wrap_content
+
+  $dom = $dom->wrap_content('<div></div>');
+
+Wrap HTML/XML fragment around this node's content, placing it as the last
+children of the first innermost element.
+
+  # "<p><b>123Test</b></p>"
+  $dom->parse('<p>Test<p>')->at('p')->wrap_content('<b>123</b>')->root;
+
+  # "<p><b>Test</b></p><p>123</p>"
+  $dom->parse('<b>Test</b>')->wrap_content('<p></p><p>123</p>');
+
 =head2 xml
 
-  my $xml = $dom->xml;
-  $dom    = $dom->xml(1);
+  my $bool = $dom->xml;
+  $dom     = $dom->xml($bool);
 
-禁用 HTML 语义解析器和激活区分大小写，默认为自动检测。
+Disable HTML semantics in parser and activate case sensitivity, defaults to
+auto detection based on processing instructions.
 
-=head1 CHILD ELEMENTS
+=head1 AUTOLOAD
 
-除了上述方法外，许多子元素也自动提供上面对象的方法，它返回根据子元素的数量来返回 L<Mojo::DOM> 或 L<Mojo::Collection> 的对象。
+In addition to the L</"METHODS"> above, many child elements are also
+automatically available as object methods, which return a L<Mojo::DOM> or
+L<Mojo::Collection> object, depending on number of children. For more power
+and consistent results you can also use L</"children">.
 
-  say $dom->p->text;
-  say $dom->div->[23]->text;
-  say $dom->div->pluck('text');
+  # "Test"
+  $dom->parse('<p>Test</p>')->p->text;
 
-=head1 ELEMENT ATTRIBUTES
+  # "123"
+  $dom->parse('<div>Test</div><div>123</div>')->div->[2]->text;
 
-元素属性也可能是直接哈希引用
+  # "Test"
+  $dom->parse('<div>Test</div>')->div->text;
 
-  say $dom->{foo};
-  say $dom->div->{id};
+=head1 OPERATORS
+
+L<Mojo::DOM> overloads the following operators.
+
+=head2 array
+
+  my @nodes = @$dom;
+
+Alias for L</"contents">.
+
+  # "<!-- Test -->"
+  $dom->parse('<!-- Test --><b>123</b>')->[0];
+
+=head2 bool
+
+  my $bool = !!$dom;
+
+Always true.
+
+=head2 hash
+
+  my %attrs = %$dom;
+
+Alias for L</"attr">.
+
+  # "test"
+  $dom->parse('<div id="test">Test</div>')->at('div')->{id};
+
+=head2 stringify
+
+  my $str = "$dom";
+
+Alias for L</"to_string">.
 
 =head1 SEE ALSO
 

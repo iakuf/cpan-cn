@@ -1,3 +1,7 @@
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 AnyEvent::HTTP - simple but non-blocking HTTP/HTTPS client
@@ -82,50 +86,25 @@ value.
 
 =item http_request $method => $url, key => value..., $cb->($data, $headers)
 
-Executes a HTTP request of type C<$method> (e.g. C<GET>, C<POST>). The URL
-must be an absolute http or https URL.
+通过指定的 C<$method> (e.g. C<GET>, C<POST>) 执行 HTTP 的请求. 这 URL 必须是绝对的 http 或 https 网址.
 
-When called in void context, nothing is returned. In other contexts,
-C<http_request> returns a "cancellation guard" - you have to keep the
-object at least alive until the callback get called. If the object gets
-destroyed before the callback is called, the request will be cancelled.
+当在空的上下文的时候, 什么都不会 return.  在其它的上下文件, C<http_request> 返回注销用的 guard "cancellation guard" - 你必须保持这个对象的引用真到回调被调用前还是存在的. 如果对象在回调没调用之前被 destroyed 时, 这个请求会被取消.
 
-The callback will be called with the response body data as first argument
-(or C<undef> if an error occured), and a hash-ref with response headers
-(and trailers) as second argument.
+在回调被调用的时候, 响应的 body 的数据会被当成第一个参数传回来 ( 如果有错误就是 C<undef> ). 并且第二个参数还会传送一个哈希引用的响应 header.
 
-All the headers in that hash are lowercased. In addition to the response
-headers, the "pseudo-headers" (uppercase to avoid clashing with possible
-response headers) C<HTTPVersion>, C<Status> and C<Reason> contain the
-three parts of the HTTP Status-Line of the same name. If an error occurs
-during the body phase of a request, then the original C<Status> and
-C<Reason> values from the header are available as C<OrigStatus> and
-C<OrigReason>.
+在这个哈希中的 header 都是小写字母. 除了这些响应头外, 伪头 "pseudo-headers" ( 大写, 以避免可能的响应头发生冲突 ) C<HTTPVersion>, C<Status> 和 C<Reason> 这三个部分的名称. 如果一个请求在 body 阶段发生错误, 那么会有新的 C<Reason> 和 C<Status> 信息, 原始的服务器响应会存在 C<OrigStatus> 和 C<OrigReason>.
 
-The pseudo-header C<URL> contains the actual URL (which can differ from
-the requested URL when following redirects - for example, you might get
-an error that your URL scheme is not supported even though your URL is a
-valid http URL because it redirected to an ftp URL, in which case you can
-look at the URL pseudo header).
+在伪头 "pseudo-headers" C<URL> 包含实际真实的 URL ( 可能请求的 URL 在重定向的时候有所不同 - 例如, 你可能得到一个不支持的 URL 的错误, 因为使你的 URL 是有效的 HTTP URL, 因为它重定向到了一个 FTP URL. 这种情况下, 你可以看看伪头中的信息. )
 
-The pseudo-header C<Redirect> only exists when the request was a result
-of an internal redirect. In that case it is an array reference with
-the C<($data, $headers)> from the redirect response. Note that this
-response could in turn be the result of a redirect itself, and C<<
-$headers->{Redirect}[1]{Redirect} >> will then contain the original
-response, and so on.
+在伪头 "pseudo-headers" C<Redirect> 只有当存在内部重定向的时候才会有内容. 在这种情况下, 它是用一个 C<($data, $headers)> 的数组引用来记录重定向的响应. 注意这个响应可能反过来是重定向到本身的一个结果, 和C<< $headers->{Redirect}[1]{Redirect} >> 中包含原始的响应, 等等.
 
-If the server sends a header multiple times, then their contents will be
-joined together with a comma (C<,>), as per the HTTP spec.
+如果服务器发送多次 header, 这些内容会使用 (C<,>) 逗号来连接, 按 HTTP 规范.
 
-If an internal error occurs, such as not being able to resolve a hostname,
-then C<$data> will be C<undef>, C<< $headers->{Status} >> will be
-C<590>-C<599> and the C<Reason> pseudo-header will contain an error
-message. Currently the following status codes are used:
+如果发生内部错误, 如不能够解析主机名, 那么 C<$data> 会是 C<undef>, 在 C<< $headers->{Status} >> 会是  C<590>-C<599> 并会给 C<Reason> 这个伪头会包含错误的信息.  目前下列的状态代码在用:
 
 =over 4
 
-=item 595 - errors during connection etsbalishment, proxy handshake.
+=item 595 - 错误发生成 connection etsbalishment, proxy 代理握手错误.
 
 =item 596 - 错误发生面 TLS 协商过程, 请求发送中和 header 处理过程中.
 
@@ -156,8 +135,7 @@ include:
 
 =item recurse => $count (default: $MAX_RECURSE)
 
-Whether to recurse requests or not, e.g. on redirects, authentication and
-other retries and so on, and how often to do so.
+Whether to recurse requests or not, e.g. on redirects, authentication and other retries and so on, and how often to do so.
 
 =item headers => hashref
 
@@ -176,9 +154,7 @@ embedded newlines.
 
 =item timeout => $seconds
 
-The time-out to use for various stages - each connect attempt will reset
-the timeout, as will read or write activity, i.e. this is not an overall
-timeout.
+The time-out to use for various stages - each connect attempt will reset the timeout, as will read or write activity, i.e. this is not an overall timeout.
 
 Default timeout is 5 minutes.
 
@@ -243,12 +219,7 @@ context) - only connections using the same unique ID will be reused.
 
 =item on_prepare => $callback->($fh)
 
-In rare cases you need to "tune" the socket before it is used to
-connect (for exmaple, to bind it on a given IP address). This parameter
-overrides the prepare callback passed to C<AnyEvent::Socket::tcp_connect>
-and behaves exactly the same way (e.g. it has to provide a
-timeout). See the description for the C<$prepare_cb> argument of
-C<AnyEvent::Socket::tcp_connect> for details.
+In rare cases you need to "tune" the socket before it is used to connect (for exmaple, to bind it on a given IP address). This parameter overrides the prepare callback passed to C<AnyEvent::Socket::tcp_connect> and behaves exactly the same way (e.g. it has to provide a timeout). See the description for the C<$prepare_cb> argument of C<AnyEvent::Socket::tcp_connect> for details.
 
 =item tcp_connect => $callback->($host, $service, $connect_cb, $prepare_cb)
 
@@ -266,7 +237,7 @@ but fast) host => IP address caching or even socks protocol support.
 
 当指定时, 这个回调会在 header 头只要当正常的从远程的服务器上接收到后就调用.
 
-这个时候必须返回真 (只有这样 AnyEvent  才会接着连接). 如果是假, 这时 AnyEvent::HTTP 会取消下载(并调用完成的回调响应 C<598>).
+这个时候必须返回真 ( 只有这样 AnyEvent  才会接着连接 ). 如果是假, 这时 AnyEvent::HTTP 会取消下载 ( 并调用完成的回调响应 C<598> ).
 
 这个回调非常有用, 比如, 要迅速拒绝不想要的内容, 如果这个内容我们确认是不支持的. 可能比做一次 C<HEAD> 请求更加快.
 
@@ -280,22 +251,24 @@ Example: cancel the request unless the content-type is "text/html".
 
 =item on_body => $callback->($partial_body, $headers)
 
-当这个回调被指定了后， body 的所有内容会传给这个回调。这时完成的那个回调就得不到数据了，只能得到空的内容并不会有 body 本身的数据了.
+当这个回调被指定了后,  body 的所有内容会传给这个回调. 这时完成的那个回调就得不到数据了, 只能得到空的内容并不会有 body 本身的数据了.
 
-这个的返回值是真要么是假，当为真的时候 AnyEvent::HTTP 会继续。当为假时 AnyEvent::HTTP 会取消下载(并响应  C<598> 的值然后调用完成的回调).
+这个的返回值是真, 要么是假, 当为真的时候 AnyEvent::HTTP 会继续下载. 当为假时 AnyEvent::HTTP 会取消下载 ( 并响应  C<598> 的值然后调用完成的回调 ).
 
-当取消下载的请求时，这时并不能重用连接.
+当取消下载的请求时, 这时并不能重用连接.
 
-这个回调常用于当数据太大，不想保存到内存中(所以回调写入文件)或只应提取一些信息，或者当 body 是需要应逐步来处理的时候。
+这个回调常用于当数据太大, 不想保存到内存中 ( 所以回调写入文件 ) 或只应提取一些信息, 或者当 body 是需要应逐步来处理的时候. 
 
-它通常优于你自己使用 C<want_body_handle> 来处理 body, 但在流式的 API 中，HTTP 只是帮你创建一个连接,  C<want_body_handle> 这时是更加好的选择，因为他可以让你自己使用自己的事件处理程序，减少资源的使用情况。
+它通常优于你自己使用 C<want_body_handle> 来处理 body, 但在流式的 API 中, HTTP 只是帮你创建一个连接,  C<want_body_handle> 这时是更加好的选择, 因为他可以让你自己使用自己的事件处理程序, 减少资源的使用情况. 
 
 =item want_body_handle => $enable
 
-当启动时(默认是禁用), 这个 AnyEvent::HTTP 的行为就会变化很大: 在解析头之后，并不下载 body ,而是调用完成的回调.
+当使用这个选项时 ( 默认是禁用), 这个 AnyEvent::HTTP 的行为就会变化很大: 在解析头之后, 代替下载 body , 而是调用完成的回调. 这个替代 C<$body> 包含 body 的数据, 这回调将接收那个 L<AnyEvent::Handle> 对象相关的连接. 在出错的时候, 会传送一个 C<undef>, 这时会没有 body  (e.g. status C<304>),  这时会传一个空字符.
+
 
 When enabled (default is disabled), the behaviour of AnyEvent::HTTP changes considerably: after parsing the headers, and instead of downloading the body (if any), the completion callback will be called. Instead of the C<$body> argument containing the body data, the callback will receive the L<AnyEvent::Handle> object associated with the connection. In error cases, C<undef> will be passed. When there is no body (e.g. status C<304>), the empty string will be passed.
 
+这个 handle 对象可能和可能不可以使用 TLS. 也许使用连接代理, 使用持久连接, 使用 chunked 传送 encoding 的内容, 
 The handle object might or might not be in TLS mode, might be connected
 to a proxy, be a persistent connection, use chunked transfer encoding
 etc., and configured in unspecified ways. The user is responsible for this
@@ -1243,7 +1216,7 @@ timestamp, or C<undef> if the date cannot be parsed.
 
 =item $AnyEvent::HTTP::MAX_PER_HOST
 
-并发连接到同一个主机的最大数目 (由主机名标识). 如果超过限制，那么额外的请求进行排队，直到以前的连接被关闭. 持久性和非持久性连接都算在这个限制.
+并发连接到同一个主机的最大数目 (由主机名标识). 如果超过限制, 那么额外的请求进行排队, 直到以前的连接被关闭. 持久性和非持久性连接都算在这个限制.
 
 默认值是 C<4>, 强烈建议你不要增加这个参数.
 

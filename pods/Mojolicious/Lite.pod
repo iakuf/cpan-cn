@@ -66,50 +66,50 @@ Mojolicious::Lite - Real-time micro web framework
 
 =head1 概述
 
-  # Automatically enables "strict", "warnings" and Perl 5.10 features
+  # 自动打开 "strict", "warnings" 和 Perl 5.10 特性
   use Mojolicious::Lite;
 
-  # Route with placeholder
+  # 占位符的路径选择
   get '/:foo' => sub {
-    my $self = shift;
-    my $foo  = $self->param('foo');
-    $self->render(text => "Hello from $foo.");
+    my $c = shift;
+    my $foo  = $c->param('foo');
+    $c->render(text => "Hello from $foo.");
   };
 
-  # Start the Mojolicious command system
+  # 启用 Mojolicious 命令行体系
   app->start;
 
 =head1 描述
 
-L<Mojolicious::Lite> 是由 L<Mojolicious> 做的一个实时 web 框架。
+L<Mojolicious::Lite> 是由 L<Mojolicious> 做的一个实时 web 框架.
+
+更新到版本 5.05.
 
 =head1 教程
 
-一个简单的例子来给你介绍，在 L<Mojolicious::Lite> 中的奇妙之处。 你会在这里学到的大多数也适用于全功能的 L<Mojolicious> 应用。
+一个简单的例子来给你介绍, 在 L<Mojolicious::Lite> 中的奇妙之处. 你会在这里学到的大多数也适用于全功能的 L<Mojolicious> 应用.
 
 =head2 Hello World
 
-下面是一个简单的 Hello World 的应用程序.因为在 Perl 5.10 中会默认启用  L<strict>, L<warnings> 几个功能。并导入  L<Mojolicious::Lite> 的功能，让你的脚本本成一个全功能的 web 应用.
+下面是一个简单的 Hello World 的应用程序.因为在 Perl 5.10 中会默认启用  L<strict>, L<warnings> 几个功能.并导入  L<Mojolicious::Lite> 的功能, 让你的脚本本成一个全功能的 web 应用.
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
 
   get '/' => sub {
-    my $self = shift;
-    $self->render(text => 'Hello World!');
+    my $c = shift;
+    $c->render(text => 'Hello World!');
   };
 
   app->start;
 
-=head2 Generator
-
 这有一个辅助命令来生成这个例子中的应用程序
 
-  $ mojo generate lite_app
+  $ mojo generate lite_app myapp.pl
 
 =head2 Commands
 
-这些标准的 L<Mojolicious::Commands> 中会提供一些常用的命令行功能.注意 CGI 和 PSGI 的环境可以自动检查出来.可以不提供参数.
+这些标准的 L<Mojolicious::Commands> 中会提供一些常用的命令行功能. 注意它可以自动的对 CGI 和 PSGI 的环境检查出来.可 以不提供参数.
 
   $ ./myapp.pl daemon
   Server available at http://127.0.0.1:3000.
@@ -120,37 +120,46 @@ L<Mojolicious::Lite> 是由 L<Mojolicious> 做的一个实时 web 框架。
   $ ./myapp.pl cgi
   ...CGI output...
 
+  $ ./myapp.pl get /
+  Hello World!
+
   $ ./myapp.pl
   ...List of available commands (or automatically detected environment)...
 
-=head2 Start
-
-你可以在  app->start 的调用中加入参数，来替换掉标准的从 C<@ARGV> 中接收参数.
+你可以在 app->start 的调用中加入参数, 来替换掉标准的从 C<@ARGV> 中接收参数.
 
   app->start('cgi');
 
-=head2 Reloading
+=head2 修改代码后自动加载
 
-如果你想你的应用在修改后能自动的 reload 的话，建议你使用 morbo 的开发用的 web 服务器，这样你就不用每次修改后重起.
+如果你想你的应用在修改后能自动的 reload 加载你的修改的程序, 建议你使用 morbo 的开发用的 web 服务器, 这样你就不用每次修改后重起.
 
   $ morbo myapp.pl
   Server available at http://127.0.0.1:3000.
 
+译者注: 默认只监控 "lib" 和 "templates" 的文件夹内的改变, 如果你想加入指定的路径的文件进行监控修改后自动重起, 可以使用 -w 参数
+
+  $ morbo -w /myhome/lib myapp.pl
+
+关如何部署你的应用程序的更多信息, 请看 L<Mojolicious::Guides::Cookbook/"DEPLOYMENT">.
+
 =head2 Routes
 
-Routes 只是请求过来的基本的路径。可以在路径中包含不同的占位符。C<$self> 是 L<Mojolicious::Controller> 对象其中包含着 HTTP request 和 HTTP response。
+Routes 只是对请求过来的路径指向不同的函数. 可以在路径中包含不同的占位符. 传进来的第一个参数是 C<$c> 是 L<Mojolicious::Controller> 对象本身, 它也包含着 HTTP request 和 HTTP response 的对象.
 
   use Mojolicious::Lite;
 
   # /foo
   get '/foo' => sub {
-    my $self = shift;
-    $self->render(text => 'Hello World!');
+    my $c = shift;
+    $c->render(text => 'Hello World!');
   };
 
   app->start;
 
-=head2 GET/POST parameters
+响应的内容通常是由 L<Mojolicious::Controller/"render"> 的动作产生的, 后面会讲到.
+
+=head2 GET/POST 传进来的参数
 
 全部的 C<GET> 和 C<POST> 的参数只需要通过 L<Mojolicious::Controller/"param"> 来访问.
 
@@ -158,24 +167,24 @@ Routes 只是请求过来的基本的路径。可以在路径中包含不同的�
 
   # /foo?user=sri
   get '/foo' => sub {
-    my $self = shift;
-    my $user = $self->param('user');
-    $self->render(text => "Hello $user.");
+    my $c = shift;
+    my $user = $c->param('user');
+    $c->render(text => "Hello $user.");
   };
 
   app->start;
 
-=head2 Stash and templates
+=head2 Stash 和模板 ( templates )
 
-这个 L<Mojolicious::Controller/"stash"> 是用来传一些数据给模板技术使用,在这我们使用的是 C<DATA>  这个部分的模板.
+这个 L<Mojolicious::Controller/"stash"> 是用来传一些数据给模板技术使用, 在这我们使用的模板是存储在 C<DATA>  这个部分中的 @@ 标记的位置内容.
 
   use Mojolicious::Lite;
 
   # /bar
   get '/bar' => sub {
-    my $self = shift;
-    $self->stash(one => 23);
-    $self->render('baz', two => 24);
+    my $c = shift;
+    $c->stash(one => 23);
+    $c->render('baz', two => 24);
   };
 
   app->start;
@@ -186,31 +195,61 @@ Routes 只是请求过来的基本的路径。可以在路径中包含不同的�
 
 更多有关模板的信息可以看看 L<Mojolicious::Guides::Rendering/"Embedded Perl">.
 
-=head2 HTTP
+=head2 HTTP 相关的对象 
 
-L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了全功能的 HTTP 的支持.
+L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 的对象调用提供了全功能的 HTTP 的支持.
 
   use Mojolicious::Lite;
 
-  # /agent
+  # 访问请求的信息, 通过 req 的对象.
   get '/agent' => sub {
-    my $self = shift;
-    $self->res->headers->header('X-Bender' => 'Bite my shiny metal ass!');
-    $self->render(text => $self->req->headers->user_agent);
+    my $c = shift;
+    my $host = $c->req->url->to_abs->host;
+    my $ua   = $c->req->headers->user_agent;
+    $c->render(text => "Request by $ua reached $host.");
+  };
+
+  # 通过 res 这个对象定制输出的 header.
+  post '/echo' => sub {
+    my $c = shift;
+    $c->res->headers->header('X-Bender' => 'Bite my shiny metal ass!');
+    $c->render(data => $c->req->body);
   };
 
   app->start;
 
-=head2 Route names
+您可以直接从使用命令行测试,这个高级的例子如下
 
-全部的 Routes 会关联到相关的名字，会自动的取得相关的名字的模板。另外  L<Mojolicious::Controller/"url_for"> 和  L<Mojolicious::Plugin::TagHelpers/"link_to"> 也能帮到你。
+   $ ./myapp.pl get -v -M POST -c 'test' /echo
+
+=head2 内置异常 C<exception> 和 C<not_found> 网页
+
+在开发的时候, 有时会因为我们的一些错误我们需要用到这些网页, 这个中包含着很多有利于我们 debug 的信息.
+
+  use Mojolicious::Lite;
+
+  # Not found (404)
+  get '/missing' => sub { shift->render('does_not_exist') };
+
+  # Exception (500)
+  get '/dies' => sub { die 'Intentional error' };
+
+  app->start;
+
+你还可以在命令行下使用 L<Mojolicious::Command::get> 加上 CSS 选择器来导入你感兴趣的信息.
+
+  $ ./myapp.pl get /dies '#error'
+
+=head2 Route 关联名称
+
+全部的 Routes 会关联到指定的相关的名字, 会自动的取得相关的名字的模板. 这个名字, 可以直接在  L<Mojolicious::Controller/"url_for"> 和  L<Mojolicious::Plugin::TagHelpers/"link_to"> 中使用, 可以很方便的帮到你.
 
   use Mojolicious::Lite;
 
   # /
   get '/' => sub {
-    my $self = shift;
-    $self->render;
+    my $c = shift;
+    $c->render;
   } => 'index';
 
   # /hello
@@ -228,14 +267,14 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
 =head2 Layouts
 
-模板是可以分层的，你只需要选择 helper 中的  L<Mojolicious::Plugin::DefaultHelpers/"layout">。给当前结果放到模板中通过  L<Mojolicious::Plugin::DefaultHelpers/"content">.
+模板是可以设计成组件来布局, 你只需要选择 helper 中的  L<Mojolicious::Plugin::DefaultHelpers/"layout">. 通过 L<Mojolicious::Plugin::DefaultHelpers/"content"> 给结果放到模板.
 
   use Mojolicious::Lite;
 
   # /with_layout
   get '/with_layout' => sub {
-    my $self = shift;
-    $self->render('with_layout');
+    my $c = shift;
+    $c->render('with_layout');
   };
 
   app->start;
@@ -253,9 +292,11 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
     <body><%= content %></body>
   </html>
 
-=head2 Blocks
+有 layout 中你可以使用 stash 或者 helpers 来给一些附加的数据放进来, 就象上面使用的  L<Mojolicious::Plugin::DefaultHelpers/"title"> .
 
-模板可以使用标准的 Perl 的功能，只需要使用 C<begin>  和 C<end> 的关键字分隔.
+=head2 模板中的代码块
+
+模板技术中, 可以使用 C<begin> 和 C<end> 的关键字分隔成的代码块来做成象 Perl 本身一样的函数. 以方便在模板技术中重用.
 
   use Mojolicious::Lite;
 
@@ -279,60 +320,25 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
     </body>
   </html>
 
-=head2 Captured content
-
-在 helper 中可以使用  L<Mojolicious::Plugin::DefaultHelpers/"content_for"> 来抓到包在一个块中的内容.
-
-  use Mojolicious::Lite;
-
-  # /captured
-  get '/captured' => sub {
-    my $self = shift;
-    $self->render('captured');
-  };
-
-  app->start;
-  __DATA__
-
-  @@ captured.html.ep
-  % layout 'blue', title => 'Green';
-  % content_for header => begin
-    <meta http-equiv="Pragma" content="no-cache">
-  % end
-  Hello World!
-  % content_for header => begin
-    <meta http-equiv="Expires" content="-1">
-  % end
-
-  @@ layouts/blue.html.ep
-  <!DOCTYPE html>
-  <html>
-    <head>
-      <title><%= title %></title>
-      %= content_for 'header'
-    </head>
-    <body><%= content %></body>
-  </html>
-
 =head2 Helpers
 
-你可以扩展内置的 L<Mojolicious> 的这个 helpers, 全部内置的所有的原生的可以在 L<Mojolicious::Plugin::DefaultHelpers> 和 L<Mojolicious::Plugin::TagHelpers> 中来查看.
+你可以在 L<Mojolicious> 中通过自己的 helper 来扩展应用, 全部的原生的 helper 可以查看 L<Mojolicious::Plugin::DefaultHelpers> 和 L<Mojolicious::Plugin::TagHelpers>.
 
   use Mojolicious::Lite;
 
-  # "whois" helper
+  # A helper to identify visitors
   helper whois => sub {
-    my $self  = shift;
-    my $agent = $self->req->headers->user_agent || 'Anonymous';
-    my $ip    = $self->tx->remote_address;
+    my $c  = shift;
+    my $agent = $c->req->headers->user_agent || 'Anonymous';
+    my $ip    = $c->tx->remote_address;
     return "$agent ($ip)";
   };
 
-  # /secret
+  # Use helper in action and template
   get '/secret' => sub {
-    my $self = shift;
-    my $user = $self->whois;
-    $self->app->log->debug("Request from $user.");
+    my $c = shift;
+    my $user = $c->whois;
+    $c->app->log->debug("Request from $user.");
   };
 
   app->start;
@@ -341,33 +347,34 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   @@ secret.html.ep
   We know who you are <%= whois %>.
 
+
 =head2 占位符
 
-路径选择的占位符可以让你取得一些请求中的路径。结果会可以通过 L<Mojolicious::Controller/"stash"> 和 L<Mojolicious::Controller/"param"> 来访问.
+路径选择的占位符可以让你取得一些请求中的路径的参数. 结果会可以通过 L<Mojolicious::Controller/"stash"> 和 L<Mojolicious::Controller/"param"> 来访问.
 
   use Mojolicious::Lite;
 
   # /foo/test
   # /foo/test123
   get '/foo/:bar' => sub {
-    my $self = shift;
-    my $bar  = $self->stash('bar');
-    $self->render(text => "Our :bar placeholder matched $bar");
+    my $c = shift;
+    my $bar  = $c->stash('bar');
+    $c->render(text => "Our :bar placeholder matched $bar");
   };
 
   # /testsomething/foo
   # /test123something/foo
   get '/(:bar)something/foo' => sub {
-    my $self = shift;
-    my $bar  = $self->param('bar');
-    $self->render(text => "Our :bar placeholder matched $bar");
+    my $c = shift;
+    my $bar  = $c->param('bar');
+    $c->render(text => "Our :bar placeholder matched $bar");
   };
 
   app->start;
 
 =head2 松懈占位符 
 
-松懈占位可以让你匹配直接到 C</> 。
+松懈占位可以让你匹配直接到 C</> .
 
   use Mojolicious::Lite;
 
@@ -384,7 +391,7 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
 =head2 通配位符
 
-配位符可以匹配到任何东西，包括 C</> 和 C<.>.
+配位符可以匹配到任何东西, 包括 C</> 和 C<.>.
 
   use Mojolicious::Lite;
 
@@ -399,85 +406,86 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   @@ groovy.html.ep
   Your name is <%= $you %>.
 
-=head2 HTTP methods
+=head2 HTTP 方法
 
-路径选择的方法可以指定 HTTP 的方法
+路径选择器可以通过指定 HTTP 的方法来限定.
 
   use Mojolicious::Lite;
 
   # GET /hello
   get '/hello' => sub {
-    my $self = shift;
-    $self->render(text => 'Hello World!');
+    my $c = shift;
+    $c->render(text => 'Hello World!');
   };
 
   # PUT /hello
   put '/hello' => sub {
-    my $self = shift;
-    my $size = length $self->req->body;
-    $self->render(text => "You uploaded $size bytes to /hello.");
+    my $c = shift;
+    my $size = length $c->req->body;
+    $c->render(text => "You uploaded $size bytes to /hello.");
   };
 
   # GET|POST|PATCH /bye
   any [qw(GET POST PATCH)] => '/bye' => sub {
-    my $self = shift;
-    $self->render(text => 'Bye World!');
+    my $c = shift;
+    $c->render(text => 'Bye World!');
   };
 
   # * /whatever
   any '/whatever' => sub {
-    my $self   = shift;
-    my $method = $self->req->method;
-    $self->render(text => "You called /whatever with $method.");
+    my $c   = shift;
+    my $method = $c->req->method;
+    $c->render(text => "You called /whatever with $method.");
   };
 
   app->start;
 
-=head2 选的占位符 
+=head2 可选的占位符 
 
+全部的占位符都需要一个值, 但我们可以通过分配一个默认值, 让占位符的捕获是可选的. 默认的值会简单的和取到的值进行合并在存储在 stash 中.
 可选的占位符.
 
   use Mojolicious::Lite;
 
   # /hello
   # /hello/Sara
-  get '/hello/:name' => {name => 'Sebastian'} => sub {
-    my $self = shift;
-    $self->render('groovy', format => 'txt');
+  get '/hello/:name' => {name => 'Sebastian', day => 'Monday'} => sub {
+    my $c = shift;
+    $c->render('groovy', format => 'txt');
   };
 
   app->start;
   __DATA__
 
   @@ groovy.txt.ep
-  My name is <%= $name %>.
+  My name is <%= $name %> and it is <%= $day %>.
 
 =head2 限制性占位符 
 
-有个最简单的方法，让你的占位符有严格的范围，您只需写出可能值的列表。
+有个最简单的方法, 让你的占位符有严格的范围, 您只需写出可能值的列表.
 
   use Mojolicious::Lite;
 
   # /test
   # /123
   any '/:foo' => [foo => [qw(test 123)]] => sub {
-    my $self = shift;
-    my $foo  = $self->param('foo');
-    $self->render(text => "Our :foo placeholder matched $foo");
+    my $c = shift;
+    my $foo  = $c->param('foo');
+    $c->render(text => "Our :foo placeholder matched $foo");
   };
 
   app->start;
 
-所有的占位符被编译到成正则表达式，所以在这也可以很容易地定制你的这个。
+所有的占位符被编译到成正则表达式, 所以在这也可以很容易地定制你的这个.
 
   use Mojolicious::Lite;
 
   # /1
   # /123
   any '/:bar' => [bar => qr/\d+/] => sub {
-    my $self = shift;
-    my $bar  = $self->param('bar');
-    $self->render(text => "Our :bar placeholder matched $bar");
+    my $c = shift;
+    my $bar  = $c->param('bar');
+    $c->render(text => "Our :bar placeholder matched $bar");
   };
 
   app->start;
@@ -486,20 +494,20 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
 =head2 Under
 
-认证并共享代码在多个路径之间很容易实现，只需要桥接生成的路由并使用 C<under> 的声明。判断是认证还是路径显示只需要看看返回是否为 true 就知道了.
+通过共享代码进行认证, 在多个路径层次之间很容易实现, 只需要桥接生成的路由并使用 C<under> 的声明. 判断是否是认证通过的路径选择器, 只需要看看返回是否为 true 就知道了.
 
   use Mojolicious::Lite;
 
   # Authenticate based on name parameter
   under sub {
-    my $self = shift;
+    my $c = shift;
 
     # Authenticated
-    my $name = $self->param('name') || '';
+    my $name = $c->param('name') || '';
     return 1 if $name eq 'Bender';
 
     # Not authenticated
-    $self->render('denied');
+    $c->render('denied');
     return undef;
   };
 
@@ -515,7 +523,7 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   @@ index.html.ep
   Hi Bender.
 
-要实现前缀的多个路径选择，也是一个使用的 C<under> 的好理由。
+要实现相同前缀的多个路径选择器, 也是一个使用的 C<under> 的好理由.
 
   use Mojolicious::Lite;
 
@@ -536,15 +544,15 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
   app->start;
 
-你也可以使用 C<group> 来组织相关的 routes ，这可以对多个路径进行 C<under>  的声明.
+你也可以使用 C<group> 来组织相关的 routes , 这可以对多个路径进行 C<under>  的声明.
 
   use Mojolicious::Lite;
 
   # Global logic shared by all routes
   under sub {
-    my $self = shift;
-    return 1 if $self->req->headers->header('X-Bender');
-    $self->render(text => "You're not Bender.");
+    my $c = shift;
+    return 1 if $c->req->headers->header('X-Bender');
+    $c->render(text => "You're not Bender.");
     return undef;
   };
 
@@ -553,9 +561,9 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
     # Local logic shared only by routes in this group
     under '/admin' => sub {
-      my $self = shift;
-      return 1 if $self->req->heaers->header('X-Awesome');
-      $self->render(text => "You're not awesome enough.");
+      my $c = shift;
+      return 1 if $c->req->heaers->header('X-Awesome');
+      $c->render(text => "You're not awesome enough.");
       return undef;
     };
 
@@ -568,17 +576,17 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
   app->start;
 
-=head2 Formats
+=head2 输出格式 ( 请求后缀 )
 
-这其实是指的后缀，这个会自动根据后缀来选择.
+这其实是指的后缀, 这个会自动根据后缀来选择.
 
   use Mojolicious::Lite;
 
   # /detection.html
   # /detection.txt
   get '/detection' => sub {
-    my $self = shift;
-    $self->render('detected');
+    my $c = shift;
+    $c->render('detected');
   };
 
 
@@ -595,17 +603,17 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   @@ detected.txt.ep
   TXT was detected.
 
-限制性的的占位符也可以使用。
+限制性的的占位符也可以使用.
 
   use Mojolicious::Lite;
 
   # /hello.json
   # /hello.txt
   get '/hello' => [format => [qw(json txt)]] => sub {
-    my $self = shift;
-    return $self->render_json({hello => 'world'})
-      if $self->stash('format') eq 'json';
-    $self->render_text('hello world');
+    my $c = shift;
+    return $c->render_json({hello => 'world'})
+      if $c->stash('format') eq 'json';
+    $c->render_text('hello world');
   };
 
   app->start;
@@ -630,7 +638,7 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
 =head2 内容协商 
 
-不同的表示方法和需要真正 C<RESTful> 的内容来协商，你可以看看 L<Mojolicious::Controller/"respond_to">.
+不同的表示方法和需要使用 C<RESTful> 的来协商时, 你可以看看 L<Mojolicious::Controller/"respond_to">.
 
   use Mojolicious::Lite;
 
@@ -641,8 +649,8 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
   # /hello?format=json
   # /hello?format=xml
   get '/hello' => sub {
-    my $self = shift;
-    $self->respond_to(
+    my $c = shift;
+    $c->respond_to(
       json => {json => {hello => 'world'}},
       xml  => {text => '<hello>world</hello>'},
       any  => {data => '', status => 204}
@@ -655,41 +663,78 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
   app->types->type(rdf => 'application/rdf+xml');
 
+=head2 静态文件 
+
+和模板技术一样, 只是静态文件可以是单个文件, 也可以从内部 C<DATA> 的部分 ( 可以是 Base64 的编码 ). 
+
+  use Mojolicious::Lite;
+
+  app->start;
+  __DATA__
+
+  @@ something.js
+  alert('hello!');
+
+  @@ test.txt (base64)
+  dGVzdCAxMjMKbGFsYWxh
+
+外部静态文件不限于一个单独的文件, 如果存在 C<public> 会自动从这个下面查找所需要的文件.
+
+  $ mkdir public
+  $ mv something.js public/something.js
+  $ mv mojolicious.tar.gz public/mojolicious.tar.gz
+
+=head2 外部模板 
+
+外部模板会从你的应用目录中的  C<templates> 目录中来查找, 如果不存在就会查找你的 C<DATA> 块中是否存在.
+
+  use Mojolicious::Lite;
+
+  # /external
+  any '/external' => sub {
+    my $c = shift;
+
+    # templates/foo/bar.html.ep
+    $c->render('foo/bar');
+  };
+
+  app->start;
+
 =head2 Conditions
 
-条件可以是象 C<agent>  和 C<host> 之前从  L<Mojolicious::Plugin::HeaderCondition> 来的东西。可以提供强大的路由限制.
+条件可以是象 C<agent>  和 C<host> 之类的信息, 是从  L<Mojolicious::Plugin::HeaderCondition> 中来的东西.可以提供强大的路由限制.
 
   use Mojolicious::Lite;
 
   # /foo (Firefox)
   get '/foo' => (agent => qr/Firefox/) => sub {
-    my $self = shift;
-    $self->render(text => 'Congratulations, you are using a cool browser.');
+    my $c = shift;
+    $c->render(text => 'Congratulations, you are using a cool browser.');
   };
 
   # /foo (Internet Explorer)
   get '/foo' => (agent => qr/Internet Explorer/) => sub {
-    my $self = shift;
-    $self->render(text => 'Dude, you really need to upgrade to Firefox.');
+    my $c = shift;
+    $c->render(text => 'Dude, you really need to upgrade to Firefox.');
   };
 
   # http://mojolicio.us/bar
   get '/bar' => (host => 'mojolicio.us') => sub {
-    my $self = shift;
-    $self->render(text => 'Hello Mojolicious.');
+    my $c = shift;
+    $c->render(text => 'Hello Mojolicious.');
   };
 
   app->start;
 
 =head2 Sessions
 
-签名 cookie 基于你的 session ，这个原生可以使用。直接通过 helper  L<Mojolicious::Plugin::DefaultHelpers/"session">.
+签名 cookie 基于你的 session , 这个原生可以使用.直接通过 L<Mojolicious::Plugin::DefaultHelpers/"session"> 这个来访问到, 所以的全部的 session 的数据序列化是通过 L<Mojo::JSON> 实现的.
 
   use Mojolicious::Lite;
 
   get '/counter' => sub {
-    my $self = shift;
-    $self->session->{counter}++;
+    my $c = shift;
+    $c->session->{counter}++;
   };
 
   app->start;
@@ -697,18 +742,14 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
   @@ counter.html.ep
   Counter: <%= session 'counter' %>
+  
+需要注意的是, 你应该使用一个自定义的  L<Mojolicious/"secret"> 来签署 Cookie 才会真正的安全.
 
-只需要意识到，所有的会话数据需要通过  L<Mojo::JSON> 序列化。
-
-=head2 Secret
-
-需要注意的是，你应该使用一个自定义的  L<Mojolicious/"secret"> 来签署 Cookie 才会真正的安全。
-
-  app->secret('My secret passphrase here');
+  app->secrets(['My secret passphrase here']);
 
 =head2 File uploads
 
-所有上传的文件只要是 C<multipart/form-data> 的请求会自动转为 L<Mojo::Upload> 对象处理。你不用担心内存的使用，因为超过 C<250KB> 的所有文件将被自动到一个临时文件。
+所有上传的文件只要是 C<multipart/form-data> 的请求会自动转为 L<Mojo::Upload> 对象处理. 你不用担心内存的使用, 因为超过 C<250KB> 的所有文件将被自动到一个临时文件.
 
   use Mojolicious::Lite;
 
@@ -717,18 +758,18 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
 
   # Multipart upload handler
   post '/upload' => sub {
-    my $self = shift;
+    my $c = shift;
 
     # Check file size
-    return $self->render(text => 'File is too big.', status => 200)
-      if $self->req->is_limit_exceeded;
+    return $c->render(text => 'File is too big.', status => 200)
+      if $c->req->is_limit_exceeded;
 
     # Process uploaded file
-    return $self->redirect_to('form')
-      unless my $example = $self->param('example');
+    return $c->redirect_to('form')
+      unless my $example = $c->param('example');
     my $size = $example->size;
     my $name = $example->filename;
-    $self->render(text => "Thanks for uploading $size byte file $name.");
+    $c->render(text => "Thanks for uploading $size byte file $name.");
   };
 
   app->start;
@@ -746,74 +787,124 @@ L<Mojolicious::Controller/"req"> 和 L<Mojolicious::Controller/"res"> 提供了�
     </body>
   </html>
 
-为了保护您避免过大的文件, 这也有一个默认极限的值 C<5MB>。你可以使用 C<MOJO_MAX_MESSAGE_SIZE> 的环境变量来修改这个.
+为了保护您避免过大的文件, 这也有一个默认极限的值 C<10MB>.你可以使用 L<Mojo::Message/"max_message_size"> 或者 C<MOJO_MAX_MESSAGE_SIZE> 的环境变量来调整这个.
 
   # Increase limit to 1GB
   $ENV{MOJO_MAX_MESSAGE_SIZE} = 1073741824;
 
 =head2 User agent
 
-L<Mojolicious::Controller/"ua">  是一个全功能的 HTTP 和 WebSocket 的 user agent，当你和 L<Mojo::JSON> L<Mojo::DOM> 组合使用时非常的强大.
+使用 L<Mojo::UserAgent> , 可以通过 L<Mojolicious::Plugin::DefaultHelpers/"ua"> 这个 helper, 它是一个全功能的 HTTP 和 WebSocket 的用户代理, 当你使用 L<Mojo::JSON> 和 L<Mojo::DOM> 组合使用时非常的强大.
 
   use Mojolicious::Lite;
 
-  get '/test' => sub {
-    my $self = shift;
-    $self->render(data => $self->ua->get('http://mojolicio.us')->res->body);
+  # Blocking
+  get '/headers' => sub {
+    my $c = shift;
+    my $url  = $c->param('url') || 'http://mojolicio.us';
+    my $dom  = $c->ua->get($url)->res->dom;
+    $c->render(json => [$dom->find('h1, h2, h3')->text->each]);
+  };
+
+  # Non-blocking
+  get '/title' => sub {
+    my $c = shift;
+    $c->ua->get('mojolicio.us' => sub {
+      my ($ua, $tx) = @_;
+      $c->render(data => $tx->res->dom->at('title')->text);
+    });
+  };
+
+  # Concurrent non-blocking
+  get '/titles' => sub {
+    my $c = shift;
+    my $delay = Mojo::IOLoop->delay(sub {
+      my ($delay, @titles) = @_;
+      $c->render(json => \@titles);
+    });
+    for my $url ('http://mojolicio.us', 'https://metacpan.org') {
+      my $end = $delay->begin(0);
+      $c->ua->get($url => sub {
+        my ($ua, $tx) = @_;
+        $end->($tx->res->dom->html->head->title->text);
+      });
+    }
   };
 
   app->start;
 
+更多用法请看 L<Mojolicious::Guides::Cookbook/"USER AGENT">.
+
 =head2 WebSockets
 
-WebSocket的应用程序从未如此简单。
+WebSocket 的应用程序从未如此简单. 接收信息通过 L<Mojolicious::Controller/"on"> 中的事件订阅 L<Mojo::Transaction::WebSocket/"json">. 并通过 L<Mojolicious::Controller/"send"> 返回就行了.
 
   use Mojolicious::Lite;
 
   websocket '/echo' => sub {
-    my $self = shift;
-    $self->on(message => sub {
-      my ($self, $msg) = @_;
-      $self->send("echo: $msg");
+    my $c = shift;
+    $c->on(json => sub {
+      my ($c, $hash) = @_;
+      $hash->{msg} = "echo: $hash->{msg}";
+      $c->send({json => $hash});
     });
   };
 
+  get '/' => 'index';
+
   app->start;
+  __DATA__
 
-在 L<Mojo::Transaction::WebSocket/"message"> 的事件中，我们可以对  L<Mojolicious::Controller/"on"> 的回调进行订阅，当每次有 WebSocket 的信息时会接收到。
+  @@ index.html.ep
+  <!DOCTYPE html>
+  <html>
+    <head>
+      <title>Echo</title>
+      <script>
+        var ws = new WebSocket('<%= url_for('echo')->to_abs %>');
+        ws.onmessage = function (event) {
+          document.body.innerHTML += JSON.parse(event.data).msg;
+        };
+        ws.onopen = function (event) {
+          ws.send(JSON.stringify({msg: 'I ♥ Mojolicious!'}));
+        };
+      </script>
+    </head>
+  </html>
 
-=head2 外部模板 
+更我相关的信息可以查看 L<Mojolicious::Guides::Cookbook/"REAL-TIME WEB">.
 
-外部模板会从你的应用目录中的  C<templates> 目录中来查找.
+=head2 模式
+
+你可以通过 L<Mojo::Log> 中的 L<Mojo/"log"> 方法收集调试信息, 并通过 L<Mojolicious> 修改模式为 production 来禁用这个. 也可以通过 L<Mojolicious/"mode"> 来取到属性.
 
   use Mojolicious::Lite;
 
-  # /external
-  any '/external' => sub {
-    my $self = shift;
+  # Prepare mode specific message during startup
+  my $msg = app->mode eq 'development' ? 'Development!' : 'Something else!';
 
-    # templates/foo/bar.html.ep
-    $self->render('foo/bar');
+  get '/' => sub {
+    my $c = shift;
+    $c->app->log->debug('Rendering mode specific message.');
+    $c->render(text => $msg);
   };
 
+  app->log->debug('Starting application.');
   app->start;
 
-=head2 静态文件 
+默认模式是使用的 C<development>. 这个可以通过命令行参数或者 C<MOJO_MODE> and C<PLACK_ENV> 的环境变量的值来修改它, 模式修改的其它改变是日志级别由 C<debug> 变成 C<info>. 
 
-静态文件可以从 C<DATA> 的部分(可以是 Base64 的编码)或 C<public> 的目录查找.
+  $ ./myapp.pl daemon -m production
 
-  @@ something.js
-  alert('hello!');
+全部的日志信息默认会写到标准输出或者如果存在 log 目录就会写到 C<log/$mode.log> 中.
 
-  @@ test.txt (base64)
-  dGVzdCAxMjMKbGFsYWxh
+    $ mkdir log
 
-  $ mkdir public
-  $ mv something.js public/something.js
+模式的改变, 这也会影响到模板其它的地方, 如 C<exception>  和 C<not_found> 的模板.
 
 =head2 Testing
 
-创建一个 C<t> 目录和进行 Perl 的单元测试，测试您的应用程序在这也一样简单。
+创建一个 C<t> 目录和进行 Perl 的单元测试, 测试您的应用程序在这也一样简单.
 
   use Test::More;
   use Test::Mojo;
@@ -826,40 +917,14 @@ WebSocket的应用程序从未如此简单。
 
   done_testing();
 
-使用  C<test> 命令运行全部的单元测试.
+使用 L<Mojolicious::Command::test> 命令运行全部的单元测试.
 
   $ ./myapp.pl test
+  $ ./myapp.pl test -v
 
-如果你想你的测试报告更加多的信息，你也可以直接在您的测试文件中更改该应用程序的日志级别。
+如果你想你的测试报告更加多的信息, 你也可以直接在您的测试文件中更改该应用程序的日志级别.
 
   $t->app->log->level('debug');
-
-=head2 模式
-
-在生产环境我们想要禁用 debug 的信息，可以直接通过 L<Mojolicious> 操作的命令行选项和修改 C<MOJO_MODE> 这个环境变量，默认是使用的 C<development>.
-
-  $ ./myapp.pl daemon -m production
-
-这也影响到模板其它的地方，如 C<exception>  和 C<not_found> 的模板.
-
-=head2 Logging
-
-使用 L<Mojo::Log> 时信息会自动的写到标准错误输入和 C<log/$mode.log> 的文件中，当然必须 C<log> 目录存在.
-
-  $ mkdir log
-
-更多的控制可以直接访问 L<Mojolicious>  的对象.
-
-  use Mojolicious::Lite;
-
-  app->log->level('error');
-  app->routes->get('/foo/:bar' => sub {
-    my $self = shift;
-    $self->app->log->debug('Got a request for "Hello Mojo!".');
-    $self->render(text => 'Hello Mojo!');
-  });
-
-  app->start;
 
 =head2 更多
 
@@ -872,27 +937,33 @@ L<Mojolicious::Lite> 实现了下列的功能.
 =head2 C<any>
 
   my $route = any '/:foo' => sub {...};
+  my $route = any '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = any '/:foo' => [foo => qr/\w+/] => sub {...};
   my $route = any [qw(GET POST)] => '/:foo' => sub {...};
 
-生成  L<Mojolicious::Routes::Route/"delete"> 的 route ， 对所有的 HTTP 的请求方法都接收.
+由 L<Mojolicious::Routes::Route/"any"> 生成的路由, 会匹配所有的 http 请求.
 
 =head2 C<app>
 
   my $app = app;
 
-这是 L<Mojolicious::Lite> 的应用.
+这是 L<Mojolicious::Lite> 的应用的对象本身.
 
 =head2 C<del>
 
   my $route = del '/:foo' => sub {...};
+  my $route = del '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = del '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成 L<Mojolicious::Routes::Route/"delete">  route ， 只对  C<DELETE>  的请求有效, 以看详细教程的参数.
+生成 L<Mojolicious::Routes::Route/"delete">  route ,  只对  C<DELETE>  的请求有效, 以看详细教程的参数.
 
 =head2 C<get>
 
   my $route = get '/:foo' => sub {...};
+  my $route = get '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = get '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成 L<Mojolicious::Routes::Route/"get"> 的 route ， 只对 C<GET>  的请求有效, 以看详细教程的参数.
+生成 L<Mojolicious::Routes::Route/"get"> 的 route ,  只对 C<GET>  的请求有效, 以看详细教程的参数.
 
 =head2 C<group>
 
@@ -915,14 +986,18 @@ L<Mojolicious::Lite> 实现了下列的功能.
 =head2 C<options>
 
   my $route = options '/:foo' => sub {...};
+  my $route = options '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = options '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成 L<Mojolicious::Routes::Route/"options"> 的 route ， 只对 C<OPTIONS> 的请求有效, 以看详细教程的参数.
+生成 L<Mojolicious::Routes::Route/"options"> 的 route ,  只对 C<OPTIONS> 的请求有效, 以看详细教程的参数.
 
 =head2 C<patch>
 
   my $route = patch '/:foo' => sub {...};
+  my $route = patch '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = patch '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成  L<Mojolicious::Routes::Route/"patch"> 的路径， 只对 C<PATCH> 的请求有效, 以看详细教程的参数.
+生成  L<Mojolicious::Routes::Route/"patch"> 的路径,  只对 C<PATCH> 的请求有效, 以看详细教程的参数.
 
 =head2 C<plugin>
 
@@ -933,27 +1008,35 @@ L<Mojolicious::Lite> 实现了下列的功能.
 =head2 C<post>
 
   my $route = post '/:foo' => sub {...};
+  my $route = post '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = post '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成 L<Mojolicious::Routes::Route/"post"> 的 route， 只对 C<POST> 的请求有效，可以看详细教程的参数. 
+生成 L<Mojolicious::Routes::Route/"post"> 的 route,  只对 C<POST> 的请求有效, 可以看详细教程的参数. 
 
 =head2 C<put>
 
   my $route = put '/:foo' => sub {...};
+  my $route = put '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = put '/:foo' => [foo => qr/\w+/] => sub {...};
 
-生成 L<Mojolicious::Routes::Route/"put"> 的 route ，只对  C<PUT> 的请求有效，可以看详细教程的参数.
+生成 L<Mojolicious::Routes::Route/"put"> 的 route , 只对  C<PUT> 的请求有效, 可以看详细教程的参数.
 
 =head2 C<under>
 
-  my $route = under sub {...};
-  my $route = under '/:foo';
+  my $bridge = under sub {...};
+  my $bridge = under '/:foo' => sub {...};
+  my $bridge = under '/:foo' => [foo => qr/\w+/];
+    my $bridge = under {format => 0};
 
-通过 L<Mojolicious::Routes::Route/"under"> 生成桥接的路由，主要用来转发路径选择并自动的附加上前面的，用于前缀选择之类.
+通过 L<Mojolicious::Routes::Route/"under"> 生成桥接的路由, 主要用来转发路径选择并自动的附加上前面的, 用于前缀选择之类.
 
 =head2 C<websocket>
 
   my $route = websocket '/:foo' => sub {...};
+  my $route = websocket '/:foo' => {foo => 'bar'} => sub {...};
+  my $route = websocket '/:foo' => [foo => qr/\w+/] => sub {...};
 
-通过 L<Mojolicious::Routes::Route/"websocket"> 来生成路径选择，只匹配 C<WebSocket> 的握手。
+通过 L<Mojolicious::Routes::Route/"websocket"> 来生成路径选择, 只匹配 C<WebSocket> 的握手.
 
 =head1 属性
 

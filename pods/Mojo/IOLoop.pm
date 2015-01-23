@@ -265,6 +265,8 @@ sub _timers {
 
 1;
 
+=encoding utf8
+
 =head1 NAME
 
 Mojo::IOLoop - Minimalistic event loop
@@ -496,8 +498,7 @@ Check if event loop is running.
   Mojo::IOLoop->one_tick;
   $loop->one_tick;
 
-Run event loop until an event occurs. Note that this method can recurse back
-into the reactor, so you need to be careful.
+运行事件循环直到事件发生. 注意, 此方法可以递归回到 reactor, 所以你必须要小心.
 
 =head2 recurring
 
@@ -537,20 +538,22 @@ as L<Mojo::IOLoop::Server/"listen">.
 
   my $loop = Mojo::IOLoop->singleton;
 
-The global L<Mojo::IOLoop> singleton, used to access a single shared event
-loop object from everywhere inside the process.
+全局的 L<Mojo::IOLoop> 一个唯一实例, 在进程的内部各处都是使用它来访问共享的单独的事件循环.
 
   # Many methods also allow you to take shortcuts
   Mojo::IOLoop->timer(2 => sub { Mojo::IOLoop->stop });
   Mojo::IOLoop->start;
+
+  # Restart active timer
+  my $id = Mojo::IOLoop->timer(3 => sub { say 'Timeout!' });
+  Mojo::IOLoop->singleton->reactor->again($id);
 
 =head2 start
 
   Mojo::IOLoop->start;
   $loop->start;
 
-Start the event loop, this will block until C<stop> is called. Note that some
-reactors stop automatically if there are no events being watched anymore.
+开始事件循环, 这将会阻塞直接到 C<stop> 被调用的时候. 注意如果没有事件需要 watch 的时候, 有些 reactor 就会自动的停止.
 
   # Start event loop only if it is not running already
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
@@ -560,8 +563,7 @@ reactors stop automatically if there are no events being watched anymore.
   Mojo::IOLoop->stop;
   $loop->stop;
 
-Stop the event loop, this will not interrupt any existing connections and the
-event loop can be restarted by running C<start> again.
+停止事件循环, 这将不会中断现有的连接和事件循环可以通过运行 C<start> 再次被重新启动。
 
 =head2 stream
 
@@ -580,16 +582,14 @@ Get L<Mojo::IOLoop::Stream> object for id or turn object into a connection.
   my $id = $loop->timer(5 => sub {...});
   my $id = $loop->timer(0.25 => sub {...});
 
-Create a new timer, invoking the callback after a given amount of time in
-seconds.
+创建一个 timer, 在那个给定的总时间之后调用这个回调.
 
   # Invoke as soon as possible
   Mojo::IOLoop->timer(0 => sub { say 'Next tick.' });
 
 =head1 DEBUGGING
 
-You can set the MOJO_IOLOOP_DEBUG environment variable to get some advanced
-diagnostics information printed to C<STDERR>.
+如果你设置了 MOJO_IOLOOP_DEBUG 的环境变量, 会给高级的诊断信息打印到标准错误.
 
   MOJO_IOLOOP_DEBUG=1
 

@@ -4,7 +4,7 @@
 
 =head1 文档
 
-Mojolicious::Guides - Mojolicious 指南 
+Mojolicious::Guides - 魔咒 ( Mojolicious ) 中文指南 
 
 =head1 不要害怕!
 
@@ -22,7 +22,7 @@ L<Modern Perl book|http://modernperlbooks.com/books/modern_perl/>, 这个免费�
 
 =item L<Mojolicious::Lite>
 
-要想快速的开发和入门可以先看 Mojolicious 中 L<Mojolicious::Lite> 的教程。你学习的所有的东西都可以用在标准的  L<Mojolicious>. 学习这个是先决条件。你必须先看看。这个很象 Dancer ,是基于单文件原型开发使用.
+要想快速的开发和入门可以先看魔咒 ( 我们目前使用的这个框架的中文名称, 取自 Mojo 的发音 ) 中 L<Mojolicious::Lite> 的教程。你学习的所有的东西都可以用在标准的  L<Mojolicious>. 学习这个是先决条件。你必须先看看。这个很象 Dancer ,是基于单文件原型开发使用.
 
 =back
 
@@ -84,7 +84,7 @@ L<Mojolicious> 和 L<Mojolicious::Lite> 有很多相同的部分.这些东西象
 
 =item L<Mojo::Server::CGI>, L<Mojo::Server::PSGI>
 
-Transparent CGI and L<PSGI> support out of the box.
+透明的支持 CGI 和 L<PSGI>.
 
 =item L<Mojo::Template>
 
@@ -92,7 +92,7 @@ Transparent CGI and L<PSGI> support out of the box.
 
 =item L<Mojo::ByteStream>
 
-Countless portable and very convenient bytestream manipulation methods.
+非常多的方便和便捷的操作字节流的方法.
 
 =item L<Mojolicious::Commands>
 
@@ -100,11 +100,320 @@ L<mojo> script 相关的命令行, 如果你想使用 Dancer 样的功能 $ mojo
 
 =item L<Test::Mojo>
 
-Test driven development toolkit for web applications.
+Web 应用开发用的测试驱动的工具包
 
 =item L<ojo>
 
-Fun oneliners using everything above.
+所有功能的单行的函数
+
+=back
+
+
+=head1 拆分
+
+这些模块并不一定是 L<Mojolicious> 的一部分. 但是它被设计成使用同一个开发的分支之下.
+
+=over 2
+
+=item L<Mango>
+
+纯 Perl 的非阻塞 I/O 的 MongoDB 驱动
+
+=item L<Minion>
+
+Job queue.
+
+=back
+
+=head1 参考
+
+下面这些是 L<Mojolicious> 中的模块的层次分布.
+
+=over 2
+
+=item * L<Mojo::Base>
+
+=over 2
+
+=item * L<Mojo>
+
+=over 2
+
+=item * L<Mojolicious>
+
+=over 2
+
+=item * L<Mojolicious::Lite>
+
+=over 2
+
+=item * L<Mojo::HelloWorld>
+
+=back
+
+=back
+
+=back
+
+=item * L<Mojo::Cache>
+
+=item * L<Mojo::Cookie>
+
+=over 2
+
+=item * L<Mojo::Cookie::Request>
+
+=item * L<Mojo::Cookie::Response>
+
+=back
+
+=item * L<Mojo::DOM::CSS>
+
+=item * L<Mojo::DOM::HTML>
+
+=item * L<Mojo::Date>
+
+=item * L<Mojo::EventEmitter>
+
+=over 2
+
+=item * L<Mojo::Asset>
+
+=over 2
+
+=item * L<Mojo::Asset::File>
+
+=item * L<Mojo::Asset::Memory>
+
+=back
+
+=item * L<Mojo::Content>
+
+=over 2
+
+=item * L<Mojo::Content::MultiPart>
+
+=item * L<Mojo::Content::Single>
+
+=back
+
+=item * L<Mojo::IOLoop::Client>
+
+=item * L<Mojo::IOLoop::Delay>
+
+=item * L<Mojo::IOLoop::Server>
+
+=item * L<Mojo::IOLoop::Stream>
+
+=item * L<Mojo::Log>
+
+=item * L<Mojo::Message>
+
+=over 2
+
+=item * L<Mojo::Message::Request>
+
+=item * L<Mojo::Message::Response>
+
+=back
+
+=item * L<Mojo::Reactor>
+
+=over 2
+
+=item * L<Mojo::Reactor::Poll>
+
+=over 2
+
+=item * L<Mojo::Reactor::EV>
+
+=back
+
+=back
+
+=item * L<Mojo::Server>
+
+=over 2
+
+=item * L<Mojo::Server::CGI>
+
+=item * L<Mojo::Server::Daemon>
+
+=over 2
+
+=item * L<Mojo::Server::Prefork>
+
+=back
+
+=item * L<Mojo::Server::PSGI>
+
+=back
+
+=item * L<Mojo::Transaction>
+
+=over 2
+
+=item * L<Mojo::Transaction::HTTP>
+
+=item * L<Mojo::Transaction::WebSocket>
+
+=back
+
+=item * L<Mojo::UserAgent>
+
+=item * L<Mojolicious::Plugins>
+
+=back
+
+=item * L<Mojo::Exception>
+
+=item * L<Mojo::Headers>
+
+=item * L<Mojo::Home>
+
+=item * L<Mojo::IOLoop>
+
+=item * L<Mojo::JSON>
+
+=item * L<Mojo::JSON::Pointer>
+
+=item * L<Mojo::Loader>
+
+=item * L<Mojo::Parameters>
+
+=item * L<Mojo::Path>
+
+=item * L<Mojo::Server::Hypnotoad>
+
+=item * L<Mojo::Server::Morbo>
+
+=item * L<Mojo::Template>
+
+=item * L<Mojo::URL>
+
+=item * L<Mojo::Upload>
+
+=item * L<Mojo::UserAgent::CookieJar>
+
+=item * L<Mojo::UserAgent::Proxy>
+
+=item * L<Mojo::UserAgent::Server>
+
+=item * L<Mojo::UserAgent::Transactor>
+
+=item * L<Mojolicious::Command>
+
+=over 2
+
+=item * L<Mojolicious::Command::cgi>
+
+=item * L<Mojolicious::Command::cpanify>
+
+=item * L<Mojolicious::Command::daemon>
+
+=item * L<Mojolicious::Command::eval>
+
+=item * L<Mojolicious::Command::generate::app>
+
+=item * L<Mojolicious::Command::generate::lite_app>
+
+=item * L<Mojolicious::Command::generate::makefile>
+
+=item * L<Mojolicious::Command::generate::plugin>
+
+=item * L<Mojolicious::Command::get>
+
+=item * L<Mojolicious::Command::inflate>
+
+=item * L<Mojolicious::Command::prefork>
+
+=item * L<Mojolicious::Command::psgi>
+
+=item * L<Mojolicious::Command::routes>
+
+=item * L<Mojolicious::Command::test>
+
+=item * L<Mojolicious::Command::version>
+
+=item * L<Mojolicious::Commands>
+
+=over 2
+
+=item * L<Mojolicious::Command::generate>
+
+=back
+
+=back
+
+=item * L<Mojolicious::Controller>
+
+=item * L<Mojolicious::Plugin>
+
+=over 2
+
+=item * L<Mojolicious::Plugin::Charset>
+
+=item * L<Mojolicious::Plugin::Config>
+
+=over 2
+
+=item * L<Mojolicious::Plugin::JSONConfig>
+
+=back
+
+=item * L<Mojolicious::Plugin::DefaultHelpers>
+
+=item * L<Mojolicious::Plugin::EPLRenderer>
+
+=item * L<Mojolicious::Plugin::EPRenderer>
+
+=item * L<Mojolicious::Plugin::HeaderCondition>
+
+=item * L<Mojolicious::Plugin::Mount>
+
+=item * L<Mojolicious::Plugin::PODRenderer>
+
+=item * L<Mojolicious::Plugin::TagHelpers>
+
+=back
+
+=item * L<Mojolicious::Renderer>
+
+=item * L<Mojolicious::Routes::Match>
+
+=item * L<Mojolicious::Routes::Pattern>
+
+=item * L<Mojolicious::Routes::Route>
+
+=over 2
+
+=item * L<Mojolicious::Routes>
+
+=back
+
+=item * L<Mojolicious::Sessions>
+
+=item * L<Mojolicious::Static>
+
+=item * L<Mojolicious::Types>
+
+=item * L<Mojolicious::Validator>
+
+=item * L<Mojolicious::Validator::Validation>
+
+=item * L<Test::Mojo>
+
+=back
+
+=item * L<Mojo::ByteStream>
+
+=item * L<Mojo::Collection>
+
+=item * L<Mojo::DOM>
+
+=item * L<Mojo::Util>
+
+=item * L<ojo>
 
 =back
 

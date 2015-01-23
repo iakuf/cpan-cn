@@ -48,7 +48,7 @@ __END__
 
 =head1 NAME
 
-Feersum - A PSGI engine for Perl based on EV/libev
+Feersum - A PSGI engine for Perl based on EV/libev 高性能的基于 EV/libev 的 PSGI 引擎
 
 =head1 SYNOPSIS
 

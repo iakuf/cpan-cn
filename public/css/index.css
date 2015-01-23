@@ -3,29 +3,27 @@ h1, h2, h3 {
   font-size: 1.5em;
   margin: 0;
 }
-
+#balloon {
+  position: absolute;
+  right: 9%;
+  top: 245px;
+}
 #fun {
   background: url(../digitalforest.png) repeat-x;
   height: 450px;
   text-align: center;
 }
-
 #introduction {
   background-color: #fff;
-  -moz-border-radius-bottomleft: 5px;
   border-bottom-left-radius: 5px;
-  -moz-border-radius-bottomright: 5px;
   border-bottom-right-radius: 5px;
-  -moz-box-shadow: 0px 0px 2px #ccc;
-  -webkit-box-shadow: 0px 0px 2px #ccc;
-  box-shadow: 0px 0px 2px #ccc;
+  box-shadow: 0px 0px 2px #999;
   margin-left: 5em;
   margin-right: 5em;
   margin-top: 1em;
   padding: 3em;
   padding-top: 70px;
 }
-
 #wrapperlicious {
   max-width: 1000px;
   margin: 0 auto;

@@ -9,27 +9,28 @@ Mojolicious::Guides::Rendering - 渲染
 
 =head1 概述
 
-本文档介绍通过 L<Mojolicious> 来渲染生成内容。
+本文档介绍通过 L<Mojolicious> 来渲染生成网页展示用的内容.  
+本文档更新到 5.06
 
 =head1 概念
 
-这是  L<Mojolicious> 一定都知道的。
+用 L<Mojolicious> 一定都知道这是什么. 
 
 =head2 Renderer
 
-在这指的渲染器是一个很小黑盒子，把 stash 的数据转化为实际的响应，其中利用到多种模板系统和数据编码模块。
+在这指的渲染器是一个很小黑盒子, 把 stash 的数据转化为实际的响应, 其中利用到多种模板系统和数据编码模块. 
 
   {text => 'Hello.'}                 -> 200 OK, text/html, 'Hello.'
   {json => {x => 3}}                 -> 200 OK, application/json, '{"x":3}'
   {text => 'Oops.', status => '410'} -> 410 Gone, text/html, 'Oops.'
 
-如果提供一些 route 之类的信息，模板可以被自动检测到。模板名遵循  C<name.format.handler> 规则，其中  C<name> 是定义的 C<controller/action> 或者是路由选择的名字，C<format> 默认是 C<html> ,其中 C<handler>  默认是 C<ep>.
+如果提供一些额外的象 route 之类的信息, 这时模板路径可以被自动检测到. 模板名遵循  C<name.format.handler> 规则, 其中 C<name> 是定义的 C<controller/action> 动作名或者是路由选择的名字, C<format> 默认是 C<html>, 其中 C<handler> 是指由什么模板技术来处理, 默认是 C<ep>.
 
   {controller => 'users', action => 'list'} -> 'users/list.html.ep'
   {name => 'foo', format => 'txt'}          -> 'foo.txt.ep'
   {name => 'foo', handler => 'epl'}         -> 'foo.html.epl'
 
-全部的模板放在 C<templates> 的目录中，如果是单文件的应用就在 C<main> 类的 C<DATA> 部分。
+全部的模板文件放我们应用的 C<templates> 的目录中, 我们可以通过 L<Mojolicious::Renderer/"paths"> 来自定义, 或者是放在应用 L<Mojolicious::Renderer/"classes"> 的 C<DATA> 部分. 
 
   __DATA__
 
@@ -45,24 +46,24 @@ Mojolicious::Guides::Rendering - 渲染
   @@ hello.txt.ep
   ...
 
-渲染器可以很容易地扩展，以支持额外的模板系统的插件，但更多的后来。
+渲染器可以很容易地扩展, 以插件的方式来支持额外的模板系统. 
 
-=head2 Embedded Perl
+=head2 嵌入 Perl 代码 
 
-L<Mojolicious> 包含简单但非常强大的模板系统，叫 Embedded Perl 或 C<ep>。它可以嵌入 Perl 代码，使用特别的标记并转化为实际的内容。
+L<Mojolicious> 包含简单但非常强大的模板系统, 叫 Embedded Perl 或 C<ep>. 它可以嵌入 Perl 代码, 使用特别的标记并转化为实际的内容. 
 
   <% Perl 代码 %>
-  <%= Perl 表达式, 结果表达式的值 %>
+  <%= Perl 表达式, 结果表达式的结果经过 XML 转义 %>
   <%== Perl 表达式, 结果是什么就显示什么 %>
   <%# 注释, 用于 debug %>
   <%% 替换为 "<%", 用于生成模板 %>
-  % Perl 代码行，和这个一样 "<% line =%>"
+  % Perl 代码行, 和这个一样 "<% line =%>"
   %= Perl 表达式,这个一样  "<%= line %>"
   %== Perl 达式,这个一样 "<%== line %>"
   %# 注释,这个一样 "<%# line =%>"
   %% 换为 "%", 用于生成模板 
 
-使用 <% 的 Tag 和使用 % 的行是一样的，但是根据不同的上下文时不同的内容看起来会好些。分号会自动追加到所有的表达式。
+使用 <% 的 Tag 和使用 % 的行是一样的, 但是根据不同的上下文时不同的内容看起来会好些. 分号会自动追加到所有的表达式. 
 
   <% my $i = 10; %>
   <ul>
@@ -82,7 +83,7 @@ L<Mojolicious> 包含简单但非常强大的模板系统，叫 Embedded Perl �
     % }
   </ul>
 
-除了空白处理的差异，这两个例子产生类似 Perl 功能代码，我们可以天真的理解成这个样子。
+除了空白处理的差异, 这两个例子产生类似 Perl 功能代码, 我们可以天真的理解成这个样子. 
 
   my $output = '';
   my $i = 10;
@@ -95,7 +96,7 @@ L<Mojolicious> 包含简单但非常强大的模板系统，叫 Embedded Perl �
   $output .= '</ul>';
   return $output;
 
-一些额外的等号可以用于禁用在 Perl 表达式中的转义的字符 C<E<lt>>, C<E<gt>>, C<&>, C<'>  和  C<"> 。这是默认设置，以防止XSS攻击.
+一些额外的等号可以用于禁用在 Perl 表达式中的转义的字符 C<E<lt>>, C<E<gt>>, C<&>, C<'>  和  C<"> . 这是默认设置, 以防止XSS攻击.
 
   <%= 'lalala' %>
   <%== '<p>test</p>' %>
@@ -104,28 +105,28 @@ L<Mojolicious> 包含简单但非常强大的模板系统，叫 Embedded Perl �
 
   <%= Mojo::ByteStream->new('<p>test</p>') %>
 
-换行符可以用一个反斜杠转义。
+换行符可以用一个反斜杠转义. 
 
   This is <%= 1 + 1 %> a\
   single line
 
-一个换行符前的反斜杠，可以用另一个反斜杠转义。
+一个换行符前的反斜杠, 可以用另一个反斜杠转义. 
 
   This will <%= 1 + 1 %> result\\
   in multiple\\
   lines
 
-您还可以对结束标签添加额外的等号，它会自动删除所有周围的空白，可以自由缩进，而不破坏的结果。
+您还可以对结束标签添加额外的等号, 它会自动删除所有周围的空白, 可以自由缩进, 而不破坏的结果. 
 
   <% for (1 .. 3) { %>
     <%= $foo =%>
   <% } %>
 
-Stash 的值不会有无效的字符的，因为它们的名字会在模板和 controller 的 C<$self> 的对象中中自动初始化。
+Stash 的值不会有无效的字符的, 因为它们的名字会在模板和 controller 的 C<$c> 的对象中中自动初始化. 
 
-  $self->stash(name => 'tester');
+  $c->stash(name => 'tester');
 
-  Hello <%= $name %> from <%= $self->tx->remote_address %>.
+  Hello <%= $name %> from <%= $c->tx->remote_address %>.
 
 在后面我们还会象很多的辅助功能
 
@@ -137,83 +138,121 @@ Stash 的值不会有无效的字符的，因为它们的名字会在模板和 c
 
 =head2 自动渲染 
 
-渲染可以通过调用方法 L<Mojolicious::Controller/"render"> 手动启动，但通常没有必要，因为路由完后会自动调用。 This also means you can have routes pointing only to templates without actual actions.
+渲染可以通过调用方法 L<Mojolicious::Controller/"render"> 手动启动, 但通常没有必要, 因为路由完后会自动调用. 这也意味着你可以只给路由指向模板来输出, 但没有实际的 action.
 
-  $self->render;
+  $c->render;
 
-这有个区别，在手动调用它时，是使用的当前的控制器对象，并不是 L<Mojolicious/"controller_class"> 中指定的默认的。
+这有个区别, 在手动调用它时, 是使用的当前的控制器对象, 并不是 L<Mojolicious/"controller_class"> 中指定的默认的类. 
+
+  $c->render_later;
+
+使用 L<Mojolicious::Controller/"render_later">  这个会禁用自动渲染, 这对于我们要使用非阻塞来延迟渲染输出非常有用, 所以必须先执行这个.
 
 =head2 渲染模板 
 
-渲染器会自动的检查合适的模板，当然你也可以使用 stash 中的变量  C<template>  来指定一个。
+渲染器会自动的检查合适的模板, 当然你也可以使用 stash 中的变量  C<template>  来指定一个. 
 
-  $self->render(template => 'foo/bar');
+  # foo/bar/baz.*.*
+  $c->render(template => 'foo/bar/baz');
 
-选择特定的 C<format> 和 C<handler> 也很容易.
+还可以选择指定的 C<format> 输出和 C<handler> 处理也很容易.
 
-  $self->render(template => 'foo/bar', format => 'txt', handler => 'epl');
+  # foo/bar/baz.txt.epl
+  $c->render(template => 'foo/bar/baz', format => 'txt', handler => 'epl');
 
-因为最常用的功能是显示指定的模板，所以上面的太过于复杂，可以使用下面的做为代替.
+因为最常用的功能是显示指定的模板, 所以上面的太过于复杂, 可以使用下面的做为代替.
 
-  $self->render('foo/bar');
+  $c->render('foo/bar');
+
+如果你并不能提前知道这个模板是否存在, 可以使用 L<Mojolicious::Controller/"render_maybe"> 这个方法来尝试是否存在.
+
+    $c->render_maybe('localized/baz') or $c->render('foo/bar/baz');
+
+=head2 渲染成字符串
+
+有时你可能想直接使用渲染的结果, 而并不是直接生成响应, 例如发送电子邮件, 这可以通过 L<Mojolicious::Controller/"render_to_string"> 来做.
+
+  my $html = $c->render_to_string('mail');
+
+上面执行时数据并不会被编码, 所以很容易重用它的结果在其它的模板或者生成进制的数据.
+
+  my $pdf = $c->render_to_string('invoice', format => 'pdf');
+  $c->render(data => $pdf, format => 'pdf');
+
+All arguments passed will get localized automatically and are only available
+during this render operation.
+
+=head2 Template variants
+
+为了使你的应用程序在不同的设备上效果都能很好, 你也可以使用 C<variant> 的 stash 的值来改变你所选择的不同的模板.
+
+  # foo/bar/baz.html+phone.ep
+  # foo/bar/baz.html.ep
+  $c->render('foo/bar/baz', variant => 'phone');
+
+这个功能非常宽松, 因为只有它有合适的模板名字确实存在时才会生效, 不然会退回到普通的状态.
 
 =head2 渲染 inline 模板
 
-象 C<ep> 之内，也可以允许内联来使用.
+象 C<ep> 之内, 也可以允许内联来使用.
 
-  $self->render(inline => 'The result is <%= 1 + 1%>.');
+  $c->render(inline => 'The result is <%= 1 + 1%>.');
 
-默认是使用自动来决定 handler 来做解析，你也可以指定 C<handler>。
+默认是使用自动来决定 handler 来做解析, 你也可以指定 C<handler>. 
 
-  $self->render(inline => "<%= shift->param('foo') %>", handler => 'epl');
+  $c->render(inline => "<%= shift->param('foo') %>", handler => 'epl');
 
 =head2 渲染文本 
 
-在这我们可以直接显示 Perl 中的字符，只要使用  C<text> 就行了，这个会自动编码成字节数据。
+在这我们可以直接显示 Perl 中的字符, 只要使用  C<text> 就行了, 这个会自动编码成字节数据. 
 
-  $self->render(text => 'Hello Wörld!');
+  $c->render(text => 'I ♥ Mojolicious!');
 
 =head2 渲染 data
 
-原始字节可以使用 C<data>  的选项，这样不会对数据进行编码。
+原始字节可以使用 C<data>  的选项, 这样不会对数据进行编码. 
 
-  $self->render(data => $octets);
+  $c->render(data => $octets);
 
 =head2 渲染 JSON
 
-这个只需要给使用 C<json> 的参数。然后提供一个 Perl 的数据结构就行了。
+这个只需要给使用 C<json> 的参数. 然后提供一个 Perl 的数据结构就行了. 
 
-  $self->render(json => {foo => [1, 'test', 3]});
+  $c->render(json => {foo => [1, 'test', 3]});
 
 =head2 Partial rendering
 
 Sometimes you might want to access the rendered result, for example to generate emails, this can be done using the C<partial> stash value.
 
-  my $html = $self->render('mail', partial => 1);
+  my $html = $c->render('mail', partial => 1);
 
 =head2 Status code
 
-响应码可以通过 C<status> 的变量来进行修改。
+响应码可以通过 C<status> 的变量来进行修改. 
 
-  $self->render(text => 'Oops.', status => 500);
+  $c->render(text => 'Oops.', status => 500);
 
-=head2 Content type
+=head2 Content 类型
 
-这个  C<Content-Type> 的头是由  C<format> 的内容基于MIME类型映射的。
+这个  C<Content-Type> 的头是由  C<format> 的内容基于MIME类型映射的. 
 
-  $self->render(text => 'Hello.', format => 'txt');
+  # Content-Type: text/plain
+  $c->render(text => 'Hello.', format => 'txt');
 
-这个映射可以由 L<Mojolicious/"types"> 中来扩展。
+  # Content-Type: image/png
+  $c->render(data => $bytes, format => 'png');
+
+这个映射可以由 L<Mojolicious/"types"> 中来扩展. 
 
   # Application
   package MyApp;
   use Mojo::Base 'Mojolicious';
 
   sub startup {
-    my $self = shift;
+    my $c = shift;
 
     # Add new MIME type
-    $self->types->type(txt => 'text/plain; charset=utf-8');
+    $c->types->type(txt => 'text/plain; charset=utf-8');
   }
 
   1;
@@ -222,9 +261,9 @@ Sometimes you might want to access the rendered result, for example to generate 
 
 任何原生的 Perl 数组类型都可以通过 L<Mojolicious::Controller/"stash"> 传给模板.
 
-  $self->stash(author     => 'Sebastian');
-  $self->stash(frameworks => [qw(Catalyst Mojolicious)]);
-  $self->stash(examples   => {tweetylicious => 'a microblogging app'});
+  $c->stash(author     => 'Sebastian');
+  $c->stash(frameworks => [qw(Catalyst Mojolicious)]);
+  $c->stash(examples   => {tweetylicious => 'a microblogging app'});
 
   %= $author
   %= $frameworks->[1]
@@ -240,9 +279,9 @@ Sometimes you might want to access the rendered result, for example to generate 
     <%= $app %> is a <%= $description %>.
   % }
 
-=head2 Content negotiation
+=head2 Content 关联
 
-在 C<RESTful> 的内容中，可以对资源有不同的显示方式，我们只需要使用 L<Mojolicious::Controller/"respond_to"> 来替换掉 L<Mojolicious::Controller/"render"> 来对不同的请求输出不同的东西.
+在 C<RESTful> 的内容中, 可以对资源有不同的显示方式, 我们只需要使用 L<Mojolicious::Controller/"respond_to"> 来替换掉 L<Mojolicious::Controller/"render"> 来对不同的请求输出不同的东西.
 
   # /hello (Accept: application/json) -> "json"
   # /hello (Accept: application/xml)  -> "xml"
@@ -250,22 +289,22 @@ Sometimes you might want to access the rendered result, for example to generate 
   # /hello.xml                        -> "xml"
   # /hello?format=json                -> "json"
   # /hello?format=xml                 -> "xml"
-  $self->respond_to(
+  $c->respond_to(
     json => {json => {hello => 'world'}},
     xml  => {text => '<hello>world</hello>'}
   );
 
-默认会根据请求头中的  C<Accept>， C<format> 的值和  C<format> 的请求参数来自动选择最好的表示方式。
+默认会自动的根据请求头中的 C<Accept>, stash 值中的 C<format> 或者 C<GET>/C<POST> 的参数中存储的的 C<format> 来自动选择最好的表示方式. 要为 C<Accept> 请求头或者 C<Content-Type> 的响应头来更改 MIME 类型的映射关系, 可以使用 L<Mojolicious/"types">.
 
-  $self->respond_to(
+  $c->respond_to(
     json => {json => {hello => 'world'}},
     html => sub {
-      $self->content_for(head => '<meta name="author" content="sri" />');
-      $self->render(template => 'hello', message => 'world')
+      $c->content_for(head => '<meta name="author" content="sri" />');
+      $c->render(template => 'hello', message => 'world')
     }
   );
 
-回调可以在单个渲染中实现非常复杂的内容协商的功能。
+回调可以在单个渲染中实现非常复杂的内容协商的功能. 
 
   # /hello (Accept: application/json) -> "json"
   # /hello (Accept: text/html)        -> "html"
@@ -276,56 +315,97 @@ Sometimes you might want to access the rendered result, for example to generate 
   # /hello?format=json                -> "json"
   # /hello?format=html                -> "html"
   # /hello?format=png                 -> "any"
-  $self->respond_to(
+  $c->respond_to(
     json => {json => {hello => 'world'}},
     html => {template => 'hello', message => 'world'},
     any  => {text => '', status => 204}
   );
 
-任何没有发现的请求都会使用 C<any> 这个来响应一个空的 C<204> 的响应。
+任何没有发现的请求都会使用 C<any> 这个来响应一个空的 C<204> 的响应. 
+
+  # /hello                      -> "html"
+  # /hello (Accept: text/html)  -> "html"
+  # /hello (Accept: text/xml)   -> "xml"
+  # /hello (Accept: text/plain) -> undef
+  # /hello.html                 -> "html"
+  # /hello.xml                  -> "xml"
+  # /hello.txt                  -> undef
+  # /hello?format=html          -> "html"
+  # /hello?format=xml           -> "xml"
+  # /hello?format=txt           -> undef
+  if (my $format = $c->accepts('html', 'xml')) {
+          ...
+  }
+
+更加先进的关联逻辑的关系, 你可以使用 L<Mojolicious::Plugin::DefaultHelpers/"accepts"> 的 helper.
 
 =head2 渲染 C<exception> 和 C<not_found> 的网页
 
-到现在你可能见过了了内置的 404 （未找到）和 500（服务器错误）的网页，当出错时会自动被渲染输出。特别是在开发过程中，他们是一个很有帮助的。我们可以通过  L<Mojolicious::Controller/"render_exception">  和 L<Mojolicious::Controller/"render_not_found"> 的方法来定制自己的网页。
+到现在你可能见过了了内置的 404 （未找到）和 500（服务器错误）的网页, 当出错时会自动被渲染输出. 特别是在开发过程中, 他们是一个很有帮助的. 我们可以通过  L<Mojolicious::Controller/"render_exception">  和 L<Mojolicious::Controller/"render_not_found"> 的方法来定制自己的网页. 
 
   use Mojolicious::Lite;
   use Scalar::Util 'looks_like_number';
 
   get '/divide/:dividend/by/:divisor' => sub {
-    my $self = shift;
-    my ($dividend, $divisor) = $self->param(['dividend', 'divisor']);
+    my $c = shift;
+    my ($dividend, $divisor) = $c->param(['dividend', 'divisor']);
 
     # 404
-    return $self->render_not_found
+    return $c->render_not_found
       unless looks_like_number $dividend && looks_like_number $divisor;
 
     # 500
-    return $self->render_exception('Division by zero!') if $divisor == 0;
+    return $c->render_exception('Division by zero!') if $divisor == 0;
 
     # 200
-    $self->render_text($dividend / $divisor);
+    $c->render_text($dividend / $divisor);
   };
 
   app->start;
 
-你也可以修改这些网页的模板，因为你可能很希望对不同的用户定制出错的网页，所以你可以使用内部的模板，直接在内部使用  C<exception.$mode.$format.*> 和  C<not_found.$mode.$format.*> 会默认被使用.
+你也可以修改这些网页的模板, 因为你可能很希望对不同的用户定制出错的网页, 所以你可以使用内部的模板, 直接在内部使用  C<exception.$mode.$format.*> 和  C<not_found.$mode.$format.*> 会默认被使用.
 
   @@ exception.production.html.ep
   <!DOCTYPE html>
   <html>
     <head><title>Server error</title></head>
-    <body><%= $exception %></body>
+    <body>
+      <h1>Exception</h1>
+      <p><%= $exception->message %></p>
+      <h1>Stash</h1>
+      <pre><%= dumper $snapshot %></pre>
+    </body>
   </html>
+
+L<Mojolicious/"before_render"> 的这个 hook 点可以让你拦截并自定义修改传递给渲染器的参数.
+
+  use Mojolicious::Lite;
+
+  hook before_render => sub {
+    my ($c, $args) = @_;
+
+    # Make sure we are rendering the exception template
+    return unless my $template = $args->{template};
+    return unless $template eq 'exception';
+
+    # Switch to JSON rendering if content negotiation allows it
+    $args->{json} = {exception => $c->stash('exception')}
+      if $c->accepts('json');
+  };
+
+  get '/' => sub { die "This sho...ALL GLORY TO THE HYPNOTOAD!\n" };
+
+  app->start;
 
 =head2 Helpers
 
-Helpers  是一些小功能，你可以使用模板和控制器代码的功能. 
+Helpers  是一些小功能, 你可以使用模板和控制器代码的功能. 
 
   %= dumper [1, 2, 3]
 
-  my $serialized = $self->dumper([1, 2, 3]);
+  my $serialized = $c->dumper([1, 2, 3]);
 
-这个 L<Mojolicious::Plugin::DefaultHelpers/"dumper"> 的例子是使用的 L<Data::Dumper> 来实例化你的数据结构，这在 debug 的时候非常有效。这个还可以用来生成一些  C<HTML> 的标签。
+这个 L<Mojolicious::Plugin::DefaultHelpers/"dumper"> 的例子是使用的 L<Data::Dumper> 来实例化你的数据结构, 这在 debug 的时候非常有效. 这个还可以用来生成一些  C<HTML> 的标签. 
 
   %= javascript '/script.js'
 
@@ -338,7 +418,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 =head2 Layouts
 
-大多的时候，我们是使用 C<ep> 模板。这个可用来封装你的 HTML ，布局之类。非常的简单.
+大多的时候, 我们是使用 C<ep> 模板. 这个可用来封装你的 HTML , 布局之类. 非常的简单.
 
   @@ foo/bar.html.ep
   % layout 'mylayout';
@@ -351,7 +431,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
     <body><%= content %></body>
   </html>
 
-你需要使用 L<Mojolicious::Plugin::DefaultHelpers/"layout">  来选择合适的 layout 模板并给结果在当前的模板上通过  L<Mojolicious::Plugin::DefaultHelpers/"content"> 来显示。
+你需要使用 L<Mojolicious::Plugin::DefaultHelpers/"layout">  来选择合适的 layout 模板并给结果在当前的模板上通过  L<Mojolicious::Plugin::DefaultHelpers/"content"> 来显示. 
 
   @@ foo/bar.html.ep
   % layout 'mylayout', title => 'Hi there';
@@ -364,24 +444,28 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
     <body><%= content %></body>
   </html>
 
-替代  C<layout> helper 也可以只调用 L<Mojolicious::Controller/"render"> 中的 C<layout> 参数。
+替代  C<layout> helper 也可以只调用 L<Mojolicious::Controller/"render"> 中的 C<layout> 参数. 
 
-  $self->render(template => 'mytemplate', layout => 'mylayout');
+  $c->render(template => 'mytemplate', layout => 'mylayout');
 
-有关 C<layout> 的参数你可以看看 L<Mojolicious/"defaults">.
+你可以在你的应用中使用 L<Mojolicious/"defaults"> 来修改你的默认的 C<layout> 的 stash 值.
 
   # Application
   package MyApp;
   use Mojo::Base 'Mojolicious';
 
   sub startup {
-    my $self = shift;
+    my $c = shift;
 
     # Default layout
-    $self->defaults(layout => 'mylayout');
+    $c->defaults(layout => 'mylayout');
   }
 
   1;
+
+Layouts 也可以通过 L<Mojolicious::Controller/"render_to_string"> 来被使用, 但 C<layout> 需要给一个渲染参数.
+
+  my $html = $c->render_to_string('reminder', layout => 'mail');
 
 =head2 包括部分模板 
 
@@ -397,19 +481,19 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
   @@ header.html.ep
   <head><title>Howdy</title></head>
 
-一样，你也可以调用  L<Mojolicious::Controller/"render"> 中来使用 C<partial> 的参数。
+一样, 你也可以调用  L<Mojolicious::Controller/"render"> 中来使用 C<partial> 的参数. 
 
   @@ foo/bar.html.ep
   <!DOCTYPE html>
   <html>
-    %= $self->render('header', partial => 1)
+    %= $c->render('header', partial => 1)
     <body>Bar</body>
   </html>
 
   @@ header.html.ep
   <head><title>Howdy</title></head>
 
-这二个之间有一点点差别，就是如果你给 stash 的值传给  C<include>, 这会自动的本地化，并可用在局部模板中。
+这二个之间有一点点差别, 就是如果你给 stash 的值传给  C<include>, 这会自动的本地化, 并可用在局部模板中. 
 
   @@ foo/bar.html.ep
   <!DOCTYPE html>
@@ -423,7 +507,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 =head2 重用模板块 
 
-如果总是重复一定不会有意思的，这也是为什么要重用的原困，在 C<ep> 的模板中也可以用，就象 Perl 的功能一样。
+如果总是重复一定不会有意思的, 这也是为什么要重用的原困, 在 C<ep> 的模板中也可以用, 就象 Perl 的功能一样. 
 
   @@ welcome.html.ep
   <% my $block = begin %>
@@ -433,7 +517,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
   <%= $block->('Sebastian') %>
   <%= $block->('Sara') %>
 
-块是由 C<begin> 和  C<end> 关键字分隔的。
+块是由 C<begin> 和  C<end> 关键字分隔的. 
 
   @@ welcome.html.ep
   % my $block = begin
@@ -463,7 +547,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 =head2 Content blocks
 
-块和 L<Mojolicious::Plugin::DefaultHelpers/"content_for"> 的 helper 也可以被用来传递到布局的模板的整个部分。
+块和 L<Mojolicious::Plugin::DefaultHelpers/"content_for"> 的 helper 也可以被用来传递到布局的模板的整个部分. 
 
   @@ foo/bar.html.ep
   % layout 'mylayout';
@@ -484,7 +568,7 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 =head2 模板继承 
 
-继承布局概念之上又进了一步, 使用  L<Mojolicious::Plugin::DefaultHelpers/"content">  和  L<Mojolicious::Plugin::DefaultHelpers/"extends"> 可以让你建立一个框架模板，子块可以覆盖。
+继承布局概念之上又进了一步, 使用  L<Mojolicious::Plugin::DefaultHelpers/"content">  和  L<Mojolicious::Plugin::DefaultHelpers/"extends"> 可以让你建立一个框架模板, 子块可以覆盖. 
 
   @@ first.html.ep
   <!DOCTYPE html>
@@ -511,18 +595,16 @@ Helpers  是一些小功能，你可以使用模板和控制器代码的功能.
 
 =head2 表单验证 Form validation
 
-你可以使用  L<Mojolicious::Controller/"validation"> 来验证你的 GET/POST 所提交给你的应用的参数. 这个对象所检查的甩的未知的字段都会被忽略, 所以你需要注表那些是可选 (optional) 和必须 (required). 然后才能对这些值进行检查.
-
-Every check is performed right away, so you can use the results immediately to build more advanced validation logic with methods like L<Mojolicious::Validator::Validation/"is_valid">.
+你可以使用  L<Mojolicious::Controller/"validation"> 来验证你的 GET/POST 所提交给你的应用程序的参数. 这个对象只检查你给出的字段, 未知的都会被忽略, 所以你在检查前这些值之前, 就需要决定哪些那些字段是可选 ( optional ) 和必须 ( required ). 检查是立即生效的, 所以你可以立即使用检查的结果使用  L<Mojolicious::Validator::Validation/"is_valid"> 之类的方法来构建更加高级的验证逻辑.
 
   use Mojolicious::Lite;
 
   get '/' => sub {
-    my $self = shift;
+    my $c = shift;
 
     # 检查是否有提交的参数. 
-    my $validation = $self->validation;
-    return $self->render unless $validation->has_data;
+    my $validation = $c->validation;
+    return $c->render unless $validation->has_data;
 
     # 验证参数 ("pass_again" 依赖 "pass" 才能存在)
     $validation->required('user')->size(1, 20)->like(qr/^[e-t]+$/);
@@ -530,7 +612,7 @@ Every check is performed right away, so you can use the results immediately to b
       if $validation->optional('pass')->size(7, 500)->is_valid;
 
     # 如果验证成功就渲染结果
-    $self->render('thanks') unless $validation->has_error;
+    $c->render('thanks') unless $validation->has_error;
   } => 'index';
 
   app->start;
@@ -567,23 +649,18 @@ Every check is performed right away, so you can use the results immediately to b
   <!DOCTYPE html>
   <html><body>Thank you <%= validation->param('user') %>.</body></html>
 
-上面的 form 元素是由 L<Mojolicious::Plugin::TagHelpers> 这个 helper 生成.
-Form elements generated with tag helpers from L<Mojolicious::Plugin::TagHelpers> will automatically remember their previous values and add the class C<field-with-error> for fields that failed validation to make styling with CSS easier.
+上面的 form 元素是由 L<Mojolicious::Plugin::TagHelpers> 这个 helper 自动生成, 当上面参数的字段检验出错时, 就会添加 C<field-with-error> 的 class 的字段来显示不同的 CSS 风格来进行提示.
 
   <label class="field-with-error" for="user">
     Username (required, only characters e-t)
   </label>
   <input class="field-with-error" type="text" name="user" value="sri" />
 
-For a full list of available checks see also
-L<Mojolicious::Validator/"CHECKS">.
+全部的 checks 的列表请看 L<Mojolicious::Validator/"CHECKS">.
 
-=head2 Adding form validation checks
+=head2 增加自定义的检查
 
-Validation checks can be registered with L<Mojolicious::Validator/"add_check">
-and return a false value if they were successful. A true value may be used to
-pass along additional information which can then be retrieved with
-L<Mojolicious::Validator::Validation/"error">.
+检验检查也可以自己通过 L<Mojolicious::Validator/"add_check"> 来注册, 只要检查通过, 就会返回的值 falsh. 如果返回一直 true 会附加 L<Mojolicious::Validator::Validation/"error"> 的一些信息.
 
   use Mojolicious::Lite;
 
@@ -596,18 +673,18 @@ L<Mojolicious::Validator::Validation/"error">.
   get '/' => 'form';
 
   post '/test' => sub {
-    my $self = shift;
+    my $c = shift;
 
     # Validate parameters with custom check
-    my $validation = $self->validation;
+    my $validation = $c->validation;
     $validation->required('number')->range(3, 23);
 
     # Render form again if validation failed
-    return $self->render('form') if $validation->has_error;
+    return $c->render('form') if $validation->has_error;
 
     # Prevent double submit with redirect
-    $self->flash(number => $validation->param('number'));
-    $self->redirect_to('form');
+    $c->flash(number => $validation->param('number'));
+    $c->redirect_to('form');
   };
 
   app->start;
@@ -633,46 +710,74 @@ L<Mojolicious::Validator::Validation/"error">.
     </html>
   </html>
 
+=head2 Cross-site request forgery
 
-=head2 记忆模板的块 
+CSRF 是一种很常用的攻击方法, 用于欺骗用户提交他们并没打算提交的表单 . 所以我们需要做的就是保护用户免受这种攻击, 使用的方式是使用一个额外的隐藏字段 L<Mojolicious::Plugin::TagHelpers/"csrf_field"> 添加到您应用表单中, 然后使用 L<Mojolicious::Validator::Validation/"csrf_protect"> 来检验它.
 
-编译模板缓存在内存中, 我们可以多走一步，使用  L<Mojolicious::Plugin::DefaultHelpers/"memorize"> 来防止模板块每次都被执行。
+  use Mojolicious::Lite;
 
-  @@ cached.html.ep
-  % use Time::Piece;
-  %= memorize begin
-    This template was compiled at <%= localtime->hms %>.
-  % end
+  get '/' => {template => 'target'};
+
+  post '/' => sub {
+    my $c = shift;
+
+    # Check CSRF token
+    my $validation = $c->validation;
+    return $c->render(text => 'Bad CSRF token!', status => 403)
+      if $validation->csrf_protect->has_error('csrf_token');
+
+    my $city = $validation->required('city')->param('city');
+    $c->render(text => "Low orbit ion cannon pointed at $city!")
+      unless $validation->has_error;
+  } => 'target';
+
+  app->start;
+  __DATA__
+
+  @@ target.html.ep
+  <!DOCTYPE html>
+  <html>
+    <body>
+      %= form_for target => begin
+        %= csrf_field
+        %= label_for city => 'Which city to point low orbit ion cannon at?'
+        %= text_field 'city'
+        %= submit_button
+      %= end
+    </body>
+  </html>
+
+这个 token 会在提交的时候加一个 C<X-CSRF-Token> 的请求头.
 
 =head2 增加 helpers
 
-添加和重新定义  helper 是很容易的，你可以用它们做所有的事。
+添加和重新定义  helper 是很容易的, 你可以用它们做所有的事. 
 
   use Mojolicious::Lite;
 
   helper debug => sub {
-    my ($self, $string) = @_;
-    $self->app->log->debug($string);
+    my ($c, $str) = @_;
+    $c->app->log->debug($str);
   };
 
   get '/' => sub {
-    my $self = shift;
-    $self->debug('action');
+    my $c = shift;
+    $c->debug('Hello from an action!');
   } => 'index';
 
   app->start;
   __DATA__
 
   @@ index.html.ep
-  % debug 'template';
+  % debug 'Hello from a template!';
 
-Helpers 也可以使用 template 块做最后的参数，比如使用它做一个标签的过滤器.
+Helpers 也可以使用 template 块做最后的参数, 比如使用它做一个标签的过滤器.
 
   use Mojolicious::Lite;
   use Mojo::ByteStream;
 
   helper trim_newline => sub {
-    my ($self, $block) = @_;
+    my ($c, $block) = @_;
     my $result = $block->();
     $result =~ s/\n//g;
     return Mojo::ByteStream->new($result);
@@ -690,20 +795,20 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
     More text.
   % end
 
-封装完的结果做成一个 L<Mojo::ByteStream> 的对象，可以防止被多次转义。
+封装完的结果做成一个 L<Mojo::ByteStream> 的对象, 可以防止被多次转义. 
 
 =head2 Helper 插件
 
-有些 helpers 可能非常有用，我们想在多个应用程序之间来使用，所以使用 plugins 会很方便.
+有些 helpers 可能非常有用, 我们想在多个应用程序之间来重复使用一段代码, 所以使用 plugins 会很方便.
 
   package Mojolicious::Plugin::DebugHelper;
   use Mojo::Base 'Mojolicious::Plugin';
 
   sub register {
-    my ($self, $app) = @_;
+    my ($c, $app) = @_;
     $app->helper(debug => sub {
-      my ($self, $string) = @_;
-      $self->app->log->debug($string);
+      my ($c, $string) = @_;
+      $c->app->log->debug($string);
     });
   }
 
@@ -716,9 +821,9 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
   plugin 'DebugHelper';
 
   get '/' => sub {
-    my $self = shift;
-    $self->debug('It works.');
-    $self->render_text('Hello.');
+    my $c = shift;
+    $c->debug('It works.');
+    $c->render_text('Hello.');
   };
 
   app->start;
@@ -727,7 +832,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
 
   $ mojo generate plugin DebugHelper
 
-当然这也提供了一个 C<PAUSE>  访问的接口给你。
+当然这也提供了一个 C<PAUSE>  访问的接口给你. 
 
   $ perl Makefile.PL
   $ make test
@@ -737,7 +842,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
 
 =head2 Bundling assets with plugins
 
-绑定静态文件和模板到你的应用和插件中很容易，即使你打算给他们放到 C<CPAN>.
+绑定静态文件和模板到你的应用和插件中很容易, 即使你打算给他们放到 C<CPAN>.
 
   $ mojo generate plugin AlertAssets
   $ mkdir AlertAssets/lib/Mojolicious/Plugin/AlertAssets
@@ -747,7 +852,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
   $ mkdir templates
   $ echo '%= javascript "/alertassets.js"' > templates/alertassets.html.ep
 
-只需在 C<register> 调用的时候要追加其各自的目录到搜索路径的列表中。
+只需在 C<register> 调用的时候要追加其各自的目录到搜索路径的列表中. 
 
   package Mojolicious::Plugin::AlertAssets;
   use Mojo::Base 'Mojolicious::Plugin';
@@ -756,7 +861,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
   use File::Spec::Functions 'catdir';
 
   sub register {
-    my ($self, $app) = @_;
+    my ($c, $app) = @_;
 
     # Append "templates" and "public" directories
     my $base = catdir(dirname(__FILE__), 'AlertAssets');
@@ -766,7 +871,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
 
   1;
 
-这个就象存在标准的 C<templates> 和  C<public> 的目录一样，只要你安装了插件并加载了.
+这个就象存在标准的 C<templates> 和  C<public> 的目录一样, 只要你安装了插件并加载了.
 
   use Mojolicious::Lite;
 
@@ -793,7 +898,7 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
   use Mojo::Base 'Mojolicious::Plugin';
 
   sub register {
-    my ($self, $app) = @_;
+    my ($c, $app) = @_;
 
     # Append class
     push @{$app->renderer->classes}, __PACKAGE__;
@@ -811,36 +916,68 @@ Helpers 也可以使用 template 块做最后的参数，比如使用它做一�
 
 =head1 高级
 
-较不常用的但更强大的功能。
+较不常用的但更强大的功能. 
+
+=head2 渲染静态文件 
+
+如果自动渲染不足够你使用, 你可能还想手工的渲染你的 C<DATA> 部分和 C<public> 其它的东西, 你可以使用 L<Mojolicious::Controller/"render_static">.
+
+  $c->res->headers->content_disposition('attachment; filename=bar.png;');
+  $c->render_static('foo/bar.png');
+
+=head2 定制的响应 
+
+你想完全定制你自己的响应, 象这个例子中, 从文件读取流式内容, 然后使用 L<Mojolicious::Controller/"rendered"> 告诉 Mojo 使用自己定制的来生成.
+
+  $c->res->headers->content_type('text/plain');
+  $c->res->content->asset(Mojo::Asset::File->new(path => '/etc/passwd'));
+  $c->rendered(200);
+
+=head2 后处理动态的内容
+
+当响应生成的时候, 我们可以使用 L<Mojolicious/"after_render"> hook 点来做渲染之后的一些操作.
+
+  use Mojolicious::Lite;
+  use IO::Compress::Gzip 'gzip';
+
+  hook after_render => sub {
+    my ($c, $output, $format) = @_;
+
+    # Check if "gzip => 1" has been set in the stash
+    return unless $c->stash->{gzip};
+
+    # Check if user agent accepts GZip compression
+    return unless ($c->req->headers->accept_encoding // '') =~ /gzip/i;
+    $c->res->headers->append(Vary => 'Accept-Encoding');
+
+    # Compress content with GZip
+    $c->res->headers->content_encoding('gzip');
+    gzip $output, \my $compressed;
+    $$output = $compressed;
+  };
+
+  get '/' => {template => 'hello', title => 'Hello', gzip => 1};
+
+  app->start;
+  __DATA__
+
+  @@ hello.html.ep
+  <!DOCTYPE html>
+  <html>
+    <head><title><%= title %></title></head>
+    <body>Compressed content.</body>
+  </html>
 
 =head2 Chunked transfer encoding
 
-=begin original
+对于动态的内容, 你并不能提前知道响应的 C<Content-Length> 的大小, 这时  C<chunked> C<Transfer-Encoding>  就非常有用. 一个常见的用处是给 HTML 中发 C<head>  部分到用户的浏览器来提前加快预载图象和样式表. 
 
-For very dynamic content you might not know the response C<Content-Length> in
-advance, that's where the C<chunked> C<Transfer-Encoding> comes in handy. A
-common use would be to send the C<head> section of an HTML document to the
-browser in advance and speed up preloading of referenced images and
-stylesheets.
-
-=end original
-
-对于动态的内容，你并不能提前知道响应的 C<Content-Length> 的大小，这时  C<chunked> C<Transfer-Encoding>  就非常有用。一个常见的用处是给 HTML 中发 C<head>  部分到用户的浏览器来提前加快预载图象和样式表。
-
-  $self->write_chunk('<html><head><title>Example</title></head>' => sub {
-    my $self = shift;
-    $self->finish('<body>Example</body></html>');
+  $c->write_chunk('<html><head><title>Example</title></head>' => sub {
+    my $c = shift;
+    $c->finish('<body>Example</body></html>');
   });
 
-=begin original
-
-The optional drain callback ensures that all previous chunks have been
-written before processing continues. An empty chunk or call to
-L<Mojolicious::Controller/"finish"> marks the end of the stream.
-
-=end original
-
-上面这个能保证 drain 的回调会给先前的数据写入完后，才会接着继续处理，一个空的 chunk 或者调用 L<Mojolicious::Controller/"finish">  标志着这个流结束了.
+上面这个能保证 drain 的回调会给先前的数据写入完后, 才会接着继续处理, 一个空的 chunk 或者调用 L<Mojolicious::Controller/"finish">  标志着这个流结束了.
 
   29
   <html><head><title>Example</title></head>
@@ -848,44 +985,27 @@ L<Mojolicious::Controller/"finish"> marks the end of the stream.
   <body>Example</body></html>
   0
 
-=begin original
 
-Especially in combination with long inactivity timeouts this can be very useful for Comet (C<long polling>). Due to limitations in some web servers this might not work perfectly in all deployment environments.
-
-=end original
-
-特别是结合长时间闲置超时的应用象 Comet (C<long polling>) 时非常的有用。不过由于一些 Web 服务器的限制，并不能包证这个能在所有的地方都能正常工作.
+特别是结合长时间闲置超时的应用象 Comet (C<long polling>) 时非常的有用. 不过由于一些 Web 服务器的限制, 并不能包证这个能在所有的地方都能正常工作.
 
 =head2 Encoding
 
-=begin original
-
-Templates stored in files are expected to be C<UTF-8> by default, but that can be easily changed.
-
-=end original
-
-默认的模板是存成 C<UTF-8> 的格式，你也可以很容易的修改.
+默认的模板是存成 C<UTF-8> 的格式, 你也可以很容易的修改.
 
   # Application
   package MyApp;
   use Mojo::Base 'Mojolicious';
 
   sub startup {
-    my $self = shift;
+    my $c = shift;
 
     # Different encoding
-    $self->renderer->encoding('koi8-r');
+    $c->renderer->encoding('koi8-r');
   }
 
   1;
 
-=begin original
-
-All templates from the C<DATA> section are bound to the encoding of the Perl script, so don't forget to use the L<utf8> pragma if necessary.
-
-=end original
-
-如果从 C<DATA> 块中绑定模板到 Perl 的程序中时，不要忘记使用 L<utf8> 的编译指示.
+如果从 C<DATA> 块中绑定模板到 Perl 的程序中时, 不要忘记使用 L<utf8> 的编译指示.
 
   use Mojolicious::Lite;
   use utf8;
@@ -898,44 +1018,22 @@ All templates from the C<DATA> section are bound to the encoding of the Perl scr
   @@ heart.html.ep
   I ♥ Mojolicious!
 
-=head2 Base64 encoded DATA files
+=head2 用 Base64 编码 DATA 内容 
 
-=begin original
-
-Base64 encoded static files such as images can be easily stored in the C<DATA> section of your application, similar to templates.
-
-=end original
-
-在你的应用程序中，你可以很容易的静态文件，如图片，存储在  C<DATA> 的部分，类似于模板一样.
+在你的应用程序中, 你可以很容易的静态文件, 如图片, 存储在  C<DATA> 的部分, 类似于模板一样.
 
   @@ favicon.ico (base64)
   ...base64 encoded image...
 
-=head2 Inflating DATA templates
+=head2 导出 DATA 模板 
 
-=begin original
-
-Templates stored in files get preferred over files from the C<DATA> section,
-this allows you to include a default set of templates in your application that
-the user can later customize. The C<inflate> command will write all templates
-and static files from the C<DATA> section into actual files in the
-C<templates> and C<public> directories.
-
-=end original
-
-模板存储后，会从 C<DATA> 部分优先取得，所以可以让你在你的应用程序中包含默认的模板。当然你也可以以后进行自定义。使用 C<inflate> 的命令会给所有 C<DATA> 部分的静态文件都写到 C<templates> 和 C<public> 的目录中.
+模板存储后, 会从 C<DATA> 部分优先取得, 所以可以让你在你的应用程序中包含默认的模板. 当然你也可以以后进行自定义. 使用 C<inflate> 的命令会给所有 C<DATA> 部分的静态文件都写到 C<templates> 和 C<public> 的目录中.
 
   $ ./myapp.pl inflate
 
 =head2 定制模板语法
 
-=begin original
-
-You can easily change the whole template syntax by loading L<Mojolicious::Plugin::EPRenderer> with a custom configuration.
-
-=end original
-
-你可以很容易的通过 L<Mojolicious::Plugin::EPRenderer> 来定义你自己的模板语法的配置。
+你可以很容易的通过 L<Mojolicious::Plugin::EPRenderer> 来定义你自己的模板语法的配置. 
 
   use Mojolicious::Lite;
 
@@ -955,52 +1053,52 @@ You can easily change the whole template syntax by loading L<Mojolicious::Plugin
   @@ index.html.mustache
   Hello {{= $name }}.
 
-=begin original
-
-L<Mojo::Template> contains the whole list of available options.
-
-=end original
-
 L<Mojo::Template>  中含可用选项的完整的列表
 
-=head2 Adding your favorite template system
+=head2 增加你喜欢的模板系统
 
-=begin original
+也许你喜欢其它的模板系统, 相比起 C<ep>.  你可以使用 L<Mojolicious::Renderer/"add_handler"> 来通过 C<register> 给新的模板系统加入到你的应用中来.
 
-Maybe you would prefer a different template system than C<ep>, all you have to do is add a new C<handler>.
+  package Mojolicious::Plugin::MyRenderer;
+  use Mojo::Base 'Mojolicious::Plugin';
 
-=end original
+  sub register {
+    my ($c, $app) = @_;
 
-也许你喜欢其它的模板系统，相比起 C<ep>。 你可以使用 C<handler> 来给新的模板系统加入到你的应用中来.
-
-  use Mojolicious::Lite;
-
-  app->renderer->add_handler(
-    mine => sub {
+    # Add "mine" handler
+    $app->renderer->add_handler(mine => sub {
       my ($renderer, $c, $output, $options) = @_;
 
-      # Check for one time use inline template
+      # Check for one-time use inline template
       my $inline = $options->{inline};
 
       # Check for absolute template path
-      my $path = $r->template_path($options);
+      my $path = $renderer->template_path($options);
 
       # Check for appropriate template in DATA section
-      my $data = $r->get_data_template($options);
+      my $data = $renderer->get_data_template($options);
 
       # This part is up to you and your template system :)
       ...
 
       # Just die if an error occurs
-      die 'Something went wrong';
+      die 'Something went wrong with the template';
 
       # Or pass the rendered result back to the renderer
       $$output = 'Hello World!';
 
       # And return true if something has been rendered or false otherwise
       return 1;
-    }
-  );
+    });
+  }
+
+  1;
+
+大多的模板系统都不支持从 C<DATA> 部分来取得模板, renderer 的方法可以帮你实现.
+
+  use Mojolicious::Lite;
+
+  plugin 'MyRenderer';
 
   get '/' => 'index';
 
@@ -1010,14 +1108,29 @@ Maybe you would prefer a different template system than C<ep>, all you have to d
   @@ index.html.mine
   ...
 
-=begin original
+=head2 直接生成二进制未编码的数据
 
-Since most template systems don't support templates in the C<DATA> section the
-renderer provides methods to help you with that.
+默认的渲染假定所有的处理的都是字符, 会自动的被 Mojo 编码一次, 但你可以很简单的禁用这个功能来直接生成 bytes 流.
 
-=end original
+  use Mojolicious::Lite;
+  use Mango::BSON ':bson';
 
-大多的模板系统都不支持从 C<DATA> 部分来取得模板，使用上面的方法可以帮你实现.
+  # Add "bson" handler
+  app->renderer->add_handler(bson => sub {
+    my ($renderer, $c, $output, $options) = @_;
+
+    # Disable automatic encoding
+    delete $options->{encoding};
+
+    # Encode BSON data from stash value
+    $$output = bson_encode delete $c->stash->{bson};
+
+    return 1;
+  });
+
+  get '/' => {bson => {i => '♥ mojolicious'}, handler => 'bson'};
+
+  app->start;
 
 =head1 MORE
 

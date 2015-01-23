@@ -228,16 +228,123 @@ Mojolicious - 实时 Web 框架
 
 在这有非常不错的文档 L<Mojolicious::Guides>!
 
+=head1 HOOKS
+
+当前可以使用的 hooks 点和相关的顺序如下:
+
+=head2 after_build_tx
+
+这个点是工作在 HTTP 的请求还没有被解析, 但连接已经建立时. 
+
+  $app->hook(after_build_tx => sub {
+    my ($tx, $app) = @_;
+    ...
+  });
+
+这是一个非常强大的 hook 点, 但不应常使用才对. 这个地方用来实现一些非常先进的功能如: 上传进度条之类, 需要注意在内嵌的应用中不能使用. ( 默认参数送的是 transaction 和 application object )
+
+=head2 before_dispatch
+
+这个点是工作在静态文件调度和路由选择之前. 
+
+  $app->hook(before_dispatch => sub {
+    my $c = shift;
+    ...
+  });
+
+如果你要重写进来的请求和提前做一些处理时非常有用. ( 默认参数送的是 controller 控制器对象 )
+
+=head2 after_static
+
+这个工作在静态响应已经由静态文件服务生成之后.
+
+  $app->hook(after_static_dispatch => sub {
+    my $c = shift;
+    ...
+  });
+
+主要用来做静态响应之后做些后处理 ( post-processing ),( 默认参数送的是 controller 对象 )
+
+=head2 before_routes
+
+这个工作在静态文件服务发现静态文件需要被服务之后和路径选择器工作之前.
+
+  $app->hook(before_routes => sub {
+    my $c = shift;
+    ...
+  });
+
+多用于定制调度和收集度量用. ( 默认参数是 controller 对象 )
+
+=head2 around_action
+
+当一个 action 被调用的时候, 这个工作在调用前后, 所以在这个中, 你还想接着处理这个链条上的其它动作, 你必须手动进入下一个 hook. 默认的操作的调度操作是最在最后个 hook 点, 所以你需要运行在它之前.
+
+  $app->hook(around_action => sub {
+    my ($next, $c, $action, $last) = @_;
+    ...
+    return $next->();
+  });
+
+这也是个非常强大的 hook 点, 但并不太常用. 它可以让你传递额外的一些参数给 action 和对不同的处理方式返回不同的值. ( Passed a callback leading to the next hook, the current controller object, the action callback and a flag indicating if this action is an endpoint )
+
+=head2 before_render
+
+这个工作在内容被 renderer 生成之前. 注意这个 hook 可能触发失灵, 由于这个的动态性质, 嵌入式应用将只用于在呈现应用程序.
+
+  $app->hook(before_render => sub {
+    my ($c, $args) = @_;
+    ...
+  });
+
+多用于提前处理参数给 renderer. ( 默认当前是传送参数是 controller 对象和 render 的参数 )
+
+=head2 after_render
+
+这个工作在内容被 renderer 生成之后, 这时分配了响应. 注册这个 hook 可能也会触发失灵, 由于这个的动态性质.
+
+  $app->hook(after_render => sub {
+    my ($c, $output, $format) = @_;
+    ...
+  });
+
+多用于后处理动态生成的内容. ( 这当前是传送的参数 controller 对象和引用到的内容与格式 )
+
+=head2 after_dispatch
+
+响应渲染的内容后调用. 注意这个 hook 点会在 C<after_static_dispatch> 之前触发. 
+
+  $app->hook(after_dispatch => sub {
+    my $c = shift;
+    ...
+  });
+
+这个主要用来重写响应的输出和其它的处理任务. (默认参数送的是 controller 对象)
+
+=head2 around_dispatch
+
+在 C<before_dispatch> 的 hook 点之前调用, 并环绕整个调度的过程. 如果你想控制连接的整个链你可以手动地 forward 到下一个 hook 点. 
+在异常处理的模块 L<Mojolicious::Controller/"render_exception"> 中, 它 hook 了开始的链并在 C<dispatch> 之后还会调用. 你的 hook 会放在这个中间的. 
+
+  $app->hook(around_dispatch => sub {
+    my ($next, $c) = @_;
+    ...
+    $next->();
+    ...
+  });
+
+这个 hook 点也非常强大, 但你常使用才对. 它可以让你定制应用的异常处理之类, 你可以给这个工具看成你的工具箱中的大锤一样重要. (传送的参数是下一个 hook 点的回调和 controller 的对象)
+
 =head1 属性
 
-L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一些新的。
+L<Mojolicious> 是从 L<Mojo> 继承了所有的属性, 并自己实现了一些新的. 
 
 =head2 C<commands>
 
   my $commands = $app->commands;
   $app         = $app->commands(Mojolicious::Commands->new);
 
-应用的命令行接口，默认是 L<Mojolicious::Commands> 的这个对象.
+应用的命令行接口, 默认是 L<Mojolicious::Commands> 的这个对象.
 
   # Add another namespace to load commands from
   push @{$app->commands->namespaces}, 'MyApp::Command';
@@ -254,8 +361,8 @@ L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一�
   my $mode = $app->mode;
   $app     = $app->mode('production');
 
-你当前应用默认的操作模式。默认这个模式会从 C<MOJO_MODE> 的环境变量或 C<development> 中取相应的参数。
-也可以加入自定义的到你的应用中，你需要给你的应用中自己的方法名定义成 C<${mode}_mode> 。这个会立即调用 C<startup> 之前调用。
+你当前应用默认的操作模式. 默认这个模式会从 C<MOJO_MODE> 的环境变量或 C<development> 中取相应的参数. 
+也可以加入自定义的到你的应用中, 你需要给你的应用中自己的方法名定义成 C<${mode}_mode> . 这个会立即调用 C<startup> 之前调用. 
 
   sub development_mode {
     my $self = shift;
@@ -267,14 +374,21 @@ L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一�
     ...
   }
 
-在调用 C<startup> 和指定模式方法之前， L<Mojolicious> 会收起当前的模式，重命名日志文件之后会提高日志级别从 C<debug> 到 C<info>。
+在调用 C<startup> 和指定模式方法之前,  L<Mojolicious> 会收起当前的模式, 重命名日志文件之后会提高日志级别从 C<debug> 到 C<info>. 
+
+=head2 moniker
+
+  my $moniker = $app->moniker;
+  $app        = $app->moniker('foo_bar');
+
+应用的名字, 常常用于宣言默认的配置文件的名字和用它 L<Mojo::Util/"decamelize"> 反驼峰化应用类.
 
 =head2 C<plugins>
 
   my $plugins = $app->plugins;
   $app        = $app->plugins(Mojolicious::Plugins->new);
 
-这是插件管理，默认是使用 L<Mojolicious::Plugins> 对象来管理，如果你需要使用插件，你可以看 C<plugin> 相关的方法。
+这是插件管理, 默认是使用 L<Mojolicious::Plugins> 对象来管理, 如果你需要使用插件, 你可以看 C<plugin> 相关的方法. 
 
   # Add another namespace to load plugins from
   push @{$app->plugins->namespaces}, 'MyApp::Plugin';
@@ -284,8 +398,8 @@ L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一�
   my $renderer = $app->renderer;
   $app         = $app->renderer(Mojolicious::Renderer->new);
 
-你的应用渲染内容使用的是 L<Mojolicious::Renderer> 的对象。
-渲染插件主要有二个， L<Mojolicious::Plugin::EPRenderer>  和 L<Mojolicious::Plugin::EPLRenderer> 可以查看相关的模块。
+你的应用渲染内容使用的是 L<Mojolicious::Renderer> 的对象. 
+渲染插件主要有二个,  L<Mojolicious::Plugin::EPRenderer>  和 L<Mojolicious::Plugin::EPLRenderer> 可以查看相关的模块. 
 
   # Add another "templates" directory
   push @{$app->renderer->paths}, '/home/sri/templates';
@@ -298,35 +412,44 @@ L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一�
   my $routes = $app->routes;
   $app       = $app->routes(Mojolicious::Routes->new);
 
-路径选择是使用的 L<Mojolicious::Routes> 的对象，你可以使用这个来定义你的 Url 的指向，在你调用 startup 时你的方法时就会定义。
+路径选择器的对象是使用的 L<Mojolicious::Routes> 的对象, 你可以使用这个来定义你的 Url 的指向, 在你调用 startup 时你的方法时就会定义. 
 
-  sub startup {
-    my $self = shift;
+  # Add routes
+  my $r = $app->routes;
+  $r->get('/foo/bar')->to('test#foo', title => 'Hello Mojo!');
+  $r->post('/baz')->to('test#baz');
 
-    my $r = $self->routes;
-    $r->get('/:controller/:action')->to('test#welcome');
-  }
+  # Add another namespace to load controllers from
+  push @{$app->routes->namespaces}, 'MyApp::Controller';
 
-=head2 C<secret>
+=head2 C<secrets>
 
   my $secret = $app->secret;
-  $app       = $app->secret('passw0rd');
+  $app       = $app->secrets(['passw0rd']);
 
-使用一个秘密的口令签署 cookies 之类。默认在应用中的名字是非常不安全的，所以你需要修改它。如果你在日志中使用默认的不安全的会提示你修改你的密码。
+使用秘密的口令用于签名 cookies 之类. 默认使用的是在应用中的名字 L</"moniker"> 这是非常不安全的, 所以你需要修改它. 如果你在日志中使用默认的不安全的会提示你修改你的密码. 
+
+只有第一个口令是用来创建新的签名, 但它们都会进行验证, 所以你在进行口令替换的时候, 可以使用它们来提高安全性, 不会让签名失效. 只需要给最新的放到前面, 并从后面给旧的拿出来.
+
+  # Rotate passphrases
+  $app->secrets(['new_passw0rd', 'old_passw0rd', 'very_old_passw0rd']);
 
 =head2 C<sessions>
 
   my $sessions = $app->sessions;
   $app         = $app->sessions(Mojolicious::Sessions->new);
 
-基于 session 管理来签署 cookie 。默认是使用 L<Mojolicious::Sessions> 的对象。更加的信息看 L<Mojolicious::Controller/"session">。
+基于 session 管理来签名 cookie . 默认是使用 L<Mojolicious::Sessions> 的对象. 更加的信息看 L<Mojolicious::Controller/"session">. 
+
+  # Change name of cookie used for all sessions
+  $app->sessions->cookie_name('mysession');
 
 =head2 C<static>
 
   my $static = $app->static;
   $app       = $app->static(Mojolicious::Static->new);
 
-从你的 C<public> 的目录输出静态文件从你的 C<public> 。默认使用 L<Mojolicious::Static> 的对象.
+从你的 C<public> 的目录输出静态文件. 默认使用 L<Mojolicious::Static> 的对象.
 
   # Add another "public" directory
   push @{$app->static->paths}, '/home/sri/public';
@@ -339,19 +462,31 @@ L<Mojolicious> 是从 L<Mojo> 继承了所有的属性，并自己实现了一�
   my $types = $app->types;
   $app      = $app->types(Mojolicious::Types->new);
 
-负责控制传的文件的扩展 MIME 类型.默认是在 L<Mojolicious::Types>  对象中控制。
+负责控制传的文件的扩展 MIME 类型.默认是在 L<Mojolicious::Types>  对象中控制. 
 
   $app->types->type(twt => 'text/tweet');
 
+=head2 validator
+
+  my $validator = $app->validator;
+  $app          = $app->validator(Mojolicious::Validator->new);
+
+检验参数, 默认是使用的 L<Mojolicious::Validator> 对象.
+
 =head1 方法
 
-L<Mojolicious> 是从 L<Mojo> 中继承了全部的方法，并实现了一些.
+L<Mojolicious> 是从 L<Mojo> 中继承了全部的方法, 并实现了一些.
 
-=head2 C<new>
+=head2 build_controller
 
-  my $app = Mojolicious->new;
+  my $c = $app->build_controller;
+  my $c = $app->build_controller(Mojo::Transaction::HTTP->new);
+  my $c = $app->build_controller(Mojolicious::Controller->new);
 
-在你调用 C<${mode}_mode> 和  C<startup> 的时候，会构造一个新的  L<Mojolicious>  应用。这个会自动的设置你的 home 目录和根据你当前模式来设置你的日志和渲染。
+默认的 controller 对象是 L</"controller_class"> 来定义.
+
+  # Render template from application
+  my $foo = $app->build_controller->render_to_string(template => 'foo');
 
 =head2 C<build_tx>
 
@@ -366,117 +501,59 @@ Transaction 的创建, 默认是使用的 L<Mojo::Transaction::HTTP> 对象.
   $app         = $app->defaults({foo => 'bar'});
   $app         = $app->defaults(foo => 'bar');
 
-对每一次请求，分配定义默认的值存在 L<Mojolicious::Controller/"stash"> 中.
+对每一次请求, 都会分配定义默认的值, 这个存在 L<Mojolicious::Controller/"stash"> 中.
 
-  # Manipulate defaults
-  $app->defaults->{foo} = 'bar';
-  my $foo = $app->defaults->{foo};
-  delete $app->defaults->{foo};
+  # Remove value
+  my $foo = delete $app->defaults->{foo};
 
 =head2 C<dispatch>
 
   $app->dispatch(Mojolicious::Controller->new);
 
-这是 Mojolicious 的应用中最重要的要点，每个请求都会通过  L<Mojolicious::Controller> 的对象调度到 C<static> 或 C<routes> 中。
+这是 Mojolicious 的应用中最重要的要点, 每个请求都会通过  L<Mojolicious::Controller> 的对象调度到 C<static> 或 C<routes> 中. 
 
 =head2 C<handler>
 
   $app->handler(Mojo::Transaction::HTTP->new);
   $app->handler(Mojolicious::Controller->new);
 
-设置默认的 controller 和每个请求的处理程序。
+设置默认的 controller 和每个请求的处理程序. 
 
 =head2 C<helper>
 
   $app->helper(foo => sub {...});
 
-加入一个新的 helper 方法为你的控制器和应用的对象中可以来调用。当然在 C<ep> 的模板中也可以调用.
+加入一个新的 helper 方法为你的控制器和应用的对象中可以来调用. 当然在 C<ep> 的模板中也可以调用.
 
   # Helper
-  $app->helper(add => sub { $_[1] + $_[2] });
+  $app->helper(cache => sub { state $cache = {} });
 
   # Controller/Application
-  my $result = $self->add(2, 3);
+  $c->cache->{foo} = 'bar';
+  my $result = $self->cache->{foo};
 
   # Template
-  %= add 2, 3
+  % cache->{foo} = 'bar';
+  %= cache->{foo}
 
 =head2 C<hook>
 
   $app->hook(after_dispatch => sub {...});
 
-通过 hooks 点来扩展  L<Mojolicious>。在这注册后可以让你的代码在所有请求中共享使用.
+通过 hooks 点来扩展 L<Mojolicious>. 在这注册后可以让你的代码在所有请求中共享使用. 全部有关 hooks 的列表, 请看 L</"HOOKS">.
 
-  # Dispatchers will not run if there's already a response code defined
+  # 如果存在定义的响应码, 这个 dispatch 是不会工作的
   $app->hook(before_dispatch => sub {
     my $c = shift;
-    $c->render(text => 'Skipped dispatchers!')
-      if $c->req->url->path->contains('/do_not_dispatch');
+    $c->render(text => 'Skipped static file server and router!')
+      if $c->req->url->path->to_route =~ /do_not_dispatch/;
   });
 
-当前可以使用的 hooks 点和相关的顺序如下:
+=head2 new
 
-=over 2
+    my $app = Mojolicious->new;
 
-=item C<after_build_tx>
-
-这个点是工作在 HTTP 的请求还没有被解析，但 transaction 完成时。
-
-  $app->hook(after_build_tx => sub {
-    my ($tx, $app) = @_;
-    ...
-  });
-
-这是一个非常强大的 hook 点，但不应常使用才对。这个地方用来实现一些非常先进的功能如：上传进度条之类，需要注意在 embedded 的应用中不能使用。 (默认参数送的是 transaction and application object)
-
-=item C<before_dispatch>
-
-这个点是工作在静态文件调度和路由选择之前。
-
-  $app->hook(before_dispatch => sub {
-    my $c = shift;
-    ...
-  });
-
-如果你要重写进来的请求和提前做一些处理时非常有用.(默认参数送的是 controller 控制器对象)
-
-=item C<after_static_dispatch>
-
-如果静态文件可以使用并且在路径选择开始之前时，调用这个 hook 点,主要用来做静态调度之后来使用.
-
-  $app->hook(after_static_dispatch => sub {
-    my $c = shift;
-    ...
-  });
-
-主要用来定制调度和静态响应之后做些后处理(post-processing),(默认参数送的是 controller 对象)
-
-=item C<after_dispatch>
-
-响应渲染的内容后调用。注意这个 hook 点会在 C<after_static_dispatch> 之前触发。
-
-  $app->hook(after_dispatch => sub {
-    my $c = shift;
-    ...
-  });
-
-这个主要用来重写响应的输出和其它的处理任务。(默认参数送的是 controller 对象)
-
-=item C<around_dispatch>
-
-在 C<before_dispatch> 的 hook 点之前调用，并环绕整个调度的过程。如果你想控制连接的整个链你可以手动地 forward 到下一个 hook 点。
-在异常处理的模块 L<Mojolicious::Controller/"render_exception"> 中，它 hook 了开始的链并在 C<dispatch> 之后还会调用。你的 hook 会放在这个中间的。
-
-  $app->hook(around_dispatch => sub {
-    my ($next, $c) = @_;
-    ...
-    $next->();
-    ...
-  });
-
-这个 hook 点也非常强大，但你常使用才对。它可以让你定制应用的异常处理之类，你可以给这个工具看成你的工具箱中的大锤一样重要。(传送的参数是下一个 hook 点的回调和 controller 的对象)
-
-=back
+在你调用 L</"startup"> 的时候, 会构造一个新的 Mojolicious 应用. 这个会自动的设置你的 home 目录和根据你当前模式来设置你的日志, 渲染, 静态文件, 默认的插件的设置和 L</"around_dispatch"> hook 点的中定义的默认异常操作.
 
 =head2 C<plugin>
 
@@ -490,7 +567,7 @@ Transaction 的创建, 默认是使用的 L<Mojo::Transaction::HTTP> 对象.
   $app->plugin('MyApp::Plugin::SomeThing', foo => 23);
   $app->plugin('MyApp::Plugin::SomeThing', {foo => 23});
 
-通过 L<Mojolicious::Plugins/"register_plugin"> 加载插件.
+加载插件, 全部的插件的例子请看 L<Mojolicious::Plugins/"PLUGINS">.
 
 =over 2
 
@@ -504,7 +581,7 @@ Transaction 的创建, 默认是使用的 L<Mojo::Transaction::HTTP> 对象.
 
 =item L<Mojolicious::Plugin::DefaultHelpers>
 
-常用的 helper 的收集。这个会默认自动加载.
+常用的 helper 的收集. 这个会默认自动加载.
 
 =item L<Mojolicious::Plugin::EPLRenderer>
 
@@ -560,8 +637,7 @@ Xslate 的扩展插件, 请直接看 L<Xslate> 的相关语法
   $app->start;
   $app->start(@ARGV);
 
-Start the command line interface for your application with
-L<Mojolicious::Commands/"start">.
+通过 L<Mojolicious::Commands/"start"> 启动应用程序并从你的命令行接口中读取参数.
 
   # Always start daemon and ignore @ARGV
   $app->start('daemon', '-l', 'http://*:8080');
@@ -570,8 +646,7 @@ L<Mojolicious::Commands/"start">.
 
   $app->startup;
 
-This is your main hook into the application, it will be called at application
-startup. Meant to be overloaded in a subclass.
+这是进入你的应用的主 hook 点, 它将会调用应用 startup.
 
   sub startup {
     my $self = shift;

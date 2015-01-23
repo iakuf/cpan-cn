@@ -1,3 +1,5 @@
+=encoding utf-8
+
 =head1 NAME
 
 AnyEvent - the DBI of event loop programming
@@ -961,9 +963,8 @@ to see whether the message will be logged. If the test succeeds it will
 load AnyEvent::Log and call C<AnyEvent::Log::log> - consequently, look at
 the L<AnyEvent::Log> documentation for details.
 
-If the test fails it will simply return. Right now this happens when a
-numerical loglevel is used and it is larger than the level specified via
-C<$ENV{PERL_ANYEVENT_VERBOSE}>.
+
+如果测试失败会简单的 return. 当这种情况时, 记录的等级会生效, 通过修改 C<$ENV{PERL_ANYEVENT_VERBOSE}> 的数字的等级为更高的.
 
 If you want to sprinkle loads of logging calls around your code, consider
 creating a logger callback with the C<AnyEvent::Log::logger> function,
@@ -1952,28 +1953,18 @@ The following environment variables are currently known to AnyEvent:
 
 =item C<PERL_ANYEVENT_VERBOSE>
 
-By default, AnyEvent will log messages with loglevel C<4> (C<error>) or
-higher (see L<AnyEvent::Log>). You can set this environment variable to a
-numerical loglevel to make AnyEvent more (or less) talkative.
+默认, AnyEvent 会在日志级别为 C<4> (C<error>) 或者更高的时候会打印日志信息, 你可以设置这个日志级别, 通过环境变量来修改它.
 
-If you want to do more than just set the global logging level
-you should have a look at C<PERL_ANYEVENT_LOG>, which allows much more
-complex specifications.
+如果你想要做的不只是设置日志的记录的级别, 你需要看看 C<PERL_ANYEVENT_LOG>, 这个种有更加复杂的一些东西.
 
-When set to C<0> (C<off>), then no messages whatsoever will be logged with
-everything else at defaults.
+当你设置成 C<0> (C<off>), 这样日志中默认是不会输出信息的.
 
-When set to C<5> or higher (C<warn>), AnyEvent warns about unexpected
-conditions, such as not being able to load the event model specified by
-C<PERL_ANYEVENT_MODEL>, or a guard callback throwing an exception - this
-is the minimum recommended level for use during development.
+当你设置成 C<5> 或者更高 (C<warn>),  这时 AnyEvent 会警告一些 unexpected 的情况, 象不能使用 C<PERL_ANYEVENT_MODEL> 加载指定的事件模型, 或者 guard 回调给出地现代战争异常 - 这是开发过程最少推荐所需要的日志的级别.
 
-When set to C<7> or higher (info), AnyEvent reports which event model it
-chooses.
+当设置成 C<7> 或者 (info), AnyEvent 会报告所有事件模型.
 
-When set to C<8> or higher (debug), then AnyEvent will report extra
-information on which optional modules it loads and how it implements
-certain features.
+当设置成 C<8> 或者更高的 (debug), 这个 AnyEvent 会报告一些扩展的信息, 象模块的加载.
+
 
 =item C<PERL_ANYEVENT_LOG>
 

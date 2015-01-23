@@ -517,24 +517,31 @@ L<Mojolicious::Controller> 是从 L<Mojo::Base> 中继承了所有的属性。�
   my $m = $c->match;
   $c    = $c->match(Mojolicious::Routes::Match->new);
 
-为当前的请求进行路由，默认是 L<Mojolicious::Routes::Match> 对象。
+为当前的请求进行路由, 默认是 L<Mojolicious::Routes::Match> 对象。
 
   # Introspect
   my $foo = $c->match->endpoint->pattern->defaults->{foo};
+  my $bar = $c->match->stack->[-1]{bar};
 
 =head2 C<tx>
 
   my $tx = $c->tx;
   $c     = $c->tx(Mojo::Transaction::HTTP->new);
 
-当前 transaction 的处理程序，通常是  L<Mojo::Transaction::HTTP> or L<Mojo::Transaction::WebSocket> 的对象
+当前连接的处理程序, 通常是 L<Mojo::Transaction::HTTP> 或者 L<Mojo::Transaction::WebSocket> 的对象来实现的. 注意: 这个中取到的对象都是使用了 weaken 来进行了弱引用操作, 以防止循环数据结构造成的内存泄漏. 所以当你执行非阻塞操作和底层连接, 需要对象的引用在其它的地方还使用时, 这可能会引起过早关闭.
 
   # Check peer information
   my $address = $c->tx->remote_address;
 
+  # Perform non-blocking operation without knowing the connection status
+  my $tx = $c->tx;
+  Mojo::IOLoop->timer(2 => sub {
+    $c->app->log->debug($tx->is_finished ? 'Finished.' : 'In progress.');
+  });
+
 =head1 方法
 
-L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并扩展了如下新的。
+L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法, 并扩展了如下新的。
 
 =head2 C<cookie>
 
@@ -561,7 +568,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c      = $c->flash({foo => 'bar'});
   $c      = $c->flash(foo => 'bar');
 
-为了下一个请求，给数据进行持久化，存在 C<session> 中。
+为了下一个请求, 给数据进行持久化, 存在 C<session> 中。
 
   # Show message after redirect
   $c->flash(message => 'User created successfully!');
@@ -571,18 +578,31 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
 
   my $cb = $c->on(finish => sub {...});
 
-从 C<tx> 中订阅相关的事件回调，常用是 L<Mojo::Transaction::HTTP>  和  L<Mojo::Transaction::WebSocket> 的对象.
+从 C<tx> 中订阅相关的事件回调, 这会影响的是 L<Mojo::Transaction::HTTP>  和  L<Mojo::Transaction::WebSocket> 的对象上的事件. 注意, 这个方法会自动的使用 101 的响应状态做为 WebSocket 的握手请求回应.
 
-  # Emitted when the transaction has been finished
+  # 在传送完成之后做一些操作. 
   $c->on(finish => sub {
     my $c = shift;
     $c->app->log->debug('We are done!');
   });
-
-  # Emitted when new WebSocket messages arrive
+  
+  # Receive WebSocket message
   $c->on(message => sub {
     my ($c, $msg) = @_;
     $c->app->log->debug("Message: $msg");
+  });
+  
+  # 在 WebSocket 中接收 JSON 对象的信息
+  $c->on(json => sub {
+    my ($c, $hash) = @_;
+    $c->app->log->debug("Test: $hash->{test}");
+  });
+  
+  # 接收 WebSocket 的 "Binary" 二进制信息
+  $c->on(binary => sub {
+    my ($c, $bytes) = @_;
+    my $len = length $bytes;
+    $c->app->log->debug("Received $len bytes.");
   });
 
 =head2 C<param>
@@ -593,12 +613,14 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   my ($foo, $bar) = $c->param(['foo', 'bar']);
   $c              = $c->param(foo => 'ba;r');
   $c              = $c->param(foo => qw(ba;r ba;z));
+  $c              = $c->param(foo => ['ba;r', 'baz']);
 
-访问 GET/POST 的参数，文件上传的内容和 route 中占位符取的内容并不会存在这个中。
-注意，此方法是在某些情况下，上下文敏感的，并因此需要小心使用.
-每个GET/ POST参数可以有多个值，这可能会带来意想不到的后果。
+访问 GET/POST, 文件上传的内容和 route 中占位符取的内容的参数. 这些参数从请求 url 的字符和 "application/x-www-form-urlencoded" or "multipart/form-data" 的 body 中按顺序取得. 
+注意, 此方法是在某些情况下, 上下文敏感的, 并因此需要小心使用.
+参数可以有多个值, 这可能会带来意想不到的后果. 这个要求如果请求的 body 是象 "multipart/form-data" 必须不能过大, 因为这部分 body 需要加载到内存中来解析 post 的参数, 这个默认值是不能超过 10M 的限制.
 
-  # List context is ambiguous and should be avoided
+  # List context is ambiguous and should be avoided you can get multiple
+  # values returned for a query string like "?foo=bar&foo=baz&foo=yada"
   my $hash = {foo => $self->param('foo')};
 
   # Better enforce scalar context
@@ -607,10 +629,13 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   # The multi name form can also enforce scalar context
   my $hash = {foo => $self->param(['foo'])};
 
-为了更好的控制，你也可以直接访问请求信息。
+为了更好的控制, 你也可以直接访问请求信息。
 
   # Only GET parameters
   my $foo = $c->req->url->query->param('foo');
+
+  # Only POST parameters
+  my $foo = $c->req->body_params->param('foo');
 
   # Only GET and POST parameters
   my $foo = $c->req->param('foo');
@@ -625,7 +650,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c = $c->redirect_to('/path');
   $c = $c->redirect_to('http://127.0.0.1/foo/bar');
 
-准备一个 C<302> 重定向的响应，这个有一些扩展的参数，和 C<url_for> 一样的参数 .
+准备一个 C<302> 重定向的响应, 这个有一些扩展的参数, 和 C<url_for> 一样的参数 .
 
   # Conditional redirect
   return $c->redirect_to('login') unless $c->session('user');
@@ -655,7 +680,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c->render_data($bytes);
   $c->render_data($bytes, format => 'png');
 
-渲染给定的内容，类似 C<render_text> 但不会进行编码,数据以原始字节生成。所有的值会合并到C<stash>中。
+渲染给定的内容, 类似 C<render_text> 但不会进行编码,数据以原始字节生成。所有的值会合并到C<stash>中。
 
   # Longer version
   $c->render(data => $bytes);
@@ -672,7 +697,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c->render_json({foo => 'bar'});
   $c->render_json([1, 2, -3], status => 201);
 
-渲染结果成 JSON 的数据结构，所有数据会合到 C<stash>.
+渲染结果成 JSON 的数据结构, 所有数据会合到 C<stash>.
 
   # Longer version
   $c->render(json => {foo => 'bar'});
@@ -681,7 +706,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
 
   $c = $c->render_later;
 
-禁用自动渲染生成内容，来延迟 HTTP 的响应生成的时机，只要有必要的时候才会生成响应.大多用在异步的时候.
+禁用自动渲染生成内容, 来延迟 HTTP 的响应生成的时机, 只要有必要的时候才会生成响应.大多用在异步的时候.
 
   # Delayed rendering
   $c->render_later;
@@ -711,14 +736,14 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   my $success = $c->render_static('images/logo.png');
   my $success = $c->render_static('../lib/MyApp.pm');
 
-渲染一个静态的的文件使用 L<Mojolicious::Static/"serve">，通常从 C<public> 的目录或 C<DATA> 的部分，你的应用程序。请注意，此方法的目录。
+渲染一个静态的的文件使用 L<Mojolicious::Static/"serve">, 通常从 C<public> 的目录或 C<DATA> 的部分, 你的应用程序。请注意, 此方法的目录。
 
 =head2 C<render_text>
 
   $c->render_text('Hello World!');
   $c->render_text('Hello World!', layout => 'green');
 
-渲染的如Perl字符的内容， 这将被编码成字节。所有的值会合并到 C<stash> 中。是 C<render_data> 的替代品，无需进行编码。需要注意的是这并没有改变响应的内容类型，默认情况下，这是 C<text/html;charset=UTF-8>。
+渲染的如Perl字符的内容,  这将被编码成字节。所有的值会合并到 C<stash> 中。是 C<render_data> 的替代品, 无需进行编码。需要注意的是这并没有改变响应的内容类型, 默认情况下, 这是 C<text/html;charset=UTF-8>。
 
   # Longer version
   $c->render(text => 'Hello World!');
@@ -731,7 +756,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c = $c->rendered;
   $c = $c->rendered(302);
 
-最后的响应状态和使用  C<after_dispatch> 插件的 hook 点，默认使用  C<200> 的响应状态码。
+最后的响应状态和使用  C<after_dispatch> 插件的 hook 点, 默认使用  C<200> 的响应状态码。
 
   # Stream content directly from file
   $c->res->content->asset(Mojo::Asset::File->new(path => '/etc/passwd'));
@@ -774,7 +799,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
     any  => sub {...}
   );
 
-从 C<Accept> 请求头中选择最好的资源回应， C<format> 的 stash 值或者 C<format> 中的 GET/POST 的参数。
+从 C<Accept> 请求头中选择最好的资源回应,  C<format> 的 stash 值或者 C<format> 中的 GET/POST 的参数。
 
 默认使用一个空的  C<204> 的响应。如果 C<Accept> 的请求头中包含多过一个 MIME 的类型会被忽略.因为浏览器通知不知道这个的意思。
 
@@ -792,7 +817,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c = $c->send($chars);
   $c = $c->send($chars => sub {...});
 
-发送消息或通过 WebSocket 的无阻塞框架， 在这个中的 drain 回调函数会被调用一次当所有的数据都被写入时。
+发送消息或通过 WebSocket 的无阻塞框架,  在这个中的 drain 回调函数会被调用一次当所有的数据都被写入时。
 
   # Send "Text" frame
   $c->send('Hello World!');
@@ -806,7 +831,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   # Send "Ping" frame
   $c->send([1, 0, 0, 0, 9, 'Hello World!']);
 
-空闲的 WebSockets 的超时，你可能还需要增加闲置逾时，通常默认为 C<15> 秒。
+空闲的 WebSockets 的超时, 你可能还需要增加闲置逾时, 通常默认为 C<15> 秒。
 
   # Increase inactivity timeout for connection to 300 seconds
   Mojo::IOLoop->stream($c->tx->connection)->timeout(300);
@@ -818,7 +843,7 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c          = $c->session({foo => 'bar'});
   $c          = $c->session(foo => 'bar');
 
-持久性数据存储，所有的会话数据 通过 L<Mojo::JSON> 序列化和存储在 C<HMAC-SHA1> 签署 cookies。需要注意的是 Cookies 通常中 4096 个字节的限制，取决于你使用什么浏览器。
+持久性数据存储, 所有的会话数据 通过 L<Mojo::JSON> 序列化和存储在 C<HMAC-SHA1> 签署 cookies。需要注意的是 Cookies 通常中 4096 个字节的限制, 取决于你使用什么浏览器。
 
   # Manipulate session
   $c->session->{foo} = 'bar';
@@ -838,10 +863,11 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
 
   my $value  = $c->signed_cookie('foo');
   my @values = $c->signed_cookie('foo');
+  my ($foo, $bar) = $c->signed_cookie(['foo', 'bar']);
   $c         = $c->signed_cookie(foo => 'bar');
   $c         = $c->signed_cookie(foo => 'bar', {path => '/'});
 
-访问签名的请求 cookie 的值，并创建新的签名响应 cookie。 cookie 失败时 C<HMAC-SHA1> 签名验证将被自动删除。
+访问签名的请求 cookie 的值, 并创建新的签名响应 cookie。 cookie 失败时 C<HMAC-SHA1> 签名验证将被自动删除。
 
 =head2 C<stash>
 
@@ -850,59 +876,31 @@ L<Mojolicious::Controller> 从 L<Mojo::Base> 中继承了全部的方法，并�
   $c        = $c->stash({foo => 'bar'});
   $c        = $c->stash(foo => 'bar');
 
-这个用来做非持久性数据存储和交换，这个的默认值可以设置 L<Mojolicious/"defaults">。
-有许多藏匿的值有特殊的含义，是保留的，目前完整的列表是  C<action>, C<app>, C<cb>,
+这个用来做非持久性数据存储和交换, 这个的默认值可以设置 L<Mojolicious/"defaults">。
+有许多藏匿的值有特殊的含义, 是保留的, 目前完整的列表是  C<action>, C<app>, C<cb>,
 C<controller>, C<data>, C<extends>, C<format>, C<handler>, C<json>, C<layout>,
 C<namespace>, C<partial>, C<path>, C<status>, C<template> and C<text>. Note
 that all stash values with a C<mojo.*> prefix are reserved for internal use.
 
-  # Manipulate stash
-  $c->stash->{foo} = 'bar';
-  my $foo = $c->stash->{foo};
-  delete $c->stash->{foo};
-
-=head2 C<ua>
-
-  my $ua = $c->ua;
-
-取得 L<Mojo::UserAgent> 的对象从 L<Mojo/"ua">.
-
-  # Longer version
-  my $ua = $c->app->ua;
-
-  # Blocking
-  my $tx = $c->ua->get('http://mojolicio.us');
-  my $tx = $c->ua->post_form('http://kraih.com/login' => {user => 'mojo'});
-
-  # Non-blocking
-  $c->ua->get('http://mojolicio.us' => sub {
-    my ($ua, $tx) = @_;
-    $c->render_data($tx->res->body);
-  });
-
-  # Parallel non-blocking
-  my $delay = Mojo::IOLoop->delay(sub {
-    my ($delay, @titles) = @_;
-    $c->render_json(\@titles);
-  });
-  for my $url ('http://mojolicio.us', 'https://metacpan.org') {
-    $delay->begin;
-    $c->ua->get($url => sub {
-      my ($ua, $tx) = @_;
-      $delay->end($tx->res->dom->html->head->title->text);
-    });
-  }
+  # Remove value
+  # my $foo = delete $c->stash->{foo};
 
 =head2 C<url_for>
 
   my $url = $c->url_for;
   my $url = $c->url_for(name => 'sebastian');
+  my $url = $c->url_for({name => 'sebastian'});
   my $url = $c->url_for('test', name => 'sebastian');
+  my $url = $c->url_for('test', {name => 'sebastian'});
   my $url = $c->url_for('/perldoc');
+  my $url = $c->url_for('//mojolicio.us/perldoc');
   my $url = $c->url_for('http://mojolicio.us/perldoc');
+  my $url = $c->url_for('mailto:sri@example.com');
 
-生成可移植的  L<Mojo::URL> 对象的 route ，路径或 URL。
-Generate a portable L<Mojo::URL> object with base for a route, path or URL.
+生成可移植的  L<Mojo::URL> 对象的 route , 路径或 URL。
+
+  # "http://127.0.0.1:3000/perldoc" if application has been started with Morbo
+  # $c->url_for('/perldoc')->to_abs;
 
   # "/perldoc?foo=bar" if application is deployed under "/"
   $c->url_for('/perldoc')->query(foo => 'bar');
@@ -915,14 +913,24 @@ Generate a portable L<Mojo::URL> object with base for a route, path or URL.
   # "/list?q=mojo&page=2" if current request was for "/list?q=mojo&page=1"
   $c->url_with->query([page => 2]);
 
+=head2 validation
+
+  my $validation = $c->validation;
+
+从当前请求中到得 L<Mojolicious::Validator::Validation> 对象, 这个是会检查 C<GET> 和 C<POST> 参数导入到这个中, 参数是从查询字符和 C<application/x-www-form-urlencoded> 与 C<multipart/form-data> 的信息中取得. 如果是  C<multipart/form-data> 之类的信息, 这需要都加载到内存中解析这个 C<POST> 参数, 所以这个不能处理很大的文件, 这是限制为 10M 的默认.
+
+  my $validation = $c->validation;
+  $validation->required('title')->size(3, 50);
+  my $title = $validation->param('title');
+
 =head2 C<write>
 
   $c = $c->write;
-  $c = $c->write('Hello!');
+  $c = $c->write($bytes);
   $c = $c->write(sub {...});
-  $c = $c->write('Hello!' => sub {...});
+  $c = $c->write($bytes => sub {...});
 
-非阻塞写动态的内容，选项 drain 的回调函数被调用时所有的数据都被写入。
+非阻塞写动态的内容, 选项 drain 的回调函数被调用时所有的数据都被写入。
 
   # Keep connection alive (with Content-Length header)
   $c->res->headers->content_length(6);
@@ -940,7 +948,7 @@ Generate a portable L<Mojo::URL> object with base for a route, path or URL.
     });
   });
 
-在 Comet (C<long polling>) 你可能还需要增加闲置逾时，通常默认为C <15>秒。
+在 Comet (C<long polling>) 你可能需要通过  L<Mojolicious::Plugin::DefaultHelpers/"inactivity_timeout"> 来增加闲置逾时, 通常默认为 C<15> 秒。
 
   # Increase inactivity timeout for connection to 300 seconds
   Mojo::IOLoop->stream($c->tx->connection)->timeout(300);
@@ -952,7 +960,7 @@ Generate a portable L<Mojo::URL> object with base for a route, path or URL.
   $c = $c->write_chunk(sub {...});
   $c = $c->write_chunk('Hello!' => sub {...});
 
-无阻塞的写入动态内容用来 C<chunked> 传输编码，当 drain 回调会被调用时所有数据已被写入。
+无阻塞的写入动态内容用来 C<chunked> 传输编码, 当 drain 回调会被调用时所有数据已被写入。
 
   # Make sure previous chunk has been written before continuing
   $c->write_chunk('He' => sub {
@@ -975,7 +983,7 @@ Generate a portable L<Mojo::URL> object with base for a route, path or URL.
 
 =head1 帮助
 
-除了上面的属性和方法，你可以使用  L<Mojolicious::Controller> 的对象。在  L<Mojolicious::Plugin::DefaultHelpers> 和 L<Mojolicious::    Plugin::TagHelpers> 包含全部的 helpers 
+除了上面的属性和方法, 你可以使用  L<Mojolicious::Controller> 的对象。在  L<Mojolicious::Plugin::DefaultHelpers> 和 L<Mojolicious::    Plugin::TagHelpers> 包含全部的 helpers 
 
   $c->layout('green');
   $c->title('Welcome!');

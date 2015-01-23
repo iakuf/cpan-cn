@@ -25,103 +25,111 @@ while some of the higher abstraction layers might look similar to other web
 frameworks, it actually defines a whole new category and could even be the
 foundation for more advanced ones in the future.
 
-=head2 Why doesn't Mojolicious have any dependencies?
+=head2 为什么 Mojolicious 没有任何依赖关系?
 
-We are optimizing L<Mojolicious> for user-friendliness and development speed,
-without compromises. While there are no rules in
-L<Mojolicious::Guides::Contributing> that forbid dependencies, we do currently
-discourage adding non-optional ones in favor of a faster and more painless
-installation process. And we do in fact already use several optional CPAN
-modules such as L<EV>, L<IO::Socket::IP>, L<IO::Socket::SSL> and L<Plack> to
-provide advanced functionality if they are installed.
+我们优化用户友好性和开发速度不能妥协. 虽然在 L<Mojolicious::Guides::Contributing> 中没有规则规定禁止依赖性, 我们目前不鼓励增加非可选择的那些东西, 这样有利于更快，更无痛的安装过程. 而我们其实已经使用了一些很多可选的 CPAN 模块, 如 L<EV>, L<IO::Socket::IP>, L<IO::Socket::SSL> 和 L<Plack> 来提供先进的功能, 当然如果已安装的话.
 
-=head2 Why reinvent wheels?
+=head2 为什么重新造轮子 
 
-Because we can make them rounder. Components specifically designed for
-user-friendliness and development speed are not easy to come by. We are strong
-believers of the Perl mantra "There is more than one way to do it", and our
-quest is to develop the best possible solutions for these two criteria.
+因为我们让它更加全能, 专为方便用户和开发速度设计的框架并不容易得到. 我们是 Perl 的口头禅 "不止一种方法来做到这一点" 的坚定的信徒, 所以我们的追求是前面制定这两个条件最佳的解决方案.
 
 =head2 What about backwards compatibility?
 
-In conformance with L<Mojolicious::Guides::Contributing>, we will always
-deprecate a feature before removing or changing it in incompatible ways
-between major releases. New features can however be marked as experimental to
-explicitly exclude them from these rules. This gives us the necessary freedom
-to ensure a healthy future for L<Mojolicious>. So, as long as you are not
-using anything marked experimental, untested or undocumented, you can always
-count on backwards compatibility, everything else would be considered a bug.
+为了符合 L<Mojolicious::Guides::Contributing>, 我们常常在主要版本更新的时候修改或者弃用一些特性, 这个时候, 我们在上一个版本的时候就不会推荐使用这个特性, 会标记为实验.
+In conformance with L<Mojolicious::Guides::Contributing>, we will always deprecate a feature before removing or changing it in incompatible ways between major releases. New features can however be marked as experimental to explicitly exclude them from these rules. This gives us the necessary freedom to ensure a healthy future for L<Mojolicious>. So, as long as you are not using anything marked experimental, untested or undocumented, you can always count on backwards compatibility, everything else would be considered a bug.
 
-=head2 Why not split up Mojolicious into many smaller distributions?
 
-Because there are no advantages, it drastically increases maintenance costs
-and installation times without giving us anything in return. It would only
-make sense if we wanted to pass ownership of a module to a new maintainer,
-which we already have done in the past.
+=head2 为什么不给 Mojolicious 分成比较小的几个部分来做发行 
 
-=head2 What does the error "Maximum message size exceeded" mean?
+这样做没任何好处, 还极大的增加了维护的成本和安装的时间, 并且没任何作用. 它只有一个意义, 就是如果我想给我其中一个模块的所有权, 维护权给其它维护者. 我们现在已经这么做了, 根本不需要拆分.
+
+=head2 我使用 Mojolicious 要使用哪个版本的 perl ?
+
+首先, 你要知道, 根据 L<perlpolicy>, 只有两个最新的稳定版本的 Perl 是现在过完全由社区支持和在进行 bug 修复的, 这就是  5.20.x 和 5.18.x. 所以 L<Mojolicious> 遵循这一模式, 并完全支持这两个版本系列.
+此外, 我们也将一直保证安装到那个我们认为值得支持某些旧版本, 但并没有特定优化它, 目前这个版本是 5.10.1.
+
+=head2 我在测试 Mojolicious 之前是否需要清理我现在的环境? 
+
+Mojolicious 使用在内部和外部都使用了很多的环境变量, 特别是 ( 但不局限于 ) 那些以 C<MOJO_*> 前缀开始的环境变量. 这中的测试套件需要一个干净的环境;
+测试用非标准的环境是不支持的, 很可能不成功, 因此, 在安装和升级 Mojolicious 的时候和运行它的测试的时候, 我们强烈建议您使用没设置这些变量的环境.
+
+=head2 阻塞和非阻塞操作之间的区别是什么? 
+
+I<blocking> 操作是一个子函数的块执行调用, 要直到这个子函数执行完退出才算完了, 才能执行下一个子函数.
+
+  my $result = blocking_subroutine();
+  ...
+
+一个 I<non-blocking> 非阻塞操作可以在调用子函数时, 立即同时可以继续执行其它子函数即使当前子函数还没有执行完毕, 而不象上面只能等待, 上面只能让子函数沿着执行顺序直到上一个子函数结束. 这就是所谓的 "连续传递的风格".
+
+  non_blocking_subroutine(sub {
+    my $result = shift;
+    ...
+  });
+  ...
+
+=head2 Mojolicious是否可以将我的代码奇迹般地变成非阻塞?
+
+不, 这是不可能让你的代码奇迹般自动的变成无阻塞. 只是 L<Mojolicious> 从根本上设计就是非阻塞 I/O 和事件循环. 我们可以利用这一优势, 这需要专门的代码, 比如象 L<Mojo::IOLoop> 和 L<Mojo::UserAgent> 或者第三方的事件循环模块才能变成非阻塞. 这样, 我们通常称其为 real-time web. 获取更多信息请看文档 L<Mojolicious::Guides::Cookbook/"REAL-TIME WEB">.
+
+=head2 什么是事件循环? 
+
+一个事件循环基本上是一个大循环, 不断测试的外部事件, 并执行相应的回调函数来处理它们, 它往往是程序的主循环.
+
+非阻塞测试的文件描述符是否可读性/可写和使用定时器来实现通常用于高度可扩展的网络服务器, 因为这样允许一个进程来处理成千上万的客户端连接同时进行.
+
+  while (1) {
+    my @readable = test_fds_for_readability();
+    handle_readable_fds(@readable);
+
+    my @writable = test_fds_for_writability();
+    handle_writable_fds(@writable);
+
+    my @expired = test_timers();
+    handle_timers(@expired);
+  }
+
+在 L<Mojolicious> 中的事件循环是使用的 L<Mojo::IOLoop>.
+
+=head2 错误 "Maximum message size exceeded" 的意思?
 
 为了保证你的应用程序处理大的请求和响应时能正常工作, HTTP 解析是是有一个上限的, 如果达到后会自动停止接收新数据, 并在大多数情况下会强制关闭连接. 这个限制默认是 C<10MB>. 你可以使用 MOJO_MAX_MESSAGE_SIZE 的环境变量来修改这个值.
 
-=head2 What does the error "Maximum line size exceeded" mean?
+=head2 错误 "Maximum line size exceeded" 的意思?
 
-这个和前面的答案基本一样, 但更加具体一点,用来描述保护机制. 这个会限制最大长度的行结尾到 C<\x0d\x0a> 的 http 的信息中的一部分上度. 象请求的行中的状态行, 请求中的 headers. 这个限制默认是 C<10KB>. 你可以使用 MOJO_MAX_LINE_SIZE 的环境变量来修改这个值.
+这个和前面的答案基本一样, 但更加具体一点,用来描述保护机制. 这个会限制最大长度的行结尾到 C<\x0d\x0a> 的 http 的信息中的一部分上度. 象请求的行中的状态行, 请求中的 headers. 这个限制默认是 C<10KB>. 你可以使用属性 L<Mojo::Message/"max_line_size"> 和 L<Mojo::Headers/"max_line_size"> 或者 MOJO_MAX_LINE_SIZE 的环境变量来修改这个值.
 
-=head2 What does the error "Maximum buffer size exceeded" mean?
+=head2 错误 "Maximum buffer size exceeded" 的意思?
 
-这个和前面的二个答案类似, 他限制了多少能从 buffer 中解析 chunked, 压缩和 multipart 信息的 HTTP 内容的大小. 这个限制默认是 C<256KB>, 你可以使用 MOJO_MAX_BUFFER_SIZE 的环境变量来修改这个值.
+这个和前面的二个答案类似, 他限制了多少能从 buffer 中解析 chunked, 压缩和 multipart 信息的 HTTP 内容的大小. 这个限制默认是 C<256KB>, 你可以使用属性 L<Mojo::Content/"max_buffer_size"> 或者 MOJO_MAX_BUFFER_SIZE 的环境变量来修改这个值.
 
-=head2 What does the error "EV does not work with ithreads" mean?
+=head2 错误 "EV does not work with ithreads" 的意思?
 
-The L<Mojolicious> user agent and web servers are based on an event loop that
-supports multiple reactor backends. One of these backends is L<EV>, it is very
-fast and will be automatically used if installed. On Windows however, the
-C<ithreads> based C<fork()> emulation can interfere with it, and you may have
-to use the MOJO_REACTOR environment variable to enforce a more portable one.
+这个 L<Mojolicious> 的用户代理和 Web 服务器是基于事件循环, 支持多种后端. 其中一个后端是 L<EV>, 它非常的快速并且会自动加载. 在一些 Windows 的环境中, 这个 C<ithreads> 是基于 C<fork()> 来仿真实现的, 你这个时候可能需要使用 MOJO_REACTOR 的环境变量来强制指定一个其它的.
 
   MOJO_REACTOR=Mojo::Reactor::Poll
 
-=head2 What does "Your secret passphrase needs to be changed" mean?
+=head2 出现提示 "Your secret passphrase needs to be changed" 的意思?
 
-L<Mojolicious> uses a secret passphrase for security features such as signed
-cookies. It defaults to the moniker of your application, which is not very
-secure, so we added this log message as a reminder. You can change the
-passphrase with the attribute L<Mojolicious/"secret">.
+L<Mojolicious> 是使用的 secret 口令来实现签名的安全功能, 它默认是使用你的应用的标记的名字, 这个并不太安全, 所以在这增加了一个日志用于提醒你, 你可以通过 L<Mojolicious/"secrets"> 来修改
 
-  app->secret('My very secret passphrase.');
+app->secrets(['My very secret passphrase.']);
 
-=head2 What does "Nothing has been rendered, expecting delayed response" mean?
+=head2 出现提示 "Nothing has been rendered, expecting delayed response" 的意思?
 
-L<Mojolicious> has been designed from the ground up for non-blocking I/O and
-event loops. So when a new request comes in and no response is generated right
-away, it will assume that this was intentional and return control to the web
-server, which can then handle other requests while waiting for events such as
-timers to finally generate a response.
+在 L<Mojolicious> 原生是被设计成一个完全非阻塞 I/O 和事件循环的. 所以当一个请求进来, 如果没有响应产生的话, 我们会认为这是程序员们故意这样, 为了让控制权返回给 Web 服务器让其处理其它的请求, 这个请求等待如事件定时器之类来最终产生一个响应.
 
-=head2 What does "Inactivity timeout" mean?
+=head2 出现提示 "Inactivity timeout" 的意思?
 
-To protect your applications from denial-of-service attacks, all connections
-have an inactivity timeout which limits how long a connection may be inactive
-before being closed automatically. It defaults to C<20> seconds for the user
-agent and C<15> seconds for all built-in web servers, and is commonly referred
-to as C<inactivity_timeout>. This timeout always applies, so you might have to
-tweak it for applications that take a long time to process a request.
+为了保护您的应用程序免受拒绝服务攻击, 全部的连接都有一个闲置超时, 用于限制了多长的连接可能是无效的需要自动关掉. 它在用户代理上缺省为 C<20> 秒, 对于原生的 Web 服务器这个是 C<15> 秒, 通常称为 C<inactivity_timeout>. 这个超时总是会起作用, 所以你可能需要调整它来适应需要很长的时间来处理请求的应用程序.
 
-=head2 What does "Premature connection close" mean?
+=head2 出现提示 "Premature connection close" 的意思?
 
-This error message is often related to the one above, and means that the web
-server closed the connection before the user agent could receive the whole
-response.
+这个错误通常和上面一样, 意味着 web 服务器关闭连接之前, 用户代理可以得到整个响应或用户代理被毁灭. 这迫使所有连接立即关闭.
 
-=head2 What does "Worker 31842 has no heartbeat, restarting" mean?
+=head2 出现提示 "Worker 31842 has no heartbeat, restarting" 的意思?
 
-As long as they are accepting new connections, Hypnotoad worker processes send
-heartbeat messages to the manager process at regular intervals, to signal that
-they are still responsive. A blocking operation such as an infinite loop in
-your application (or active connections after a worker has stopped accepting
-new connections) can prevent this, and will force the affected worker to be
-restarted after a timeout. This C<heartbeat_timeout> defaults to C<20> seconds
-and can be extended if your application requires it.
+如果接收新的连接, Hypnotoad 的 Worker 进程会定期发送心跳信息给管理进程, 以表示自己还是能处理响应. 一个阻塞操作, 如在应用程序当中有一个无限循环 ( 或一个活动的连接之后, Worker 不在接收新的连接 ). 这个功能是为了防止这种情况, 如果一直没收到心跳信息, 会迫使这个被影响的 Worker 在超时后重新启动. 这个 C<heartbeat_timeout> 默认值是 C<20> 秒, 你可以根据你的应用需要进行扩展.
 
 =head1 MORE
 
