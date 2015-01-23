@@ -386,9 +386,9 @@ Note that updating the time I<might> cause some events to be handled.
 
    $w = AnyEvent->signal (signal => <uppercase_signal_name>, cb => <callback>);
 
-你也可以对信号使用信号处理的 watcher, 上面参数 C<signal> 是没有 C<SIG> 前缀的信号名字。这个 C<cb> 就是普通的当信号发生时的回调.
+你也可以对信号使用信号处理的 watcher, 上面参数 C<signal> 是没有 C<SIG> 前缀的信号名字. 这个 C<cb> 就是普通的当信号发生时的回调.
 
-虽然回调可能会传递的参数, 但这些是否有和值是否定义了这个在信号处理时并不能确认。所以你不能依靠他们.所以 AnyEvent 的回调不能使用参数传给 watcher 的回调程序.
+虽然回调可能会传递的参数, 但这些是否有和值是否定义了这个在信号处理时并不能确认. 所以你不能依靠他们.所以 AnyEvent 的回调不能使用参数传给 watcher 的回调程序.
 
 Multiple signal occurrences can be clumped together into one callback invocation, and callback invocation will be synchronous. Synchronous means that it might take a while until the signal gets handled by the process, but it is guaranteed not to interrupt any other callbacks.
 
@@ -577,7 +577,7 @@ AnyEvent 有点不同: 它期望其它人来运行事件循环, 只在必要的�
 
 你也可以使用这个来模拟传统的事件程序 - 例如, 你可以在你的应用 app  的主程序中 C<< ->recv >> 直到用户按下退出的按钮, 你就通过 C<< ->send >> 得到  "quit" 的事件.
 
-需要注意的是条件变量递归访问在事件循环中 - 如果你有两段代码，轮循机制方式调用 C<< ->recv >>. 这时, 状态变量是一个非常好的帮你导出你的 caller 的方式. 但是你应该避免的阻塞等待自己.最少回调时要这样, 这比较麻烦. 
+需要注意的是条件变量递归访问在事件循环中 - 如果你有两段代码, 轮循机制方式调用 C<< ->recv >>. 这时, 状态变量是一个非常好的帮你导出你的 caller 的方式. 但是你应该避免的阻塞等待自己.最少回调时要这样, 这比较麻烦. 
 
 状态变量其实就是 perl 的哈希引用, 这个 AnyEvent 它自己使用的 keys 的全部的名字都是 C<_ae_XXX> 这为我们创建子类非常容易(这对于在 AnyEvent 上创建自己的事件类非常有用). 在子类中, 使用 C<AnyEvent::CondVar>
 做为基类在你自己的 C<new> 方法调用它的 C<new> 方法.
@@ -623,7 +623,7 @@ results are available:
 
 =head3 生产者(PRODUCERS)方法 
 
-这个方法只能使用在生产者的部分，也就是归终发送信号的代码/模块。需要注意，这是大多数的情况,也有少数时候，为消费者创建.
+这个方法只能使用在生产者的部分, 也就是归终发送信号的代码/模块. 需要注意, 这是大多数的情况,也有少数时候, 为消费者创建.
 
 =over 4
 
@@ -633,9 +633,9 @@ results are available:
 Flag the condition as ready - a running C<< ->recv >> and all further calls to C<recv> will (eventually) return after this method has been called. If nobody is waiting the send will be remembered.
 
 If a callback has been set on the condition variable, it is called immediately from within send.
-如果回调是有设置状态变量的话，它调用会从内部发送 send 。
+如果回调是有设置状态变量的话, 它调用会从内部发送 send . 
 
-任何给 C<send> 的调用的参数，都会成接下来 C<< ->recv >> 调用的返回。
+任何给 C<send> 的调用的参数, 都会成接下来 C<< ->recv >> 调用的返回. 
 future C<< ->recv >> calls.
 
 Condition variables are overloaded so one can call them directly (as if
@@ -652,13 +652,13 @@ This can be used to signal any errors to the condition variable user/consumer. D
 
 =item $cv->end
 
-这二个方法是联合绑定起来使用的.例如, 我们使用状态变量的方式并行的 ping 一堆主机。
+这二个方法是来联合绑定多个事件或者事物到一块使用. 例如, 一个常用的功能是, 我们使用 condition variable (条件变量) 的方式并行的 ping 一堆主机,  然后处理完一起来拿结果. 
 
-每调用一次 C<< ->begin >> 会增加一个计数器，任何 C<< ->end >> 的调用会减少它。如果记数器在 C<< ->end >> 的时候为 C<0> 时,这个最后的回调会通过 C<begin> 中的内容来执行, 并且会给 condvar 做为第一个参数传送过去. 这个回调会假设调用  C<< ->send >>, 但这不是必须的。 如果没有组回调, 这个 C<send> 会不带任何参数.
+每调用一次 C<< ->begin >> 会增加一个计数器, 任何 C<< ->end >> 的调用会减少一次计数器. 如果记数器在 C<< ->end >> 的时候为 C<0> 时, 会认为这是这组回调中的最后一个, 这时回调会调用 C<begin> 中的内容来执行, 并且会给 condvar 做为第一个参数传送过去. 这个回调会假设调用 C<< ->send >>, 但这不是必须的.  如果没有组回调, 这个 C<send> 会不带任何参数.
 
-你可以认为在这个地方中的 C<< $cv->send >> 的方法调用相当于一个 OR 的条件，而 C<< $cv->begin >> 和 C<< $cv->end >> 组成一个 AND 的条件(在condvar条件回调前，全部的 C<begin> 的调用必须有 C<end>).
+你可以认为在这个地方中的 C<< $cv->send >> 的方法调用相当于一个 OR 的条件 (任何地方只要调用都会结束整组的回调), 而 C<< $cv->begin >> 和 C<< $cv->end >> 组成一个 AND 的条件 (在 condvar 条件回调前, 全部的 C<begin> 的调用必须有 C<end> 来组成一组).
 
-让我们见下简单的例子: 你有二个  I/O watchers (象下面例子, 在我们的程序中一个 STDOUT 和一个 STDERR 句柄), 然后你想等待两个流都关掉后，然后才调用 condvar 让条件成立.
+让我们见下简单的例子: 你有二个  I/O watchers (象下面例子, 在我们的程序中一个 STDOUT 和一个 STDERR 句柄), 然后你想等待两个流都关掉后, 然后才调用 condvar 让条件成立.
 
    my $cv = AnyEvent->condvar;
 
@@ -676,9 +676,9 @@ This can be used to signal any errors to the condition variable user/consumer. D
 
    $cv->recv;
 
-这个上面的过程是这样，在每个事件源(文件句柄)上，都调用了 C<begin>, 所以 condvar 的条件会等全部的 C<end> 调用后来执行.
+这个上面的过程是这样, 在每个事件源( 文件句柄的 EOF)上, 都调用了 C<begin>, 所以 condvar 的条件会等整组全部的 C<end> 调用后来执行, 这个地方整组是二个.
 
-这个 ping 的例子稍微复杂一些，因为有结果返回，开始的任务数量可能为零。
+这个 ping 的例子稍微复杂一些, 这会有结果返回, 开始的任务数量可能为零. 
 
    my $cv = AnyEvent->condvar;
 
@@ -695,19 +695,19 @@ This can be used to signal any errors to the condition variable user/consumer. D
 
    $cv->end;
 
-这个代码片段对所有主机执行 ping 操作,然后在全部的结果都收集完时-顺序不定，执行 C<send>, 因为第一个 C<begin> 对应的 C<end> 最后执行.
+这个代码片段对所有主机执行 ping 操作, 然后在整组全部的结果都收集完时 (注意顺序不定) 会执行执行 C<send> 来退出组回调状态.
 
-要实现这个功能，我们需要在代码执行前调用 C<begin> 然后在执行各自的 ping 请求，最后当程序返回结果时执行 C<end>.由于 C<begin> 和 C<end> 只是维护一个计数器，所以并不能保证结果的顺序.
+要实现这个功能, 我们需要在代码执行前调用 C<begin> 然后在执行各自的 ping 请求, 最后当程序返回结果时执行 C<end>. 由于 C<begin> 和 C<end> 只是维护一个计数器, 所以并不能保证结果的顺序.
 
-这有一个额外包围在循环代码外的 C<begin> 和 C<end> ,这有二个重要的目的: 第一, 它设置了一个当计数器达到 C<0> 时的回调. 第二， 它可以确保即使没有主机列表, 还是能调用 C<send>. (循环将不会执行一次).
+这有一个额外包围在循环代码外的 C<begin> 和 C<end>, 看起来没什么用, 其实这有二个非常重要的目的: 第一, 它在 C<begin> 上设置了一个当计数器达到 C<0> 时的回调. 第二,  它可以确保即使没有主机列表, 还是能调用 C<send>. (循环将不会执行一次).
 
-这是我们一般的模式，当你生成多个子请求(但有可能是零个): 使用外部的  C<begin> 和 C<end> 对来设置回调，确保至少有一次调用 C<end> 的机会.然后才开始你的子请求，调用 C<begin> 当每个子请求完成时调用 C<end>.
+这是我们一般的模式, 当你生成多个子请求 (但有可能是零个): 使用外部的  C<begin> 和 C<end> 对来设置回调, 确保至少有一次调用 C<end> 的机会, 然后才开始你的内部每组的子请求 不然程序就死在这了, 因为没任何地方调用 C<send>. 上面每个组的子函数会调用 C<begin> , 而当每个子请求完成时调用 C<end>.
 
 =back
 
 =head3 METHODS FOR CONSUMERS
 
-These methods should only be used by the consuming side, i.e. the code awaits the condition.
+这些方法只能使用在消费者这一端. 因为这些代码会等条件达成.
 
 =over 4
 
@@ -715,7 +715,7 @@ These methods should only be used by the consuming side, i.e. the code awaits th
 
 等待 (如果必要则阻塞) 直到  C<< ->send >> 或者 C<< ->croak >> 方法在 C<$cv> 上被调用, 而其他 watcher 服务正常.
 
-你一次只能等一个条件 - 其他调用是有效的，但将立即返回。
+你一次只能等一个条件 - 其他调用是有效的, 但将立即返回. 
 
 如果错误的条件成立会调用 C<< ->croak >>.
 
@@ -975,9 +975,9 @@ enourmously.
 
 =head1 如果它在模块中时要注意什么
 
-如果你是一个模块的作者，你需要 C<use AnyEvent> 并自由调用 AnyEvent 的方法，你不要载入指定的事件模块.
+如果你是一个模块的作者, 你需要 C<use AnyEvent> 并自由调用 AnyEvent 的方法, 你不要载入指定的事件模块.
 
-当你在你的模块内创建 watchers 时要非常小心 - AnyEvent 会使用首先调用的模块的事件模块，所以如果你在你的模块中强行指定用户的事件模块时会载入你指定的模块.
+当你在你的模块内创建 watchers 时要非常小心 - AnyEvent 会使用首先调用的模块的事件模块, 所以如果你在你的模块中强行指定用户的事件模块时会载入你指定的模块.
 
 不要在状态变量上调用 C<< ->recv >>, 除非你非常清楚 C<< ->send >> 方法会被已调用. 因为这会使整个程序停滞, 使用事件最主要是可以互动.
 
@@ -989,7 +989,7 @@ enourmously.
 
 如果程序不是基于事件的, 这时并不需要特别的东西, 就算它使用依赖 AnyEvent 的模块. 如果程序本身就使用 AnyEvent, 也不用关心事件循环使用, 它需要做的就是 C<use AnyEvent>. 在这二种情况下 AnyEvent 都会是最好的循环的实现.
 
-如果主程序依赖于一个特定的事件模型 - 例如 Gtk2 的程序中, 你只能使用 Glib 的模型 - 这时你应该在事件模块加载之前加载 AnyEvent 或任何使用它的模块：一般来说，你应该载入尽早.
+如果主程序依赖于一个特定的事件模型 - 例如 Gtk2 的程序中, 你只能使用 Glib 的模型 - 这时你应该在事件模块加载之前加载 AnyEvent 或任何使用它的模块：一般来说, 你应该载入尽早.
 主要原因时, 模块可能会在加载时创造 watchers, 这时 AnyEvent 会决定使用自己, 因为创建了 watcher, 这时可能选择错了事件模型, 除非你自己正确的加载.
 
 当然你也可以使用纯 Perl 实现的 C<AnyEvent::Loop> 模块, 但是通常 AnyEvent 自己选择的模型一定会更加好.
@@ -1002,7 +1002,7 @@ enourmously.
 
    AnyEvent->condvar->recv;
 
-进入事件循环，永远循环的效果.
+进入事件循环, 永远循环的效果.
 
 平时注意你的程序一定有某些的退出条件, 在这种情况下, 它是使用"传统"的方式存储状态变量的地方, 等待, 直到 send 时应该干净地退出.
 
