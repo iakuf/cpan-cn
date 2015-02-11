@@ -341,7 +341,8 @@ Sometimes you might want to access the rendered result, for example to generate 
 
 =head2 渲染 C<exception> 和 C<not_found> 的网页
 
-到现在你可能见过了了内置的 404 （未找到）和 500（服务器错误）的网页, 当出错时会自动被渲染输出. 特别是在开发过程中, 他们是一个很有帮助的. 我们可以通过  L<Mojolicious::Controller/"render_exception">  和 L<Mojolicious::Controller/"render_not_found"> 的方法来定制自己的网页. 
+到现在你可能见过了内置默认的的 404 (未找到) 和 500 (服务器错误) 的网页, 当出错时会自动被渲染输出. 特别是在开发过程中, 这些错误是一个很有帮助的. 
+我们可以通过  L<Mojolicious::Plugin::DefaultHelpers/"reply-E<gt>exception">  和 L<Mojolicious::Plugin::DefaultHelpers/"reply-E<gt>not_found"> 的方法来定制自己的网页. 
 
   use Mojolicious::Lite;
   use Scalar::Util 'looks_like_number';
@@ -351,14 +352,14 @@ Sometimes you might want to access the rendered result, for example to generate 
     my ($dividend, $divisor) = $c->param(['dividend', 'divisor']);
 
     # 404
-    return $c->render_not_found
+    return $c->reply->not_found
       unless looks_like_number $dividend && looks_like_number $divisor;
 
     # 500
-    return $c->render_exception('Division by zero!') if $divisor == 0;
+    return $c->reply->exception('Division by zero!') if $divisor == 0;
 
     # 200
-    $c->render_text($dividend / $divisor);
+    $c->render(text => $dividend / $divisor);
   };
 
   app->start;
