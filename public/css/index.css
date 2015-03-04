@@ -2,7 +2,13 @@ h1, h2, h3 {
   color: #2a2a2a;
   font-size: 1.5em;
   margin: 0;
+  font-family:"Microsoft Yahei", "WenQuanYi Zen Hei", "SimSun";
 }
+
+h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6{ font-family:"Microsoft Yahei", "WenQuanYi Zen Hei", "SimSun";}
+
+body {font-family:"Microsoft Yahei", "WenQuanYi Zen Hei", "SimSun";}
+
 #balloon {
   position: absolute;
   right: 9%;
@@ -23,6 +29,14 @@ h1, h2, h3 {
   margin-top: 1em;
   padding: 3em;
   padding-top: 70px;
+}
+#promotion {
+  border-left: 2px dotted #c1c1c1;
+  float: right;
+  margin: 3em;
+  margin-right: 0;
+  padding: 1em;
+  padding-right: 0;
 }
 #wrapperlicious {
   max-width: 1000px;

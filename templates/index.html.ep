@@ -15,36 +15,38 @@
       Perl 编程语言的下一代的 Web 框架. 
     </h1>
     <p>
-      早期互联网，很多人熟悉并了解 Perl 是因为它是有非常优秀的 <a href="http://metacpan.org/module/CGI">CGI</a>，
-      使用 CGI 模块当时并不同于其它的语言，当时这个不需要开发者掌握太多的 Perl 语言语法规则并且能够让人们在学习和开发应用程序的过程中感受 Perl 的乐趣.
-      虽然以我们现在的眼光来看以前的这种开发方法已经不在适用于现在的 Web 时代，但是 CGI 的开发思想却对我们有很深的影响。
+      早期互联网,很多人熟悉并了解 Perl 是因为它是有非常优秀的 <a href="http://metacpan.org/module/CGI">CGI</a> 的 lib 库,
+      使用 CGI 模块当时并不同于其它的语言,当时这个不需要开发者掌握太多的 Perl 语言语法规则并且能够让人们在学习和开发应用程序的过程中感受 Perl 的乐趣.
+      虽然以我们现在的眼光来看以前的这种开发方法已经不在适用于现在的 Web 时代,但是 CGI 的开发思想却对我们有很深的影响。
       <a href="perldoc/Mojolicious">Mojolicious</a> 正是实现了新的开发思想在而产生的新的开发技术.
     </p>
+    <div id="promotion">
+      <a href="http://kraih.spreadshirt.com">
+        <img src="/t-shirt.png" alt="Get T-Shirts">
+      </a>
+    </div>
     <h2>特性</h2>
     <ul>
       <li>
-        这是一个会让你感到惊叹的 web 框架，你可以使用单个模块文件<a href="perldoc/Mojolicious/Lite">Mojolicious::Lite</a>来做成单个文件的网络应用的原型.
+        这是一个会让你感到惊叹的 web 框架, 你可以使用单个模块文件 <a href="perldoc/Mojolicious/Lite">Mojolicious::Lite</a> 来开发成单个文件的网络应用的原型.
         <blockquote>
           <p>
-            强大的 RESTful 的路由、插件管理、Perl风格的模板系统、会话管理、签名的 cookie、静态文件服务、测试框架、文件级的 Unicode 支持等等
+            强大的 RESTful 的路由, 插件管理, 命令, Perl 语言风格的模板系统, 内容协商, 会话管理, 参数检验, 静态文件服务、测试框架、文件级的 Unicode 支持等等, 你可以发现更多你想要的.
           </p>
         </blockquote>
       </li>
       <li>
-        Mojolicious 框架是一个非常简洁，轻巧并且具有 Perl 实现的面向对象功能。建议基于 Perl 5. 推荐使用 5.14 以上。可选的使用 cpan 上的模块来提供高级的功能。 
+        Mojolicious 框架是一个非常简洁, 轻巧. 并完全面向对象的纯 Perl 的 API. 建议基于 Perl 5.20.0 ( Perl 5.10.1 也可以使用, 但可能会需要一些其它的 cpan的模块).
       </li>
       <li>
-        全功能的 HTTP 和 WebSocket 的服务器和客户端实现。支持  IPv6, TLS, IDNA, Comet (long polling), chunking  和 multipart 的支持.
+        全功能的 HTTP 和 WebSocket 的服务器和客户端实现. 支持 IPv6, TLS, SNI, IDNA, HTTP/SOCKS5 proxy, Comet (long polling), keep-alive, 连接池, 超时, Cookie, Multipart 和 Gzip 压缩的支持.
       </li>
       <li>
-        原生的  non-blocking I/O 的 Web 服务器 <a href="http://libev.schmorp.de">libev</a> 的支持和热部署，并适合嵌入象 Dancer 一样的单文件开发.
-      </li>
-      <li>
-        全自动的支持 CGI 和 <a href="http://plackperl.org">PSGI</a> 的环境.
+        原生的非阻塞 non-blocking I/O 的 Web 服务器, 支持多种事件循环, 支持 prefork 和热部署, 可以完美的实现高可用的 Web 服务.
       </li>
       <li> 支持 JSON 和 HTML/XML 解析并支持使用 CSS  的选择器.</li>
       <li>
-        根据多年的 <a href="http://catalystframework.org">Catalyst</a> 开发经验来开发的这个系统.
+        基于多年的 <a href="http://catalystframework.org">Catalyst</a> 开发经验来开发的这个系统.
       </li>
     </ul>
     <h1>直接进入文档</h1>
@@ -54,68 +56,51 @@
 
     <h2>安装</h2>
     <p>你所需要的就是一个单行,它大级需要一分钟的时间.</p>
-    <pre>  $ curl get.mojolicio.us | sh</pre>
+    <pre>$ curl -L https://cpanmin.us | perl - -M https://cpan.metacpan.org -n Mojolicious </pre>
     <h2>入门</h2>
     <p>这三行是一个完整的应用.</p>
     <p>
     <pre class="prettyprint">  use Mojolicious::Lite;
 
-  get &#39;/&#39; =&gt; {text =&gt; &#39;Hello World!&#39;};
+  get &#39;/&#39; =&gt; {text =&gt; &#39;I ♥ Mojolicious!&#39;};
 
   app-&gt;start;</pre>
-      若是你要运行上面这个例子, 你需要给上面的例子到一个文件中，并使用 "morbo" 来启动它.
+      若是你要运行上面这个例子, 你需要给上面的例子到一个文件中,并使用 "morbo" 来启动它.
     </p>
-    <pre>  $ morbo hello.pl
-  Server available at http://127.0.0.1:3000.
+    <pre><code>$ morbo hello.pl
+    Server available at http://127.0.0.1:3000
 
-  $ curl http://127.0.0.1:3000/
-  Hello World!</pre>
+    $ curl http://127.0.0.1:3000/
+    I ♥ Mojolicious!</code></pre>
     <h2>HTML5的应用程序开发</h2>
     <p>
     这个框架可以让 Web 开发变得简单和有趣。
     </p>
-    <pre class="prettyprint">  use Mojolicious::Lite;
+<pre><code class="prettyprint">use Mojolicious::Lite;
+use 5.20.0;
+use experimental &#39;signatures&#39;;
 
-  # Simple plain text response
-  get &#39;/&#39; =&gt; {text =&gt; &#39;Hello World!&#39;};
+# Render template &quot;index.html.ep&quot; from the DATA section
+get &#39;/&#39; =&gt; {template =&gt; &#39;index&#39;};
 
-  # Route associating &quot;/time&quot; with template in DATA section
-  get &#39;/time&#39; =&gt; &#39;clock&#39;;
+# WebSocket service used by the template to extract the title from a web site
+websocket &#39;/title&#39; =&gt; sub ($c) {
+  $c-&gt;on(message =&gt; sub ($c, $msg) {
+    my $title = $c-&gt;ua-&gt;get($msg)-&gt;res-&gt;dom-&gt;at(&#39;title&#39;)-&gt;text;
+    $c-&gt;send($title);
+  });
+};
 
-  # RESTful web service with JSON and text representation
-  get &#39;/list/:offset&#39; =&gt; sub {
-    my $self    = shift;
-    my $numbers = [0 .. $self-&gt;param(&#39;offset&#39;)];
-    $self-&gt;respond_to(
-      json =&gt; {json =&gt; $numbers},
-      txt  =&gt; {text =&gt; join(&#39;,&#39;, @$numbers)}
-    );
-  };
+app-&gt;start;
+<% %>__DATA__
 
-  # Scrape information from remote sites
-  post &#39;/title&#39; =&gt; sub {
-    my $self = shift;
-    my $url  = $self-&gt;param(&#39;url&#39;) || &#39;http://mojolicio.us&#39;;
-    $self-&gt;render_text(
-      $self-&gt;ua-&gt;get($url)-&gt;res-&gt;dom-&gt;html-&gt;head-&gt;title-&gt;text);
-  };
-
-  # WebSocket echo service
-  websocket &#39;/echo&#39; =&gt; sub {
-    my $self = shift;
-    $self-&gt;on(message =&gt; sub {
-      my ($self, $msg) = @_;
-      $self-&gt;send(&quot;echo: $msg&quot;);
-    });
-  };
-
-  app-&gt;start;
-  __DATA__
-
-  @@ clock.html.ep
-  %% use Time::Piece;
-  %% my $now = localtime;
-  The time is &lt;%= $now-&gt;hms %&gt;.</pre>
+<% %>@@ index.html.ep
+%% my $url = url_for &#39;title&#39;;
+&lt;script&gt;
+  var ws = new WebSocket(&#39;&lt;%= $url-&gt;to_abs %&gt;&#39;);
+  ws.onmessage = function (event) { document.body.innerHTML += event.data };
+  ws.onopen    = function (event) { ws.send(&#39;http://mojolicio.us&#39;) };
+&lt;/script&gt;</code></pre>
     <p>
         象这种单文件的原型很容易扩展成有层次结构的大型应用程序。
     </p>

@@ -1,0 +1,371 @@
+# PODNAME: Moose::Cookbook::Roles::Comparable_CodeReuse
+# ABSTRACT: Using roles for code reuse
+
+__END__
+
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+Moose::Cookbook::Roles::Comparable_CodeReuse - Using roles for code reuse
+
+=head1 VERSION
+
+version 2.1403
+
+=head1 SYNOPSIS
+
+  package Eq;
+  use Moose::Role;
+
+  requires 'equal_to';
+
+  sub not_equal_to {
+      my ( $self, $other ) = @_;
+      not $self->equal_to($other);
+  }
+
+  package Comparable;
+  use Moose::Role;
+
+  with 'Eq';
+
+  requires 'compare';
+
+  sub equal_to {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == 0;
+  }
+
+  sub greater_than {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == 1;
+  }
+
+  sub less_than {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == -1;
+  }
+
+  sub greater_than_or_equal_to {
+      my ( $self, $other ) = @_;
+      $self->greater_than($other) || $self->equal_to($other);
+  }
+
+  sub less_than_or_equal_to {
+      my ( $self, $other ) = @_;
+      $self->less_than($other) || $self->equal_to($other);
+  }
+
+  package Printable;
+  use Moose::Role;
+
+  requires 'to_string';
+
+  package US::Currency;
+  use Moose;
+
+  with 'Comparable', 'Printable';
+
+  has 'amount' => ( is => 'rw', isa => 'Num', default => 0 );
+
+  sub compare {
+      my ( $self, $other ) = @_;
+      $self->amount <=> $other->amount;
+  }
+
+  sub to_string {
+      my $self = shift;
+      sprintf '$%0.2f USD' => $self->amount;
+  }
+
+=head1 DESCRIPTION
+
+Role 有二个主要的作用: 用于接口 (interfaces), 和用于代码重用. 这个文档显示了后者.
+我们在对象中定义了比较和显示的功能.
+
+我们先看开始的包 <Eq>. 注意在这我们给 C<use Moose> 替换成了 C<use Moose::Role>.
+我们使用了一新的语法糖的功能 C<requires>:
+
+  requires 'equal_to';
+
+这指出任何使用这个 role 的其它类都需要提供 C<equal_to> 的方法. 在这个 role 中
+可以直接提供这个方法, 也可以由其它 role 和类提供.
+
+这个 C<Eq> 的 role 定义了 C<not_equal_to> 方法需要 C<equal_to> 的方法. 这让我们
+最大限度的减少了消费类必须提供的方法.
+
+在接下来的 role 中, C<Comparable>, 是附属于 C<Eq> 这个 role 创建. 在 C<Comparable> 中
+通过 C<with> 来导入 C<Eq>, 这是另一个新的语法糖功能:
+
+  with 'Eq';
+
+这个 C<with> 功能会取得 role 的消费列表. 在我们这个例子中,
+这个 C<Comparable> 角色提供 C<Eq> 角色中要求的 C<equal_to> 方法.
+这个在角色是可以不提供的, 只是在我们这个 C<Comparable> 中提供了自己的 C<equal_to>.
+换言之, 一个角色可以消耗另一个角色, 但不提供任何 required 要求的方法.
+
+这个 C<Comparable> 角色请求了一个 C<compare> 的方法:
+
+  requires 'compare';
+
+这个 C<Comparable> 的角色也提供了一些其它的方法, 这些方法都需要使用 C<compare>.
+
+  sub equal_to {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == 0;
+  }
+
+  sub greater_than {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == 1;
+  }
+
+  sub less_than {
+      my ( $self, $other ) = @_;
+      $self->compare($other) == -1;
+  }
+
+  sub greater_than_or_equal_to {
+      my ( $self, $other ) = @_;
+      $self->greater_than($other) || $self->equal_to($other);
+  }
+
+  sub less_than_or_equal_to {
+      my ( $self, $other ) = @_;
+      $self->less_than($other) || $self->equal_to($other);
+  }
+
+最后, 我们定义了 C<Printable> role. 这个 role 的存在只是为了提供一个接口.
+这个中没有方法, 只有一个 required 方法, 在这个例子中, 我们指出其它消耗的类
+必须提供 C<to_string> 的方法.
+
+在接口的 role 通常只定义方法和 I<name>. 我们知道任何使用它的类都会提供
+C<to_string> 方法, 我们就是这样假设的. 这也是我们想要的语义. 在真实的代码中, 会定义
+象这个文档中的 C<Printable> 角色要求的内容.
+
+Finally, we have the C<US::Currency> class which consumes both the
+C<Comparable> and C<Printable> roles.
+
+  with 'Comparable', 'Printable';
+
+It also defines a regular Moose attribute, C<amount>:
+
+  has 'amount' => ( is => 'rw', isa => 'Num', default => 0 );
+
+Finally we see the implementation of the methods required by our
+roles. We have a C<compare> method:
+
+  sub compare {
+      my ( $self, $other ) = @_;
+      $self->amount <=> $other->amount;
+  }
+
+By consuming the C<Comparable> role and defining this method, we gain
+the following methods for free: C<equal_to>, C<greater_than>,
+C<less_than>, C<greater_than_or_equal_to> and
+C<less_than_or_equal_to>.
+
+Then we have our C<to_string> method:
+
+  sub to_string {
+      my $self = shift;
+      sprintf '$%0.2f USD' => $self->amount;
+  }
+
+=head1 CONCLUSION
+
+Roles can be very powerful. They are a great way of encapsulating
+reusable behavior, as well as communicating (semantic and interface)
+information about the methods our classes provide.
+
+=head1 FOOTNOTES
+
+=over 4
+
+=item (1)
+
+Consider two classes, C<Runner> and C<Process>, both of which define a
+C<run> method. If we just require that an object implements a C<run>
+method, we still aren't saying anything about what that method
+I<actually does>. If we require an object that implements the
+C<Executable> role, we're saying something about semantics.
+
+=back
+
+=begin testing
+
+ok( US::Currency->does('Comparable'), '... US::Currency does Comparable' );
+ok( US::Currency->does('Eq'),         '... US::Currency does Eq' );
+ok( US::Currency->does('Printable'),  '... US::Currency does Printable' );
+
+my $hundred = US::Currency->new( amount => 100.00 );
+isa_ok( $hundred, 'US::Currency' );
+
+ok( $hundred->DOES("US::Currency"), "UNIVERSAL::DOES for class" );
+ok( $hundred->DOES("Comparable"),   "UNIVERSAL::DOES for role" );
+
+can_ok( $hundred, 'amount' );
+is( $hundred->amount, 100, '... got the right amount' );
+
+can_ok( $hundred, 'to_string' );
+is( $hundred->to_string, '$100.00 USD',
+    '... got the right stringified value' );
+
+ok( $hundred->does('Comparable'), '... US::Currency does Comparable' );
+ok( $hundred->does('Eq'),         '... US::Currency does Eq' );
+ok( $hundred->does('Printable'),  '... US::Currency does Printable' );
+
+my $fifty = US::Currency->new( amount => 50.00 );
+isa_ok( $fifty, 'US::Currency' );
+
+can_ok( $fifty, 'amount' );
+is( $fifty->amount, 50, '... got the right amount' );
+
+can_ok( $fifty, 'to_string' );
+is( $fifty->to_string, '$50.00 USD', '... got the right stringified value' );
+
+ok( $hundred->greater_than($fifty),             '... 100 gt 50' );
+ok( $hundred->greater_than_or_equal_to($fifty), '... 100 ge 50' );
+ok( !$hundred->less_than($fifty),               '... !100 lt 50' );
+ok( !$hundred->less_than_or_equal_to($fifty),   '... !100 le 50' );
+ok( !$hundred->equal_to($fifty),                '... !100 eq 50' );
+ok( $hundred->not_equal_to($fifty),             '... 100 ne 50' );
+
+ok( !$fifty->greater_than($hundred),             '... !50 gt 100' );
+ok( !$fifty->greater_than_or_equal_to($hundred), '... !50 ge 100' );
+ok( $fifty->less_than($hundred),                 '... 50 lt 100' );
+ok( $fifty->less_than_or_equal_to($hundred),     '... 50 le 100' );
+ok( !$fifty->equal_to($hundred),                 '... !50 eq 100' );
+ok( $fifty->not_equal_to($hundred),              '... 50 ne 100' );
+
+ok( !$fifty->greater_than($fifty),            '... !50 gt 50' );
+ok( $fifty->greater_than_or_equal_to($fifty), '... !50 ge 50' );
+ok( !$fifty->less_than($fifty),               '... 50 lt 50' );
+ok( $fifty->less_than_or_equal_to($fifty),    '... 50 le 50' );
+ok( $fifty->equal_to($fifty),                 '... 50 eq 50' );
+ok( !$fifty->not_equal_to($fifty),            '... !50 ne 50' );
+
+## ... check some meta-stuff
+
+# Eq
+
+my $eq_meta = Eq->meta;
+isa_ok( $eq_meta, 'Moose::Meta::Role' );
+
+ok( $eq_meta->has_method('not_equal_to'), '... Eq has_method not_equal_to' );
+ok( $eq_meta->requires_method('equal_to'),
+    '... Eq requires_method not_equal_to' );
+
+# Comparable
+
+my $comparable_meta = Comparable->meta;
+isa_ok( $comparable_meta, 'Moose::Meta::Role' );
+
+ok( $comparable_meta->does_role('Eq'), '... Comparable does Eq' );
+
+foreach my $method_name (
+    qw(
+    equal_to not_equal_to
+    greater_than greater_than_or_equal_to
+    less_than less_than_or_equal_to
+    )
+    ) {
+    ok( $comparable_meta->has_method($method_name),
+        '... Comparable has_method ' . $method_name );
+}
+
+ok( $comparable_meta->requires_method('compare'),
+    '... Comparable requires_method compare' );
+
+# Printable
+
+my $printable_meta = Printable->meta;
+isa_ok( $printable_meta, 'Moose::Meta::Role' );
+
+ok( $printable_meta->requires_method('to_string'),
+    '... Printable requires_method to_string' );
+
+# US::Currency
+
+my $currency_meta = US::Currency->meta;
+isa_ok( $currency_meta, 'Moose::Meta::Class' );
+
+ok( $currency_meta->does_role('Comparable'),
+    '... US::Currency does Comparable' );
+ok( $currency_meta->does_role('Eq'), '... US::Currency does Eq' );
+ok( $currency_meta->does_role('Printable'),
+    '... US::Currency does Printable' );
+
+foreach my $method_name (
+    qw(
+    amount
+    equal_to not_equal_to
+    compare
+    greater_than greater_than_or_equal_to
+    less_than less_than_or_equal_to
+    to_string
+    )
+    ) {
+    ok( $currency_meta->has_method($method_name),
+        '... US::Currency has_method ' . $method_name );
+}
+
+=end testing
+
+=head1 AUTHORS
+
+=over 4
+
+=item *
+
+Stevan Little <stevan.little@iinteractive.com>
+
+=item *
+
+Dave Rolsky <autarch@urth.org>
+
+=item *
+
+Jesse Luehrs <doy@tozt.net>
+
+=item *
+
+Shawn M Moore <code@sartak.org>
+
+=item *
+
+יובל קוג'מן (Yuval Kogman) <nothingmuch@woobling.org>
+
+=item *
+
+Karen Etheridge <ether@cpan.org>
+
+=item *
+
+Florian Ragwitz <rafl@debian.org>
+
+=item *
+
+Hans Dieter Pearcey <hdp@weftsoar.net>
+
+=item *
+
+Chris Prather <chris@prather.org>
+
+=item *
+
+Matt S Trout <mst@shadowcat.co.uk>
+
+=back
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2006 by Infinity Interactive, Inc..
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut

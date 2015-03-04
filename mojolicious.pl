@@ -19,11 +19,9 @@ BEGIN {
 		# Rewrite links
   		my $dom     = Mojo::DOM->new(_pod_to_html($src));
   		my $perldoc = $c->url_for('/perldoc/');
-  		for my $e ($dom->find('a[href]')->each) {
-  		  my $attrs = $e->attr;
-  		  $attrs->{href} =~ s!::!/!gi
-  		    if $attrs->{href} =~ s!^http://metacpan\.org/pod/!$perldoc!;
-  		}
+        $_->{href} =~ s!^https://metacpan\.org/pod/!$perldoc!
+            and $_->{href} =~ s!::!/!gi
+            for $dom->find('a[href]')->map('attr')->each; 
 
   		# Rewrite code blocks for syntax highlighting and correct indentation
   		for my $e ($dom->find('pre > code')->each) {
@@ -57,7 +55,7 @@ BEGIN {
     };
 };
 
-if ( app->log->is_level('debug') ) {
+if ( app->log->level('debug') ) {
     no warnings 'redefine';
     *Mojo::Log::_format = sub {
         my ($self, $level, @lines) = @_;
