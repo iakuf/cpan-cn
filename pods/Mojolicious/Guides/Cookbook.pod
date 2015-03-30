@@ -10,7 +10,7 @@ Mojolicious::Guides::Cookbook - Cookbook
 
 许多有趣的烹饪 L<Mojolicious> 的食谱.
 
-本文档更新到 5.05.
+本文档更新到 6.0.
 
 =head1 部署
 
@@ -25,17 +25,17 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
   $ ./script/myapp daemon
   Server available at http://127.0.0.1:3000.
 
-它可以使用 L<Mojolicious::Command::daemon> 所有可用的命令, 其中有许多的配置选项, 并且它本身的单进程架构的可以很好的工作在已知的所有平台.
+它可以使用 L<Mojolicious::Command::daemon> 中所有可用的命令, 其中有许多的配置选项, 并且它本身的单进程架构的可以很好的工作在已知的所有平台.
 
   $ ./script/myapp daemon -h
   ...List of available options...
 
-另一个巨大的好处是, 它默认支持 TLS 和 WebSocket. 出去测试的目的, 内置了一个开发证书, 所以它可以直接工作, 你只需要使用 L<Mojo::Server::Daemon/"listen"> 指定. 
+另一个巨大的好处是, 它默认支持 TLS 和 WebSocket. 出于测试的目的, 我们内置了一个开发证书, 所以它可以直接工作, 你只需要使用 L<Mojo::Server::Daemon/"listen"> 指定. 
 
   $ ./script/myapp daemon -l https://[::]:3000
     Server available at https://[::]:3000.
 
-在 Unix 架构的平台上, 你可以通过 L<Mojolicious::Command::prefork> 的命令来创建多进程的程序, 好处是可以使用多 CPU 核心和写时 copy. 
+在 Unix 架构的平台上, 你可以通过 L<Mojolicious::Command::prefork> 的命令来创建多进程的程序, 好处是可以使用多 CPU 核心和内存的写时 copy. 
 
   $ ./script/myapp prefork
     Server available at http://127.0.0.1:3000.
@@ -45,7 +45,7 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
   $ ./script/myapp prefork -m production -w 10 -c 1
     Server available at http://127.0.0.1:3000.
 
-你的应用在启动的时候就会预装入的管理进程, 每当一个新的 worker 进程被 fork 出来你可以运行 L<Mojo::IOLoop/"next_tick">.
+你的应用在启动的时候就会预装入的管理进程, 这时并不会运行事件程序, 所以每当一个新的 worker 进程被 fork 出来你可以运行 L<Mojo::IOLoop/"next_tick"> 来让事件循环开始.
 
   use Mojolicious::Lite;
 
@@ -59,12 +59,12 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
 
 =head2 Morbo
 
-如果你之前读过 L<Mojolicious::Lite> 这个指南, 我想你已经知道 L<Mojo::Server::Morbo> 这个东西了. 
+如果你之前读过 L<Mojolicious::Guides::Tutorial> 这个指南, 我想你已经知道 L<Mojo::Server::Morbo> 这个东西了. 
 
   Mojo::Server::Morbo
   +- Mojo::Server::Daemon
 
-它是基于 L<Mojo::Server::Daemon> 的 web 服务器 fork 出来并在你的代码变化时支持 restarter 功能, 所以也只是用于开发当中.
+它是基于 L<Mojo::Server::Daemon> 的 web 服务器 fork 出来并在你的代码变化时支持 restarter 功能, 所以也只是用于开发当中. 你可以直接 L<morbo> 脚本来启动.
 
   $ morbo script/myapp
   Server available at http://127.0.0.1:3000.
@@ -79,7 +79,8 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
   |- Mojo::Server::Daemon [3]
   +- Mojo::Server::Daemon [4]
 
-这个是基于 L<Mojo::Server::Prefork> 的 Web 服务器, 增加了 preforking 到 L<Mojo::Server::Daemon> 中, 但是对于生产环境进行了优化. 
+这个是基于 L<Mojo::Server::Prefork> 的 Web 服务器, 增加了 preforking 到 L<Mojo::Server::Daemon> 中, 但是对于生产环境进行了优化. 我们可以使用 L<hypnotoad> 脚本来启动, 默认监听 C<8080>,
+并自动的为  L<Mojolicious> 和 L<Mojolicious::Lite> 的环境设置为生产环境模式  C<production>.
 
   $ hypnotoad script/myapp
   Server available at http://127.0.0.1:8080.
@@ -110,14 +111,14 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
   $ hypnotoad script/myapp
   Starting hot deployment for Hypnotoad server 31841.
 
-如果你的 Hypnotoad 使用的环境是在反向代理之后, 你可以让 L<Mojolicious> 自动的取得 C<X-Forwarded-For> 和 C<X-Forwarded-HTTPS> 的头. 
+如果你的 Hypnotoad 使用的环境是在反向代理之后, 你可以让 L<Mojolicious> 自动的取得 C<X-Forwarded-For> 和 C<X-Forwarded-Proto> 的头. 
 
   # myapp.conf
   {hypnotoad => {proxy => 1}};
 
 =head2 零停机的软件升级（热部署）
 
-你可以在上面看到 Hypnotoad 使得零停机的软件升级（热部署）很简单, 但在支持 SO_REUSEPORT 套接字选项现代操作系统, 里面还有另一种适用于所有内置的Web服务器的方法可用.
+你可以在上面看到 Hypnotoad 使得零停机的软件升级（热部署）很简单, 但在支持 SO_REUSEPORT 套接字选项现代操作系统, 里面还有另一种适用于所有内置的 Web 服务器的方法可用.
 
  $ ./script/myapp prefork -P /tmp/first.pid -l http://*:8080?reuse=1
  Server available at http://127.0.0.1:8080.
@@ -170,7 +171,7 @@ L<Mojolicious> 内部包含了一个非常方便的非阻塞的  I/O HTTP 和 We
 
 =head2 Apache/CGI
 
-当然你的 L<Mojolicious> 应用也支持 C<CGI> 的应用. 这会自动检查你的环境. 
+当然你的 L<Mojolicious> 应用也支持 C<CGI> 的应用. 这会自动检查你的环境, 如果代理过来的是 CGI 的话. 
 
   ScriptAlias / /home/sri/myapp/script/myapp/
 
@@ -415,15 +416,48 @@ L<Mojo::URL> 的对象很容易操纵, 只需要确保该 URL (C<foo/bar?baz=yad
 
   app->start;
 
+请记住, 所有的事件都是协程, 所以你要让你的回调不应该阻塞太长时间 . 
+
+
+=head2 异常事件 
+
 因为记时器和其它 low-level 的事件 watchers 独立于应用, 错误不会自动的记录到日志, 如果你想修改, 可以要象下面一样订阅 L<Mojo::Reactor/"error"> 的回调. 
 
-  # Forward error messages to the application log
+  use Mojolicious::Lite;
+  use Mojo::IOLoop;
+
+  # 转发事件错误的信息到应用的日志中
   Mojo::IOLoop->singleton->reactor->on(error => sub {
     my ($reactor, $err) = @_;
     app->log->error($err);
   });
 
-请记住, 所有的事件都是协程, 所以你要让你的回调不应该阻塞太长时间 . 
+  # Exception only gets logged (and connection times out)
+  get '/connection_times_out' => sub {
+    my $c = shift;
+    Mojo::IOLoop->timer(2 => sub {
+      die 'This request will not be getting a response';
+    });
+  };
+
+  # Exception gets caught and handled
+  get '/catch_exception' => sub {
+    my $c = shift;
+    Mojo::IOLoop->timer(2 => sub {
+      eval { die 'This request will be getting a response' };
+      $c->reply->exception($@) if $@;
+    });
+  };
+
+  app->start;
+
+默认 subscriber 会给所有的错误通过 L<Mojo::IOLoop> 的事件回调出来.
+
+  Mojo::IOLoop->singleton->reactor->unsubscribe('error');
+
+During development or for applications where crashing is simply preferable, you
+can also make every exception that gets thrown in a callback fatal by removing
+all of its subscribers.
 
 =head2 WebSocket web service
 
@@ -687,28 +721,28 @@ L<Mojolicious> 中包含了基于 L<Mojo::EventEmitter> 的一些非常复杂的
 
 =head2 Web 元素挖掘 (Web scraping)
 
-从网站找到你喜欢的信息出来是一个很有意思的事情.  你可以使用原生的 HTML/XML 的解析器 L<Mojo::DOM>, 这个 L<Mojo::Message/"dom"> 支持全部的 CSS 的选择器. 
+从网站找到你喜欢的信息出来是一个很有意思的事情. 你可以使用原生的 HTML/XML 的解析器 L<Mojo::DOM>, 这个 L<Mojo::Message/"dom"> 支持全部的 CSS 的选择器. 
 
   use Mojo::UserAgent;
 
-  # 打开 Web 站点 
+  # Fetch web site
   my $ua = Mojo::UserAgent->new;
   my $tx = $ua->get('mojolicio.us/perldoc');
 
-  # 取出 title
+  # Extract title
   say 'Title: ', $tx->res->dom->at('head > title')->text;
 
-  # 取出 head 
-  $tx->res->dom('h1, h2, h3')->each(sub { say 'Heading: ', shift->all_text; });
+  # Extract headings
+  $tx->res->dom('h1, h2, h3')->each(sub { say 'Heading: ', shift->all_text });
 
   # Visit all nodes recursively to extract more than just text
-  for my $n ($tx->res->dom->all_contents->each) {
+  for my $n ($tx->res->dom->descendant_nodes->each) {
 
     # Text or CDATA node
-    print $n->content if $n->node eq 'text' || $n->node eq 'cdata';
+    print $n->content if $n->type eq 'text' || $n->type eq 'cdata';
 
     # Also include alternate text for images
-    print $n->{alt} if $n->node eq 'tag' && $n->type eq 'img';
+    print $n->{alt} if $n->type eq 'tag' && $n->tag eq 'img';
   }
 
 特别是对于 L<Mojolicious> 应用的单元测试来讲, 这是一个非常强大的工具.要查看所有的 CSS 的选择器可以查看 L<Mojo::DOM::CSS/"SELECTORS">.
@@ -737,7 +771,7 @@ L<Mojolicious> 中包含了基于 L<Mojo::EventEmitter> 的一些非常复杂的
   use Mojo::UserAgent;
 
   my $ua = Mojo::UserAgent->new;
-  say $ua->get('https://sri:secret@mojolicio.us/hideout')->res->body;
+  say $ua->get('https://sri:secret@example.com/hideout')->res->body;
 
 =head2 修饰后续请求 
 
@@ -776,7 +810,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
 
   # 通过 streaming 在 PUT 和 POST 的时候发送多个文件
   $ua->put('http://example.com/upload'  => stream => '/home/sri/mojo.png');
-  $ua->post('http://example.com/upload' => stream => '/home/sri/mango.png');
+  $ua->post('http://example.com/upload' => stream => '/home/sri/minion.png');
 
 默认的  C<json> 和 C<form> 也是内容生成器.
 
@@ -806,7 +840,7 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
 
   # Lets fetch the latest Mojolicious tarball
   my $ua = Mojo::UserAgent->new(max_redirects => 5);
-  my $tx = $ua->get('latest.mojolicio.us');
+  my $tx = $ua->get('https://www.github.com/kraih/mojo/tarball/master');
   $tx->res->content->asset->move_to('mojo.tar.gz');
 
 为了保护避免过大的文件也有一个极限默认值 C<10MB>. 你可以通过 L<Mojo::Message/"max_message_size"> 或者 C<MOJO_MAX_MESSAGE_SIZE> 的环境变量来调整. 
@@ -822,7 +856,8 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
 
   # 上传文件通过 POST 的 HTTP 方法, 并且会修改成  "multipart/form-data" 的类型
   my $ua = Mojo::UserAgent->new;
-  $ua->post('example.com/upload', form => {image => {file => '/home/sri/hello.png'}});
+  $ua->post('example.com/upload' =>
+    form => {image => {file => '/home/sri/hello.png'}})
 
 当然一样, 你还是不必担心内存的使用, 因为这个也是直接流式传送这个文件. 
 
@@ -836,10 +871,10 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
   my $ua = Mojo::UserAgent->new;
   my $tx = $ua->build_tx(GET => 'http://example.com');
 
-  # 承许接收不确认大小的响应
+  # Accept response of indefinite size
   $tx->res->max_message_size(0);
 
-  # 替换掉 "read" 的事件禁用默认的内容解析
+  # Replace "read" events to disable default content parser
   $tx->res->content->unsubscribe('read')->on(read => sub {
     my ($content, $bytes) = @_;
     say "Streaming: $bytes";
@@ -858,26 +893,26 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
 
   # Build a normal transaction
   my $ua = Mojo::UserAgent->new;
-  my $tx = $ua->build_tx(GET => 'http://mojolicio.us');
+  my $tx = $ua->build_tx(GET => 'http://example.com');
 
-  # 准备内容
-  my $content = 'Hello world!';
-  $tx->req->headers->content_length(length $content);
+  # Prepare body
+  my $body = 'Hello world!';
+  $tx->req->headers->content_length(length $body);
 
-  # 开始写内容通过 drain 的回调
+  # Start writing directly with a drain callback
   my $drain;
   $drain = sub {
-    my $req   = shift;
-    my $chunk = substr $content, 0, 1, '';
-    $drain    = undef unless length $content;
-    $req->write($chunk, $drain);
+    my $content = shift;
+    my $chunk   = substr $body, 0, 1, '';
+    $drain      = undef unless length $body;
+    $content->write($chunk, $drain);
   };
-  $tx->req->$drain;
+  $tx->req->content->$drain;
 
   # Process transaction
-  $ua->start($tx);
+  $tx = $ua->start($tx);
 
-在前一个块写真的写完后, 会调用在 drain 回调使用 L<Mojo::Message/"write"> 的方法. 
+在前一个块写真的写完后, 会调用在 drain 回调使用 L<Mojo::Content/"write">  的方法. 
 
 
 =head2 非阻塞 
@@ -891,15 +926,15 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
   my $ua = Mojo::UserAgent->new;
   $ua->get('http://metacpan.org/search?q=mojo' => sub {
     my ($ua, $mojo) = @_;
-    ...
+    say $mojo->res->dom->at('title')->text;
   });
-  $ua->get('http://metacpan.org/search?q=mango' => sub {
-    my ($ua, $mango) = @_;
-    ...
+  $ua->get('http://metacpan.org/search?q=minion' => sub {
+    my ($ua, $minion) = @_;
+    say $minion->res->dom->at('title')->text;
   });
 
   # Start event loop if necessary
-  Mojo::IOLoop->start unless Mojo::IOLoop->is_running
+  Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
 您可以完全控制的 L<Mojo::IOLoop> 的事件循环. 
 
@@ -913,12 +948,16 @@ L<Mojo::UserAgent> 可以自动的 follow 重定向, 在  L<Mojo::UserAgent/"sta
   # Synchronize non-blocking requests
   my $ua    = Mojo::UserAgent->new;
   my $delay = Mojo::IOLoop->delay(sub {
-    my ($delay, $mojo, $mango) = @_;
-    ...
+    my ($delay, $mojo, $minion) = @_;
+    say $mojo->res->dom->at('title')->text;
+    say $minion->res->dom->at('title')->text;
   });
-  $ua->get('http://metacpan.org/search?q=mojo'  => $delay->begin);
-  $ua->get('http://metacpan.org/search?q=mango' => $delay->begin);
+  $ua->get('http://metacpan.org/search?q=mojo'   => $delay->begin);
+  $ua->get('http://metacpan.org/search?q=minion' => $delay->begin);
   $delay->wait;
+
+在这调用 L<Mojo::IOLoop::Delay/"wait"> 可以使的代码可以移植, 可以工作在已经运行的事件循环或启动一个.
+
 =head2 WebSockets
 
 WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket"> 来打开新的连接, 它们总是无阻塞的. 握手过程会有一些额外的一个正常的 HTTP 请求的头文件, 它甚至可以包含 cookies, 其次服务器的 C<101> 响应还可以通知我们的用户代理和这个连接开始使用双向的 WebSocket 协议.
@@ -955,7 +994,6 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
   # Start event loop if necessary
   Mojo::IOLoop->start unless Mojo::IOLoop->is_running;
 
-
 =head2 命令行 
 
 在使用命令行检查时, 不知道你们是不是很反感很大的 HTML 文件. 得益于  C<mojo get> 这个命令可以帮助我们改变这些. 你只需要随意的使用一下 CSS 的选择器  L<Mojo::DOM>  和 JOSNP 的  L<Mojo::JSON::Pointer> 就能搞定.
@@ -985,11 +1023,11 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
 您可以跟随重定向和查看 header 的所有消息. 
 
-  $ mojo get -r -v http://reddit.com 'head > title'
+  $ mojo get -r -v http://google.com 'head > title'
 
 从 JSON 的数据结构中提取信息.
 
-  $ mojo get http://search.twitter.com/search.json /error
+  $ mojo get https://api.metacpan.org/v0/author/SRI /name
 
 这可以是一个非常好的工具, 用于测试您的应用程序
 
@@ -999,11 +1037,37 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
 为了快速的 hacks 和测试,  L<ojo> 的单行也是一个不错的选择.
 
-  $ perl -Mojo -E 'say g("mojolicio.us")->dom->html->head->title->text'
+  $ perl -Mojo -E 'say g("mojolicio.us")->dom->at("title")->text'
 
 =head1 应用程序
 
 玩转 L<Mojolicious> 应用来 hacks 各种部分
+
+=head2 Basic authentication
+
+对于 Basic 认识的数据我们可以直接通过 C<Authorization> 的 header 来导出.
+Basic authentication data will be automatically extracted from the
+C<Authorization> header.
+
+  use Mojolicious::Lite;
+
+  get '/' => sub {
+    my $c = shift;
+
+    # Check for username "Bender" and password "rocks"
+    return $c->render(text => 'Hello Bender!')
+      if $c->req->url->to_abs->userinfo eq 'Bender:rocks';
+
+    # Require authentication
+    $c->res->headers->www_authenticate('Basic');
+    $c->render(text => 'Authentication required!', status => 401);
+  };
+
+  app->start;
+
+你可以使用 TLS 来生成一个更加安全的机器上来连接.
+
+  $ ./myapp.pl daemon -l 'https://*:3000?cert=./server.crt&key=./server.key'
 
 =head2 添加一个配置文件
 
@@ -1039,19 +1103,22 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
 =head2 增加命令到 Mojolicious
 
-你现在可能使用了很多 L<Mojolicious::Commands> 原生的命令, 对于新增加一个命令, 也非常的方便.
+你现在可能使用了很多 L<Mojolicious::Commands> 原生的命令, 对于新增加一个命令到你的接口, 也非常的方便.
 
   package Mojolicious::Command::spy;
   use Mojo::Base 'Mojolicious::Command';
 
-  has description => 'Spy on application.';
+  has description => 'Spy on application';
   has usage       => "Usage: APPLICATION spy [TARGET]\n";
 
   sub run {
-    my ($c, @args) = @_;
+    my ($self, @args) = @_;
 
     # Leak secret passphrases
-    say for @{$c->app->secrets} if $args[0] eq 'secrets';
+    say for @{$self->app->secrets} if $args[0] eq 'secrets';
+
+    # Leak mode
+    say $self->app->mode if $args[0] eq 'mode';
   }
 
   1;
@@ -1079,11 +1146,16 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
   1;
 
+这有些选项 C<-h>/C<--help>, C<--home> and C<-m>/C<--mode> 这些会由 L<Mojolicious::Commands> 自动处理并共享全部的命令.
+
+  $ ./myapp.pl spy -m production mode
+  production
+
 =head2 针对您的应用程序来运行代码 
 
 没有想过对 L<Mojolicious> 的应用程序使用一个快速的单行来测试? 得益于的 C<eval> 命令, 你可以方便的做到这一点, 直接通过 C<app> 来访问应用程序对象本身. 
 
-  $ mojo generate lite_app
+  $ mojo generate lite_app myapp.pl
   $ ./myapp.pl eval 'say for @{app->static->paths}'
 
 使用 C<verbose> 选择会让 print 和 return 的值直接打印到 C<STDOUT>.
@@ -1096,15 +1168,15 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
 你有没有想过使用 CPAN 来安装你的  L<Mojolicious> 的应用, 这个比实际的想象还要容易.
 
-  $ mojo generate app
-  $ cd my_mojolicious_app
-  $ mv public lib/MyMojoliciousApp/
-  $ mv templates lib/MyMojoliciousApp/
+  $ mojo generate app MyApp
+  $ cd my_app
+  $ mv public lib/MyApp/
+  $ mv templates lib/MyApp/
 
 这个关键是要给 C<public>  和 C<templates> 的目录移到能够自动安装的模块的地方.
 
   # Application
-  package MyMojoliciousApp;
+  package MyApp;
   use Mojo::Base 'Mojolicious';
 
   use File::Basename 'dirname';
@@ -1117,21 +1189,35 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
     my $self = shift;
 
     # Switch to installable home directory
-    $self->home->parse(catdir(dirname(__FILE__), 'MyMojoliciousApp'));
+    $self->home->parse(catdir(dirname(__FILE__), 'MyApp'));
 
     # Switch to installable "public" directory
-    $self->static->paths->[0] = $c->home->rel_dir('public');
+    $self->static->paths->[0] = $self->home->rel_dir('public');
 
     # Switch to installable "templates" directory
-    $self->renderer->paths->[0] = $c->home->rel_dir('templates');
+    $self->renderer->paths->[0] = $self->home->rel_dir('templates');
 
     $self->plugin('PODRenderer');
 
-    my $r = $c->routes;
-    $self->get('/welcome')->to('example#welcome');
+    my $r = $self->routes;
+    $r->get('/welcome')->to('example#welcome');
   }
 
   1;
+
+这对你的应用的脚本需要几个简单的改变. 首行推荐写成 C<#!perl>, 这样工具会自动的在安装的时候改写这个. 你也需要使用 L<FindBin> 来让你的 L<lib> 使用当前路径下的 lib.
+
+  #!perl
+
+  use strict;
+  use warnings;
+
+  use FindBin;
+  BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
+
+  # Start command line interface for application
+  require Mojolicious::Commands;
+  Mojolicious::Commands->start_app('MyApp');
 
 这就是所有啦, 你现在可以象任何其它的 CPAN 模块一样给你的程序打包.
 
@@ -1147,7 +1233,7 @@ WebSockets 不只是服务器端, 你可以使用 L<Mojo::UserAgent/"websocket">
 
 =head2 Hello World
 
-每个字都很重要, 你可以使用最少的字来写一个基于 L<Mojolicious::Lite> 的 C<Hello World> 的应用.
+每写一个字都很重要, 你可以使用最少的字数来写一个基于 L<Mojolicious::Lite> 的 C<Hello World> 的应用.
 
   use Mojolicious::Lite;
   any {text => 'Hello World!'};

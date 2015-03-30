@@ -2215,10 +2215,9 @@ program when the user enters quit:
 
    $cv->recv; # wait until user enters /^q/i
 
-=head1 REAL-WORLD EXAMPLE
+=head1 真实的例子 
 
-Consider the L<Net::FCP> module. It features (among others) the following
-API calls, which are to freenet what HTTP GET requests are to http:
+我们看看 L<Net::FCP> 模块. 它有下面的这些 IP 可以调用. 它可以通过 HTTP GET 请求来取得 freenet 上的 HTTP 服务.
 
    my $data = $fcp->client_get ($url); # blocks
 
@@ -2226,25 +2225,22 @@ API calls, which are to freenet what HTTP GET requests are to http:
    $transaction->cb ( sub { ... } ); # set optional result callback
    my $data = $transaction->result; # possibly blocks
 
-The C<client_get> method works like C<LWP::Simple::get>: it requests the
-given URL and waits till the data has arrived. It is defined to be:
+这个 C<client_get> 的方法很象 C<LWP::Simple::get>: 它请求指定的 URL 然后等待数据的到达.
+它是通过下面这种方式来定义:
 
    sub client_get { $_[0]->txn_client_get ($_[1])->result }
 
-And in fact is automatically generated. This is the blocking API of
-L<Net::FCP>, and it works as simple as in any other, similar, module.
+这个 L<Net::FCP> 的 API 会阻塞, 就象其它的模块一样, 这样简单.
 
-More complicated is C<txn_client_get>: It only creates a transaction
-(completion, result, ...) object and initiates the transaction.
+更加复杂一些的用法是 C<txn_client_get>: 它创建一个事务 (完成, 结果...) 的对象并启动事务.
 
    my $txn = bless { }, Net::FCP::Txn::;
 
-It also creates a condition variable that is used to signal the completion
-of the request:
+它还创建了一个状态变量, 用于请求完成的信号:
 
    $txn->{finished} = AnyAvent->condvar;
 
-It then creates a socket in non-blocking mode.
+它创建了一个非阻塞的 socket.
 
    socket $txn->{fh}, ...;
    fcntl $txn->{fh}, F_SETFL, O_NONBLOCK;
@@ -2253,11 +2249,11 @@ It then creates a socket in non-blocking mode.
       and !$!{EINPROGRESS}
       and Carp::croak "unable to connect: $!\n";
 
-Then it creates a write-watcher which gets called whenever an error occurs
-or the connection succeeds:
+它创建了一个写的监控者, 取得当有错误发生或者连接上了时的操作:
 
    $txn->{w} = AnyEvent->io (fh => $txn->{fh}, poll => 'w', cb => sub { $txn->fh_ready_w });
 
+iv可用的时候会返回事务的对象. 
 And returns this transaction object. The C<fh_ready_w> callback gets
 called as soon as the event loop detects that the socket is ready for
 writing.

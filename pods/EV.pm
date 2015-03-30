@@ -168,18 +168,13 @@ the section about embed watchers for an example on how to achieve that.
 
 =item $loop = new EV::Loop [$flags]
 
-Create a new event loop as per the specified flags. Please refer to
-the C<ev_loop_new ()> function description in the libev documentation
-(L<http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#GLOBAL_FUNCTIONS>,
-or locally-installed as F<EV::libev> manpage) for more info.
+通过 flags 标记来创建一个新的事件循环. 请参数 libev 的文档中 (L<http://pod.tst.eu/http://cvs.schmorp.de/libev/ev.pod#GLOBAL_FUNCTIONS>, 
+中的有关 C<ev_loop_new ()> 部分的文档或者本地安装的 F<EV::libev> 的帮助来查看相关信息.
 
-The loop will automatically be destroyed when it is no longer referenced
-by any watcher and the loop object goes out of scope.
+这个 loop 会自动的对不在被任何引用监控者使用时, 或者对象超出块空间时会被自动销毁.
 
-If you are not embedding the loop, then Using C<EV::FLAG_FORKCHECK>
-is recommended, as only the default event loop is protected by this
-module. If you I<are> embedding this loop in the default loop, this is not
-necessary, as C<EV::embed> automatically does the right thing on fork.
+如果你不是嵌入循环, 推荐使用 C<EV::FLAG_FORKCHECK>, 这个默认的事件循环通过这个提供保护.
+如果是嵌入 EV 到默认的循环, 这不是必须的, 使用 C<EV::embed> 会自动的做正确的事情.
 
 =item $loop->loop_fork
 

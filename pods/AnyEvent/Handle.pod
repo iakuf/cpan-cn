@@ -251,11 +251,8 @@ from most attacks.
 
 =item read_size => <bytes>
 
-The initial read block size, the number of bytes this module will try
-to read during each loop iteration. Each handle object will consume
-at least this amount of memory for the read buffer as well, so when
-handling many connections watch out for memory requirements). See also
-C<max_read_size>. Default: C<2048>.
+初始的读取块的大小, 这个数是每次这个循环迭代会尝试读取的字节. 每一个句柄最少需要使用这个设置的内存, 所以处理许多连接的时候, 注意内存的使用). 另外可以
+看 C<max_read_size>. 本参数的默认值为 C<2048>.
 
 =item max_read_size => <bytes>
 
@@ -798,6 +795,7 @@ sub on_drain {
 
 =item $handle->push_write ($data)
 
+在队列中写入一些标题的数据. 你也可以推一些你想推的数据 (注意 C<wbuf_max> 别超这个的限制就行), 你可以使用 
 Queues the given scalar to be written. You can push as much data as
 you want (only limited by the available memory and C<wbuf_max>), as
 C<AnyEvent::Handle> buffers it independently of the kernel.
