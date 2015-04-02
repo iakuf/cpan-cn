@@ -10,7 +10,7 @@ Mojolicious::Guides::Growing - 成长成更大型的项目
 
 本文档介绍中, 我们来讲怎么从 L<Mojolicious::Lite> 开始做的原型项目, 成长为一个结构良好的的全或功能 L<Mojolicious> 应用. 
 
-本文档更新到版本 5.05
+本文档更新到版本 6.05
 
 =head1 概念
 
@@ -66,7 +66,7 @@ RESR 是一种 Web 软件架构的风格, 近来常常用于给 HTTP 做协议. 
 
 虽然 HTTP 的方法象 C<PUT>, C<GET> 和 C<DELETE> 并不是 REST 的一部分, 但他们用来管理资源非常不错.
 
-=head2 Sessions
+=head2 会话 (Sessions)
 
 Web 服务上的 HTTP 本来就被设计成一个无状态的协议, 所以我们并不知道是否是以前的请求, 这使得让用户友好登录到系统变得非常棘手. Sessions 就是用来解决这个问题, 使得网络应用中跨多个 HTTP 请求后还能保留状态信息. 
 
@@ -115,8 +115,8 @@ L<Mojolicious> 和其他 Web 框架的主要区别之一是, 它还包括有一�
   |  +- myapp                # 应用程序的脚本  
   |- lib                     # Library 的目录 
   |  |- MyApp.pm             # 应用程序的类 
-  |  +- MyApp                # 应用程序的名字空间 
-  |     +- Example.pm        # Controller 类
+  |     +- Controller        # 控制器名字空间
+  |        +- Example.pm     # 控制器的类 
   |- t                       # 测试目录 
   |  +- basic.t              # Random test
   |- log                     # 日志目录 
@@ -162,31 +162,52 @@ L<Mojolicious> 和其他 Web 框架的主要区别之一是, 它还包括有一�
 
 当你保存你的修改后, 会在你下一次刷新浏览器的时候就会自动生效了.
 
+=head2 A birds-eye view
+
+我们可以通过浏览器发送一个 HTTP 请求, 就象下面这样
+
+  GET / HTTP/1.1
+  Host: localhost:3000
+
+一旦请求在 Web 服务器上通过事件循环被接收到后, 接下来会通过 L<Mojolicious> 进行几个简单的处理.
+
+  1. 如果请求的只是一个静态文件就行, 就输出这个文件.
+  2. 尝试找一个能满足要求的路由信息.
+  3. 调度这个请求到这个路由上指定的一个或者多个方法和动作.
+  4. 处理请求, 可能产生的渲染器的响应. 
+  5. 将控制器内返回到 Web 服务器, 如果没有响应生成, 就会通过事件循环来等一个非阻塞操作.
+
+如果你的应用进入了路由中第二步, 和第四步, 就会响应一些内容, 就象下面这个一样, 并在你的浏览器上显示.
+
+  HTTP/1.1 200 OK
+  Content-Length: 12
+  Hello world!
+
 =head2 Model
 
-在 L<Mojolicious>  中, 我们认为 Web 应用是现有业务逻辑的简单前端, 这意味着 L<Mojolicious> 设计完全是和   L<model> 层无关的, 你可以使用任意的 Perl 模块来替换. 
+在 L<Mojolicious>  中, 我们认为 Web 应用是现有前端的简单业务逻辑, 这意味着 L<Mojolicious> 设计完全是和 L<model> 层无关的, 你可以使用任意的 Perl 模块来替换. 
 
-  $ mkdir lib
-  $ touch lib/MyUsers.pm
-  $ chmod 644 lib/MyUsers.pm
+  $ mkdir -p lib/MyApp/Model
+  $ touch lib/MyApp/Model/Users.pm
+  $ chmod 644 lib/MyApp/Model/Users.pm
 
-我们的登录管理,将只使用一个普通的原有 Perl 模块抽象出, 来匹配用户名和密码这个工作相关的逻辑. 
+我们的登录管理, 将只使用一个普通的原有 Perl 模块抽象出, 来匹配用户名和密码这个工作相关的逻辑. 下面的这个 C<MyApp::Model::Users> 只是可以选择任何你所需要的东西. 只是用于分离. 
 
-  package MyUsers;
+  package MyApp::Model::Users;
 
   use strict;
   use warnings;
 
   my $USERS = {
-    sri    => 'secr3t',
-    marcus => 'lulz',
-    yko    => 'zeecaptain'
+    joel      => 'las3rs',
+    marcus    => 'lulz',
+    sebastian => 'secr3t'
   };
 
   sub new { bless {}, shift }
 
   sub check {
-    my ($c, $user, $pass) = @_;
+    my ($self, $user, $pass) = @_;
 
     # Success
     return 1 if $USERS->{$user} && $USERS->{$user} eq $pass;
@@ -197,19 +218,16 @@ L<Mojolicious> 和其他 Web 框架的主要区别之一是, 它还包括有一�
 
   1;
 
-如果你想实现自己的 C<model> 的动作和模板, 你可以使用  L<Mojolicious/"helper">  的功能来注册你的方法. 
+如果你想实现自己的 C<model> 的动作和模板, 你可以使用 L<Mojolicious/"helper"> 的功能来注册你的方法. 
 
   #!/usr/bin/env perl
   use Mojolicious::Lite;
 
   use lib 'lib';
-  use MyUsers;
-
-  # Model object
-  my $users = MyUsers->new;
-
-  # Helper function returning our model object
-  helper users => sub { return $users };
+  use MyApp::Model::Users;
+    
+  # Helper to lazy initialize and store our model object
+  helper users => sub { state $users = MyApp::Model::Users->new };
 
   # /?user=sri&pass=secr3t
   any '/' => sub {
@@ -231,7 +249,7 @@ L<Mojolicious> 和其他 Web 框架的主要区别之一是, 它还包括有一�
 
 这个 L<Mojolicious::Controller/"param">  的方法会取得请求过来的参数, POST 的参数, 文件上传送的内容和 Route 的占位符取得的内容.和其它.
 
-=head2 测试 Testing
+=head2 测试 (Testing)
 
 在 L<Mojolicious> 中我们希望大家能都认真的采用测试驱动开发, 并努力推动它.
 
@@ -260,7 +278,7 @@ L<Test::Mojo> 是一个脚本化的 HTTP user agent , 设计是专门用于测�
     ->element_exists('form input[type="submit"]');
 
   # Test login with valid credentials
-  $t->post_form_ok('/' => {user => 'sri', pass => 'secr3t'})
+  $t->post_form_ok('/' => {user => 'sebastian', pass => 'secr3t'})
     ->status_is(200)->text_like('html body' => qr/Welcome sri/);
 
   # Test accessing a protected page
@@ -297,20 +315,20 @@ L<Test::Mojo> 是一个脚本化的 HTTP user agent , 设计是专门用于测�
   Connection: keep-alive
   Date: Sun, 18 Jul 2010 13:09:58 GMT
   Server: Mojolicious (Perl)
-  Content-Length: 12
+  Content-Length: 20
   Content-Type: text/plain
 
-  Welcome sri.
+  Welcome sebastian.
 
-=head2 State keeping
+=head2 状态保持 (State keeping)
 
-Sessions 在 L<Mojolicious> 中非常简单, 直接可以通过 L<Mojolicious::Controller/"session"> 方法来使用, 不过建议你使用更加安全的通过 L<Mojolicious/"secrets"> 来设置个密码短语.
+Sessions 在 L<Mojolicious> 中非常简单, 直接可以通过 L<Mojolicious::Controller/"session"> 方法来使用, 不过建议你使用更加安全的设置, 通过 L<Mojolicious/"secrets"> 来设置个密码短语用于加密 session.
 
   app->secrets(['Mojolicious rocks']);
 
-这个密码短语是使用的 C<HMAC-SHA1> 算法来签名你的 cookie , 并可以随时改变让所有现有会话无效. 
+这个密码短语是使用的 C<HMAC-SHA1> 算法来签名你的 cookie ,并可以随时改变让所有现有会话无效. 
 
-  $c->session(user => 'sri');
+  $c->session(user => 'sebastian');
   my $user = $c->session('user');
 
 默认的 sessions 的有效时间为一个小时, 如果你想自己控制, 就使用 C<expiration> 的参数, 来设置 session 方法中的值就可以了. 
@@ -326,7 +344,7 @@ Sessions 在 L<Mojolicious> 中非常简单, 直接可以通过 L<Mojolicious::C
   $c->flash(message => 'Everything is fine.');
   $c->redirect_to('goodbye');
 
-你需要知道的就是所有的会话的数据都被 L<Mojo::JSON> 实例化并使用 C<HMAC-SHA1> 签名 cookie 来存储的. 通常浏览器对这个数据有 4096 个字节的限制需要你注意.
+你需要知道的就是所有的会话的数据都被 L<Mojo::JSON> 实例化并使用 C<HMAC-SHA1> 签名 cookie 来存储的. 通常浏览器对这个数据有 C<4096> 个字节的限制 (4KB) 需要你注意.
 
 =head2 最终的原型
 
@@ -336,46 +354,46 @@ Sessions 在 L<Mojolicious> 中非常简单, 直接可以通过 L<Mojolicious::C
   use Mojolicious::Lite;
 
   use lib 'lib';
-  use MyUsers;
+  use MyApp::Model::Users;
 
-  # Make signed cookies secure
+  # 创建一个 cookies 安全用的签名
   app->secrets(['Mojolicious rocks']);
 
-  helper users => sub { state $users = MyUsers->new };
+  helper users => sub { state $users = MyApp::Model::Users->new };
 
-  # Main login action
+  # 主要的登陆动作
   any '/' => sub {
     my $c = shift;
 
-    # Query or POST parameters
+    # 用于得到查询的参数
     my $user = $c->param('user') || '';
     my $pass = $c->param('pass') || '';
 
-    # Check password and render "index.html.ep" if necessary
+    # 检查用户密码, 如果不对就输出 "index.html.ep" 的网页
     return $c->render unless $c->users->check($user, $pass);
 
-    # Store username in session
+    # 存储用户名到会话的 cookie 中
     $c->session(user => $user);
 
-    # Store a friendly message for the next page in flash
+    # 存储一个友好的信息给下一个网页来显示
     $c->flash(message => 'Thanks for logging in.');
 
-    # Redirect to protected page with a 302 response
+    # 通过 302 重定向到需要认证保护的网页
     $c->redirect_to('protected');
   } => 'index';
 
-  # Make sure user is logged in for actions in this group
+  # 这个 group 需要确保用户是登陆的.
   group {
     under sub {
       my $c = shift;
 
-      # Redirect to main page with a 302 response if user is not logged in
+      # 如果用户没有登陆就 302 重定向到主页
       return 1 if $c->session('user');
       $c->redirect_to('index');
       return undef;
     };
 
-    # A protected page auto rendering "protected.html.ep"
+    # 显示被认证保护的网页 "protected.html.ep"
     get '/protected';
   };
 
@@ -429,35 +447,35 @@ Sessions 在 L<Mojolicious> 中非常简单, 直接可以通过 L<Mojolicious::C
 
 L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的变化, 这给你很好的概括了各种可能性.
 
-=head2 Inflating templates
+=head2 导出内部模板 (Inflating templates)
 
-所有在 C<DATA> 的部分的内容的静态文件和模板, 可以自动的生成并放在 C<templates> 和 C<public> 的目录.
+所有在 C<DATA> 的部分的内容的静态文件和模板, 可以通过这个方法自动的生成并放在 C<templates> 和 C<public> 的目录, 并保持原来的结构.
 
   $ ./myapp.pl inflate
 
-这些目录会优先取得内容, 比起本身的 C<DATA> 部分, 所以 inflating 可以让你定制你的应用. 
+在项目目录下的模板和静态文件有比起 C<DATA> 部分的有着更高的优先级, 使用 inflate 之后, 可以让你更加方便的定制你的应用. 
 
-=head2 简单的应用程序的类 
+=head2 简单完整应用程序的类 
 
 这些东西是整个 L<Mojolicious> 应用的心脏, 这些内容在 Web 服务启动的过程中被实例化.
 
   $ touch lib/MyApp.pm
   $ chmod 644 lib/MyApp.pm
 
-我们开始从  C<myapp.pl> 提取出所有 action 的代码, 放到指定的目录中, 变成 L<Mojolicious::Routes> 中混合的 route . 我们并不需要改变实际的功能代码.
+我们开始从原来的 C<myapp.pl> 单文件中提取出所有 action 的方法的实现代码, 放到指定的目录中, 变成 L<Mojolicious::Routes> 中混合成 route . 我们并不需要改变实际的功能代码.
 
   package MyApp;
   use Mojo::Base 'Mojolicious';
-
-  use MyUsers;
+ 
+  use MyApp::Model::Users;
 
   sub startup {
-    my $c = shift;
+    my $self = shift;
 
-    $c->secrets(['Mojolicious rocks']);
-    $c->helper(users => sub { state $users = MyUsers->new });
+    $self->secrets(['Mojolicious rocks']);
+    $self->helper(users => sub { state $users = MyApp::Model::Users->new });
 
-    my $r = $c->routes;
+    my $r = $self->routes;
 
     $r->any('/' => sub {
       my $c = shift;
@@ -488,7 +506,7 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
 
   1;
 
-这个 C<startup> 的方法调用后整个应用程序被创建并实例化, 由于全功能的  L<Mojolicious> 可以使用嵌套的路径选择器, 所以没必要使用 C<group> 块.
+这个 C<startup> 的方法调用后整个应用程序被创建并实例化, 由于全功能的 L<Mojolicious> 可以使用嵌套的路径选择器, 所以没必要使用 C<group> 块.
 
 =head2 简单的应用启动的脚本 
 
@@ -505,19 +523,19 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
   # Start commands for application
   Mojolicious::Commands->start_app('MyApp');
 
-=head2 Controller 类
+=head2 控制器类 (Controller)
 
-这个 Controller 是用于实现详细的功能的类.
+这个控制器是用于实现详细的功能的类.
 
-混合起来的 route 很方便, 但要最大限度地提高可维护性是非常有意义的, 所以我们需要分离操作代码和它的路由信息, 就可以达到这个目标.
+上面那种给路由和实现的动作混合起来的很方便, 但要最大限度地提高可维护性, 需要从路由中给动作的方法代码分离出来, 这是非常有意义的, 所以我们需要分离操作代码和它的路由配置, 下面我们来达成这个目标.
 
-  $ mkdir lib/MyApp
-  $ touch lib/MyApp/Login.pm
-  $ chmod 644 lib/MyApp/Login.pm
+  $ mkdir lib/MyApp/Controller
+  $ touch lib/MyApp/Controller/Login.pm
+  $ chmod 644 lib/MyApp/Controller/Login.pm
 
-当然, 实际的功能代码还是不需要修改. 
+当然, 实际的功能代码还是不需要修改. 我们只需要改变 C<$self> 变成更加好理解的 C<$c> 来表示这是控制器.
 
-  package MyApp::Login;
+  package MyApp::Controller::Login;
   use Mojo::Base 'Mojolicious::Controller';
 
   sub index {
@@ -547,9 +565,9 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
 
   1;
 
-全部的 L<Mojolicious::Controller> 的 controller 就是普通的 Perl 的类. 
+全部的 L<Mojolicious::Controller> 的控制器就是普通的 Perl 的类.
 
-=head2 Application 类
+=head2 应个应用的主类 (Application)
 
 应用类, 是用于指示这个应用本身的全局信息的类.
 
@@ -558,7 +576,7 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
   package MyApp;
   use Mojo::Base 'Mojolicious';
 
-  use MyUsers;
+  use MyApp::Model::Users;
 
   sub startup {
     my $c = shift;
@@ -568,16 +586,18 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
 
     my $r = $c->routes;
     $r->any('/')->to('login#index')->name('index');
+
     my $logged_in = $r->under->to('login#logged_in');
     $logged_in->get('/protected')->to('login#protected');
+
     $r->get('/logout')->to('login#logout');
   }
 
   1;
 
-这个 L<Mojolicious::Routes> 可以有非常多的 route 的变化,  选出你最喜欢的方式.
+这个 L<Mojolicious::Routes> 可以有非常多的路由的变化, 选出你最喜欢的方式都行.
 
-=head2 Templates
+=head2 模板
 
 我们给模板绑定到控制器, 所以需要给他们移动到相应的目录.
 
@@ -587,28 +607,12 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
 
 =head2 Script
 
-最终的 C<myapp.pl>  替换成 L<Mojolicious> 的脚本.
+最终的 C<myapp.pl> 需要移到 C<script> 的目录中并重命名为 C<my_app>, 这是 CPAN 的标准.
 
-  $ rm myapp.pl
   $ mkdir script
-  $ touch script/myapp
-  $ chmod 744 script/myapp
+  $ mv myapp.pl script/my_app
 
-只有几个小的改变. 
-
-  #!/usr/bin/env perl
-
-  use strict;
-  use warnings;
-
-  use FindBin;
-  BEGIN { unshift @INC, "$FindBin::Bin/../lib" }
-
-  # Start command line interface for application
-  require Mojolicious::Commands;
-  Mojolicious::Commands->start_app('MyApp');
-
-=head2 简单的 tests
+=head2 简单的测试
 
 标准的 L<Mojolicious> 应用程序更容易测试, 所以 C<t/login.t> 可以简化.
 
@@ -625,8 +629,8 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
     ->element_exists('form input[name="pass"]')
     ->element_exists('form input[type="submit"]');
 
-  $t->post_form_ok('/' => {user => 'sri', pass => 'secr3t'})
-    ->status_is(200)->text_like('html body' => qr/Welcome sri/);
+  $t->post_form_ok('/' => {user => 'sebastian', pass => 'secr3t'})
+    ->status_is(200)->text_like('html body' => qr/Welcome sebastian/);
 
   $t->get_ok('/protected')->status_is(200)->text_like('a' => qr/Logout/);
 
@@ -637,10 +641,38 @@ L<Mojolicious> 非常的灵活, 所以在实际变成完整应用时有很多的
 
   done_testing();
 
-测试驱动开发需要多一点时间, 但很值得！
+最后我们的目录看起来会是这样:
+
+  myapp
+  |- script
+  |  +- my_app
+  |- lib
+  |  |- MyApp.pm
+  |  +- MyApp
+  |     |- Controller
+  |     |  +- Login.pm
+  |     +- Model
+  |        +- Users.pm
+  |- t
+  |  +- login.t
+  +- templates
+     |- layouts
+     |  +- default.html.ep
+     +- login
+        |- index.html.ep
+        +- protected.html.ep
+
+测试驱动开发需要多一点时间, 但很值得! 
 
 =head1 MORE
 
 你现在可以看看 L<Mojolicious::Guides> . 现在也可以看看 L<Mojolicious wiki|http://github.com/kraih/mojo/wiki>,  这有很多文档和不同作者的例子.
+
+=head1 SUPPORT
+
+If you have any questions the documentation might not yet answer, don't
+hesitate to ask on the
+L<mailing-list|http://groups.google.com/group/mojolicious> or the official IRC
+channel C<#mojo> on C<irc.perl.org>.
 
 =cut

@@ -37,7 +37,7 @@ BEGIN {
   		my @parts;
   		for my $e ($dom->find('h1, h2, h3')->each) {
 
-  		  push @parts, [] if $e->type eq 'h1' || !@parts;
+  		  push @parts, [] if $e->tag eq 'h1' || !@parts;
   		  my $anchor = $e->{id};
   		  my $link   = Mojo::URL->new->fragment($anchor);
   		  push @{$parts[-1]}, my $text = $e->all_text, $link;
@@ -47,7 +47,7 @@ BEGIN {
 
   		# Try to find a title
   		my $title = 'Perldoc';
-  		$dom->find('h1 + p')->first(sub { $title = shift->text });
+        $dom->find('h1 + p')->first(sub { $title = shift->text });
 
   		# Combine everything to a proper response
   		$c->content_for(perldoc => "$dom");

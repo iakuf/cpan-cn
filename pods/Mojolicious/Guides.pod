@@ -78,25 +78,25 @@ L<Mojolicious> 和 L<Mojolicious::Lite> 有很多相同的部分.这些东西象
 
 功能齐全，高度可移植的非阻塞 I/O HTTP 和 WebSocket 服务器，自重启的功能支持在 L<Mojo::Server::Morbo> 中调用，适合用于开发和测试。
 
-=item L<Mojo::Server::Hypnotoad>
+=item L<Mojo::Server::Prefork>
 
-功能齐全，为 UNIX 优化过，preforking 的非阻塞 I/O HTTP服务器和 WebSocket 服务器. 支持可以零停机的软件升级方式（热部署）。
-
-=item L<Mojo::Server::CGI>, L<Mojo::Server::PSGI>
-
-透明的支持 CGI 和 L<PSGI>.
-
-=item L<Mojo::Template>
-
-全部由 Perl 实现的模板系统.
+功能齐全，为 UNIX 优化过，preforking 的非阻塞 I/O HTTP服务器和 WebSocket 服务器. 支持可以零停机的软件升级方式（热部署）它是通过 L<Mojo::Server::Hypnotoad> 实现。
 
 =item L<Mojo::ByteStream>
 
 非常多的方便和便捷的操作字节流的方法.
 
-=item L<Mojolicious::Commands>
+=item L<Mojo::Server::CGI>, L<Mojo::Server::PSGI>
 
-L<mojo> script 相关的命令行, 如果你想使用 Dancer 样的功能 $ mojo generate app MojoMvcTutorial 功能时，就去看这个.
+透明的支持 CGI 和 L<PSGI>.
+
+=item L<Mojo::IOLoop>
+
+支持多个事件反应堆后端的事件处理程序.
+
+=item L<Mojo::Template>
+
+全部由 Perl 实现的模板系统.
 
 =item L<Test::Mojo>
 
@@ -108,20 +108,21 @@ Web 应用开发用的测试驱动的工具包
 
 =back
 
-
 =head1 拆分
 
 这些模块并不一定是 L<Mojolicious> 的一部分. 但是它被设计成使用同一个开发的分支之下.
 
 =over 2
 
-=item L<Mango>
+=item L<Mojo::Pg>
 
-纯 Perl 的非阻塞 I/O 的 MongoDB 驱动
+A tiny wrapper around L<DBD::Pg> that makes
+L<PostgreSQL|http://www.postgresql.org> a lot of fun to use with
+L<Mojolicious>.
 
 =item L<Minion>
 
-Job queue.
+A job queue for L<Mojolicious> with support for multiple backends.
 
 =back
 
@@ -197,6 +198,8 @@ Job queue.
 
 =back
 
+=item * L<Mojo::IOLoop>
+
 =item * L<Mojo::IOLoop::Client>
 
 =item * L<Mojo::IOLoop::Delay>
@@ -271,13 +274,7 @@ Job queue.
 
 =item * L<Mojo::Home>
 
-=item * L<Mojo::IOLoop>
-
-=item * L<Mojo::JSON>
-
 =item * L<Mojo::JSON::Pointer>
-
-=item * L<Mojo::Loader>
 
 =item * L<Mojo::Parameters>
 
@@ -410,6 +407,10 @@ Job queue.
 =item * L<Mojo::Collection>
 
 =item * L<Mojo::DOM>
+
+=item * L<Mojo::JSON>
+
+=item * L<Mojo::Loader>
 
 =item * L<Mojo::Util>
 
