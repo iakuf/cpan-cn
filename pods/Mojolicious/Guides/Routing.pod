@@ -9,13 +9,13 @@ Mojolicious::Guides::Routing - Routing
 
 本文件包含一个简单而有趣的介绍 Mojolicious 路径选择器 ( Router ) 和它的基本概念.
 
-本文更新到 Mojolicious 5.05 版本
+本文更新到 Mojolicious 6.05 版本
 
 =head1 概念
 
 基本每个 L<Mojolicious> 的开发者都知道. Mojolicious 的路径选择器用于识别网址, 分配给对应的 Controller 做动作的处理.
 
-=head2 Dispatcher 调度
+=head2 调度 (Dispatche)
 
 每一个 Web 框架的基础都是一个小的黑盒子, 对连接所传入的请求, 转换到相应的代码来生成适当的响应内容.
 
@@ -39,7 +39,7 @@ Mojolicious::Guides::Routing - Routing
   User-Agent: Mozilla/5.0 (compatible; Mojolicious; Perl)
   Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
 
-=head2 Routes 路径选择器
+=head2 路径选择器 (Routes)
 
 虽然正则表达式是非常强大的, 他们也往往是令人不爽的地方, 比如常常对于普通的路径匹配有点大材小用.
 
@@ -439,10 +439,8 @@ This has already been done for all attributes and methods from L<Mojolicious::Co
 
 =head2 Under
 
-To share code with multiple nested routes you can use
-L<Mojolicious::Routes::Route/"under">, because unlike normal nested routes, the
-routes generated with it have their own intermediate destination and result in
-additional dispatch cycles when they match.
+多个嵌套的路由, 你可以使用 L<Mojolicious::Routes::Route/"under"> 来共享代码, 不同于正常的嵌套路由的地方是
+这个路由会在当他们匹配时会有额外的调度周期.
 
   # /foo     -> undef
   # /foo/bar -> {controller => 'foo', action => 'baz'}
@@ -450,9 +448,7 @@ additional dispatch cycles when they match.
   my $foo = $r->under('/foo')->to('foo#baz');
   $foo->get('/bar')->to('#bar');
 
-The actual action code for this destination needs to return a true value or the
-dispatch chain will be broken, this can be a very powerful tool for
-authentication.
+这个调度链要么被中断, 要么需要给目标动作的函数执行是需要返回一个真值, 这对于认证非常强大.
 
   # /blackjack -> {cb => sub {...}}
   #               {controller => 'hideout', action => 'blackjack'}
@@ -468,14 +464,12 @@ authentication.
   });
   $auth->get('/blackjack')->to('hideout#blackjack');
 
-Broken dispatch chains can be continued by calling the method
-L<Mojolicious::Controller/"continue">, this allows for example non-blocking
-operations to finish before reaching the next dispatch cycle.
+中断的调度链可以通过调用 L<Mojolicious::Controller/"continue"> 方法继续. 这个例子中使用的是非阻塞的操作, 可以直到下一个调度周期之前.
 
   my $maybe = $r->under('/maybe' => sub {
     my $c = shift;
 
-    # Wait 3 seconds and then give visitors a 50% chance to continue
+    # 等待 3 秒钟, 然后给游客一个 50% 机会继续
     Mojo::IOLoop->timer(3 => sub {
 
       # Loser
@@ -489,10 +483,8 @@ operations to finish before reaching the next dispatch cycle.
   });
   $maybe->get('/')->to('maybe#winner');
 
-Every destination is just a snapshot of the stash at the time the route
-matched, and only the C<format> value is shared by all of them. For a little
-more power you can introspect the preceding and succeeding destinations with
-L<Mojolicious::Controller/"match">.
+每一个路由匹配到的目的地址都有一个快照在一定的时间存储在 stash 中. 只有 C<format> 值会被所有的共享. 
+这对于你 L<Mojolicious::Controller/"match"> 用于自省自己的处理目的之前和之后非常有用.
 
   # Action of the fourth dispatch cycle
   my $action = $c->match->stack->[3]{action};
@@ -550,10 +542,9 @@ L<Mojolicious::Controller/"match">.
   }
 
   1;
-The connection gets established when you respond to the WebSocket handshake
-request with a C<101> response status, which happens automatically if you
-subscribe to an event with L<Mojolicious::Controller/"on"> or send a message
-with L<Mojolicious::Controller/"send"> right away.
+
+当连接上时 WebSocket 的握手请求会发送一个 C<101> 的响应状态, 如果你定阅了 L<Mojolicious::Controller/"on"> 
+或者发送 L<Mojolicious::Controller/"send"> 的时候会自动的产生.
 
   GET /echo HTTP/1.1
   Host: mojolicio.us
@@ -570,11 +561,9 @@ with L<Mojolicious::Controller/"send"> right away.
   Upgrade: websocket
   Sec-WebSocket-Accept: SWsp5N2iNxPbHlcOTIw8ERvyVPY=
 
-=head2 Catch-all route
+=head2 捕捉全部路由 (Catch-all route)
 
-Since routes match in the order in which they were defined, you can catch all
-requests that did not match in your last route with an optional wildcard
-placeholder.
+由于路径匹配是根据定义的顺序的, 你可以通过可选通配符占位符在最后面, 来捕捉所有请求中不匹配的路由.
 
   # * /*
   $r->any('/*whatever' => {whatever => ''} => sub {
@@ -584,55 +573,28 @@ placeholder.
   });
 
 
+=head2 条件 (Conditions)
 
-=head2 更加方便的路径选择 
+条件是根据 C<headers>, C<agent> 或者 C<host> 来通过 L<Mojolicious::Plugin::HeaderCondition> 来应用到
+L<Mojolicious::Routes::Route/"over"> 的方法上, 这可以实现非常强大的路由限制.
 
-在本教程中, 您应该已经知道了 L<Mojolicious::Lite> 的路径选择, 这其实是所有的一切只是为了便利
+  # / (Origin: http://mojolicio.us)
+  $r->get('/')->over(headers => {Origin => qr/mojolicio\.us/})->to('foo#bar');
 
-  # POST /foo -> {controller => 'foo', action => 'abc'}
-  $r->post('/foo')->to(controller => 'foo', action => 'abc');
+  # / (Firefox)
+  $r->get('/')->over(agent => qr/Firefox/)->to('browser-test#firefox');
 
-  # PATCH /bar -> {controller => 'foo', action => 'bar', test => 23}
-  $r->patch('/bar')->to('foo#bar', test => 23);
+  # / (Internet Explorer)
+  $r->get('/')->over(agent => qr/Internet Explorer/)->to('browser-test#ie');
 
-  # GET /baz -> {template => 'foo/bar'}
-  $r->get('/baz')->to(template => 'foo/bar');
+  # http://mojolicio.us/perldoc
+  $r->get('/perldoc')->over(host => 'mojolicio.us')->to('perldoc#index');
 
-  # * /yada.txt  -> {controller => 'foo', action => 'yada', format => 'txt'}
-  # * /yada.json -> {controller => 'foo', action => 'yada', format => 'json'}
-  $r->any('/yada' => [format => [qw(txt json)]])->to('foo#yada');
-
-  # GET /foo/bar  -> {controller => 'foo', action => 'bar'}
-  # PUT /foo/baz  -> {controller => 'foo', action => 'baz'}
-  my $foo = $r->any('/foo')->to('foo#');
-  $foo->get('/bar')->to('#bar');
-  $foo->put('/baz')->to('#baz');
-
-如果你从  L<Mojolicious::Lite> 的原型转换过来到全功能的 L<Mojolicious> 应用非常简单, 如下.
-
-  # POST /bar
-  $r->post('/bar' => sub {
-    my $c = shift;
-    $c->render(text => 'Just like a Mojolicious::Lite action.');
-  });
-
-即使是比较抽象的概念象 L<Mojolicious::Routes::Route> 中的 'under'.
-
-  # GET  /yada
-  # POST /yada
-  my $yada = $r->under('/yada');
-  $yada->get(sub {
-    my $c = shift;
-    $c->render(text => 'Hello.');
-  });
-  $yada->post(sub {
-    my $c = shift;
-    $c->render(text => 'Go away.');
-  });
+要知道, 条件的路由缓存太复杂, 通常我们只加快重复请求, 因此这会降低性能.
 
 =head2 Hooks
 
-Hooks 操作是主要用来扩展和共享你的代码, 使它更为强大, 让你可以方便的扩展 L<Mojolicious>.
+L<Mojolicious/"hook"> 操作是主要用来扩展和共享你的代码, 使它更为强大, 让你可以方便的扩展 L<Mojolicious>.
 
   # Application
   package MyApp;
@@ -664,15 +626,14 @@ after_static 是工作在静态文件处理之后, 这个用于设置附加响�
     $c->res->headers->cache_control('max-age=3600, must-revalidate');
   });
 
+  # 删除默认的 Header 
+  $app->hook(after_dispatch => sub {
+    my $c = shift;
+    $c->res->headers->remove('Server');
+  });
+
 before_dispatch 是工作在请求进入调度分配之前, 预处理请求.
 
-  # 让请求参数中的 "_method" 的参数来重写请求的方法
-  $c->hook(before_dispatch => sub {
-    my $c = shift;
-    return unless my $method = $c->req->url->query->param('_method');
-    $c->req->method($method);
-  });
-  
   # 基于请求的 header 头修改传给模板的 variant 的值
   $c->hook(before_dispatch => sub {
     my $c = shift;
@@ -689,8 +650,22 @@ after_dispatch 是工作在请求离开调度之后, 例子是使用更先进的
     $c->ua->post_form('https://kraih.com/bugs' => {exception => $e});
   });
 
-有关 hooks 的完整列表可以查看 L<Mojolicious/"hook">.
+你也可以扩展核心的基础的功能.
 
+  # Make controller object available to actions as $_
+  $app->hook(around_action => sub {
+    my ($next, $c, $action, $last) = @_;
+    local $_ = $c;
+    return $next->();
+  });
+
+  # Pass route name as argument to actions
+  $app->hook(around_action => sub {
+    my ($next, $c, $action, $last) = @_;
+    return $c->$action($c->current_route);
+  });
+
+有关 hooks 的完整列表可以查看 L<Mojolicious/"hook">.
 
 =head2 自省
 
@@ -714,32 +689,41 @@ after_dispatch 是工作在请求离开调度之后, 例子是使用更先进的
   $r->add_shortcut(resource => sub {
     my ($r, $name) = @_;
 
-    # Generate "/$name" route
-    my $resource = $r->route("/$name")->to("$name#");
+    # Prefix for resource
+    my $resource = $r->any("/$name")->to("$name#");
 
-    # Handle POST requests
-    $resource->post->to('#create')->name("create_$name");
+    # Render a list of resources
+    $resource->get->to('#index')->name($name);
 
-    # Handle GET requests
-    $resource->get->to('#show')->name("show_$name");
-      
-    # Handle OPTIONS requests
-    $resource->options(sub {
-      my $c = shift;
-      $c->res->headers->allow('POST, GET, OPTIONS');
-      $c->render(data => '', status => 204);
-    });
+    # Render a form to create a new resource (submitted to "store")
+    $resource->get('/create')->to('#create')->name("create_$name");
 
+    # Store newly created resource (submitted by "create")
+    $resource->post->to('#store')->name("store_$name");
+
+    # Render a specific resource
+    $resource->get('/:id')->to('#show')->name("show_$name");
+
+    # Render a form to edit a resource (submitted to "update")
+    $resource->get('/:id/edit')->to('#edit')->name("edit_$name");
+
+    # Store updated resource (submitted by "edit")
+    $resource->put('/:id')->to('#update')->name("update_$name");
+
+    # Remove a resource
+    $resource->delete('/:id')->to('#remove')->name("remove_$name");
 
     return $resource;
   });
 
-  # POST /user -> {controller => 'user', action => 'create'}
-  # GET  /user -> {controller => 'user', action => 'show'}
-  # OPTIONS /user
-  $r->resource('user');
-
-add_shortcut 象什么? 这个有点象 routes, bridges 甚至两者兼而有之.
+  # GET /users         -> {controller => 'users', action => 'index'}
+  # GET /users/create  -> {controller => 'users', action => 'create'}
+  # POST /users        -> {controller => 'users', action => 'store'}
+  # GET /users/23      -> {controller => 'users', action => 'show', id => 23}
+  # GET /users/23/edit -> {controller => 'users', action => 'edit', id => 23}
+  # PUT /users/23      -> {controller => 'users', action => 'update', id => 23}
+  # DELETE /users/23   -> {controller => 'users', action => 'remove', id => 23}
+  $r->resource('users');
 
 =head2 重排 routes
 
@@ -755,32 +739,26 @@ add_shortcut 象什么? 这个有点象 routes, bridges 甚至两者兼而有之
 
 你想看 find 路径选择的其它, 可以 L<Mojolicious::Routes::Route/"find">
 
-=head2 Conditions 条件 
+=head2 添加条件 
 
-有时候, 你可能变得更加强大的能力, 例如: 在多个路径选择前检查 C<User-Agent> 的头.这是 Conditions 开始发挥作用的最好地方. 这是用于做路径选择器的插件和返回真值来配合匹配.
+你可以通过 L<Mojolicious::Routes/"add_condition"> 加入自己的方法, 使它变得更加强大的能力.
+所有的基本路径插件会在每个请求到来时执行, 它需要返回真假来确认.
 
-  # Simple "User-Agent" condition
+  # A condition that randomly allows a route to match
   $r->add_condition(
-    agent => sub {
-      my ($route, $c, $captures, $pattern) = @_;
+    random => sub {
+      my ($route, $c, $captures, $num) = @_;
 
-      # User supplied regular expression
-      return undef unless $pattern && ref $pattern eq 'Regexp';
+      # Loser
+      return undef unless int rand $num;
 
-      # Match "User-Agent" header and return true on success
-      my $agent = $c->req->headers->user_agent;
-      return 1 if $agent && $agent =~ $pattern;
-
-      # No success
+      # Winner
       return undef;
     }
   );
 
-  # /firefox_only (Firefox) -> {controller => 'foo', action => 'bar'}
-  $r->get('/firefox_only')->over(agent => qr/Firefox/)->to('foo#bar');
-
-这个方法 L<Mojolicious::Routes/"add_condition"> 为路径选择时加了一个条件, 当 L<Mojolicious::Routes::Route/"over"> 这个通过时才进入到这个子函数.
-
+  # /maybe (25% chance)
+  $r->get('/maybe')->over(random => 4)->to('foo#bar');
 
 =head2 条件 plugins
 
@@ -796,8 +774,7 @@ add_shortcut 象什么? 这个有点象 routes, bridges 甚至两者兼而有之
     my ($c, $app) = @_;
 
     # Add "werewolf" condition
-    $app->routes->add_condition(
-      werewolf => sub {
+    $app->routes->add_condition( werewolf => sub {
         my ($route, $c, $captures, $days) = @_;
 
         # Keep the werewolfs out!
@@ -818,13 +795,13 @@ add_shortcut 象什么? 这个有点象 routes, bridges 甚至两者兼而有之
   use Mojo::Base 'Mojolicious';
 
   sub startup {
-    my $c = shift;
+    my $self = shift;
 
     # Plugin
-    $c->plugin('WerewolfCondition');
+    $self->plugin('WerewolfCondition');
 
     # /hideout (keep them out for 4 days after full moon)
-    $c->routes->get('/hideout')->over(werewolf => 4)
+    $self->routes->get('/hideout')->over(werewolf => 4)
       ->to(controller => 'foo', action => 'bar');
   }
 
@@ -832,9 +809,7 @@ add_shortcut 象什么? 这个有点象 routes, bridges 甚至两者兼而有之
 
 =head2 Mount applications
 
-The easiest way to embed one application into another is
-L<Mojolicious::Plugin::Mount>, which allows you to mount whole self-contained
-applications under a domain and/or prefix.
+你可以非常容易的使用 L<Mojolicious::Plugin::Mount> 加载其它人的应用到你的应用中, 你只需要提供一个安全可用的 undef 的前缀或者子域.
 
   use Mojolicious::Lite;
 
@@ -854,7 +829,7 @@ applications under a domain and/or prefix.
 您可以方便地给程序嵌入整个应用程序, 如果你只想简单地使用他们, 而想使用控制器. 这允许例如使用的 L<Mojolicious::Lite> 域的 DSL 语言来替换 L<Mojolicious> 的控制器的行.
 
   # Controller
-  package MyApp::Bar;
+  package MyApp:::Controller:Bar;
   use Mojolicious::Lite;
 
   # /hello
@@ -874,7 +849,7 @@ applications under a domain and/or prefix.
 
 一个最简单的应用无非就是 L<Mojo> 的子类, 从 L<Mojolicious::Controller> 的对象中包含 C<handler> 的方法.
 
-  package MyApp::Bar;
+  package MyApp::Controller::Bar;
   use Mojo::Base 'Mojo';
 
   sub handler {
