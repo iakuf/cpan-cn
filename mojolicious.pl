@@ -25,7 +25,7 @@ BEGIN {
 
   		# Rewrite code blocks for syntax highlighting and correct indentation
   		for my $e ($dom->find('pre > code')->each) {
-  		  $e->content(my $str = unindent $e->content);
+          my $str = $e->content;
   		  next if $str =~ /^\s*(?:\$|Usage:)\s+/m || $str !~ /[\$\@\%]\w|-&gt;\w/m;
   		  my $attrs = $e->attr;
   		  my $class = $attrs->{class};
@@ -76,9 +76,9 @@ hook before_dispatch => sub {
   my $self = shift;
   # 重写 mojo.php-oa.com  的所有 perldoc 指向 cpan
   my $url = $self->req->url;
-  if (  $url->base->host ne 'cpan.php-oa.com' and $url->path =~ /\/perldoc\/.*/ ) {
+  if (  $url->base->host ne 'mojo.perlchina.org' and $url->path =~ /\/perldoc\/.*/ ) {
       $self->res->code(301);
-      $self->redirect_to($self->req->url->to_abs->host("cpan.php-oa.com"));
+      $self->redirect_to($self->req->url->to_abs->host("mojo.perlchina.org"));
   }
 };
 

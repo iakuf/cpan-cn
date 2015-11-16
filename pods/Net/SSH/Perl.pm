@@ -555,18 +555,12 @@ password, you'll be prompted for one.
 
 =head2 ($out, $err, $exit) = $ssh->cmd($cmd, [ $stdin ])
 
-Runs the command I<$cmd> on the remote server and returns
-the I<stdout>, I<stderr>, and exit status of that
-command.
+在远程的服务器上运行 I<$cmd> 命令, 并返回 I<stdout>, I<stderr>, 和退出的状态码.
 
-If I<$stdin> is provided, it's supplied to the remote command
-I<$cmd> on standard input.
+如果 I<$stdin> 提供了的话, 这个远程运行的命令 I<$cmd> 的输出会通过这个来输出.
 
-NOTE: the SSH-1 protocol does not support running multiple commands
-per connection, unless those commands are chained together so that
-the remote shell can evaluate them. Because of this, a new socket
-connection is created each time you call I<cmd>, and disposed of
-afterwards. In other words, this code:
+注意: SSH-1 的协议并不支持在每个连接上运行多个命令, 除非这些命令是连成一行的. 所以当使用远程的调用 I<cmd> 的时候会创建一个新的 socket 连接.
+所以, 如果是象下面的代码:
 
     my $ssh = Net::SSH::Perl->new("host1");
     $ssh->login("user1", "pass1");
@@ -574,12 +568,9 @@ afterwards. In other words, this code:
     $ssh->cmd("foo");
     $ssh->cmd("bar");
 
-will actually connect to the I<sshd> on the first invocation of
-I<cmd>, then disconnect; then connect again on the second
-invocation of I<cmd>, then disconnect again.
+这会自动的连接到远程的 I<sshd> 服务, 运行 I<cmd> 命令, 然后断开, 在次连接后在调用 I<cmd> 命令.
 
-Note that this does I<not> apply to the SSH-2 protocol. SSH-2 fully
-supports running more than one command over the same connection.
+这和 SSH-2 的协议不一样, SSH-2 的协议完全支持同一个连接上运行一个或者多个命令.
 
 =head2 $ssh->shell
 

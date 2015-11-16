@@ -48,12 +48,12 @@
     .animated { transition: top 0.2s ease-in-out }
   </style>
   <div id="mojobar-logo">
-    %= link_to 'http://mojo.php-oa.com/perldoc' => begin
+    %= link_to 'http://mojo.perlchina.org/perldoc' => begin
       %= image '/mojo/logo-white.png', alt => 'Mojolicious logo'
     % end
   </div>
   <div id="mojobar-links">
-    %= link_to '魔咒文档(中)' => 'http://mojo.php-oa.com/perldoc'
+    %= link_to '魔咒文档(中)' => 'http://mojo.perlchina.org/perldoc'
     %= link_to '文档首页(英)' => 'http://mojolicio.us/perldoc'
     %= link_to Wiki => 'https://github.com/kraih/mojo/wiki'
     %= link_to GitHub => 'https://github.com/kraih/mojo'

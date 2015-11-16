@@ -121,7 +121,7 @@ L<Mojolicious> 和其他 Web 框架的主要区别之一是, 它还包括有一�
   |  +- basic.t              # Random test
   |- log                     # 日志目录 
   |  +- development.log      # 开发模式的日志
-  |- public                  # 静态文件的目录 (served automatically)
+  |- public                  # 静态文件的目录 (象 css, js 之类)
   |  +- index.html           # 静态 HTML 文件
   +- templates               # 模板目录
      |- layouts              # 模板目录和 layout
