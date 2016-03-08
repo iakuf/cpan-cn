@@ -48,12 +48,9 @@ Pegex 是 self-hosting 语言. 这意味着 Pegex Language 语言是通过自己
 =head1 Rule Section
 
 Pegex grammar  剩余的是用于设置 rule 名字, 每个 rule 是一个 rule 名字紧接着一个 ':',
-在接着定义我们的 rule, 在接着一个 ';' 或者定义新行.
-The remainder of a Pegex grammar is a set of named rules. Each rule is a rule
-name, followed by a ':', followed by the definition of the rule, followed by a
-';' or a newline.
+在接着是我们对规则的定义, 在接着一个 ';' 或者定义新行.
 
-这是在 pegex.pgx grammar 语法的一对规则.
+这是在 pegex.pgx 语法的一对规则.
 Here are a couple rules from the pegex.pgx grammar. (These are the rules that
 start to define a rule!).
 
@@ -68,12 +65,15 @@ start to define a rule!).
         COLON -
     /
 
+规则定义了中缀表达式.
+
+它们是被操作符分开的标记组成, 用括号来区分结合优先级, 有3个不同的标记和3个操作符.
+
 Rule definitions are infix expressions. They consist of tokens separated by
 operators, with parentheses to disambiguate binding precedence. There are 3
 distinct tokens and 3 operators.
 
-这有 3 种 token 类型: rule-reference, regex and error-message.  和 3 种操作
-AND (' '), OR ('|') 和  ALT ('%', '%%').
+这有 3 种标记 (token) 类型: 规则引用 (rule-reference), 正则 (regex) 和错误信息 ( error-message ).  和 3 种操作 AND (' '), OR ('|') 和  ALT ('%', '%%').
 
 这有个 Pegex grammar 解析 json：
 
