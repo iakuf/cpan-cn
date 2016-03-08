@@ -82,39 +82,31 @@ distinct tokens and 3 operators.
 
 这可以理解成: "json 是可以 hash 或者数组, 数组是 '[' 零或者多个节点由逗号分割, 或者一个 ']'， 如果没有 ']' 就是错误".
 
-C<hash>, C<array> 和 C<node> 是规则的引用, 意味着这是引用到相同名字的在 grammar 中的 rule 名, 这种是必须匹配到的定. 
-文本被 '/' 字符环绕成一个正则.
-C<hash>, C<array> and C<node> are rule references, meaning that they refer to
-named rules within the grammar that must match at that point. Text surrounded
-by a pair of '/' chars forms a regex. Text surrounding by backticks is an
-error message.
+C<hash>, C<array> 和 C<node> 是规则的引用, 意味着它们指向引用到 grammar 语法中相同的规则名字, 这种是必须匹配到的命名规则. 
+文本被 '/' 字符环绕的部分构成一个正则表达式. 本周围的反引号是错误消息.
 
-C<LSQUARE>, C<RSQUARE> and C<COMMA> are also rule references. Rules may be
-referred to inside of regexes, as long as they refer to regexes themselves. In
-this way big regexes can be assembled from smaller ones, thus leading to reuse
-and readability. Finally, the '*' after C<node> is called a "quntifier". More
-about those later.
+C<LSQUARE>, C<RSQUARE> 和 C<COMMA> 也是规则引用. 规则也可以放到其它的正则表达式内. 这样大的正则表达式可以从较小的组装，从实现重用和提高可读性.
+最后在 C<node> 后面有个 '*' 这个叫量词. 后面会说更多.
 
 =head2 Rule References
 
-规则引用是一个规则的名称, 通常放在括号内. 但这个括号是可选的. 一个正则表达式如果没有　C<< <> >>　时，规则的引用必须前面有空格.
+规则引用是一些规则的名称, 通常放在括号内. 但这个括号是可选的. 一个正则表达式如果没有　C<< <> >>　时，规则的引用必须前面有空格.
 
     <sub_rule_name>
     sub_rule_name
 
-When used outside a regex, a reference can have a number of prefix modifiers.  Note the the angle brackets are not required here, but add to readability.
+当我们在外面使用正则时, 这个规则引用后面加以加多个前缀修饰符. 注意在这里不需要尖括号, 但有了会增加可读性.
 
     =rule  # Zero-width positive assertion (look-ahead)
     !rule  # Zero-width negative assertion (look-ahead)
-    .rule  # Skip (ie: parse but don't capture a subpattern)
-    -rule  # Flat (flatten the array captures)
-    +rule  # Always wrap
+    .rule  # 跳过 (ie: 解析但不捕获的子模式)
+    -rule  # Flat (Flat 捕获成数组)
+    +rule  # 可以捕获
 
-(Skipping and wrapping are explained in [Return Values].)
+(跳过和捕获的解释看 [Return Values].)
 
-A reference can also have a number of suffixed quantifiers. Similar to regular
-expression syntax, a quantifier indicates how many times a rule (reference)
-should match.
+每一个规则引用, 也可以有多个后缀量词. 类似于正则的语法.
+量词用于指定有多少次可以找到个这个匹配到的规则(引用).
 
     rule?      # optional
     rule*      # 0 or more times
@@ -124,30 +116,26 @@ should match.
     <rule>2-3  # 2 or 3 times
     <rule>0-6  # 0 to 6 times
 
-Note that you must use angle brackets if you are using a numbered modifier:
+注意，如果你使用了数字的修饰符，你必须使用尖括号.
 
     rule8    # WRONG!  This would match rule "rule8".
     rule2+   # WRONG!  This would match rule "rule2", 1 or more times.
     rule2-3  # WRONG!  Pegex syntax error
 
-There is a special set of predefined "L<Atoms|Pegex::Grammar::Atoms>" that
-refer to regular expression fragments. Atoms exist for every punctuation
-character and for characters commonly found in regular expressions. Atoms
-enchance readability in grammar texts, and allow special characters (like
-slash or hash) to be used as Pegex syntax.
+有一组特殊的预定义 "L<Atoms|Pegex::Grammar::Atoms>" 这个是指的一些常用的正则的片段。 Atoms 存在于每个正则表达式中用于替换标点符号和字符。 
+Atoms 增加了 grammar 文件的可读性，可以让你指定有一定指定的符号 (like slash or hash) 可以用于 Pegex 语法.
 
-For example, a regex to match a comment might be '#' followed by anything,
-followed by a newline. In Pegex, you would write:
+例如, 一个正则匹配注释, 象 '#' 开始的任何内容, 在 Pegex 中，你会这样写:
 
     comment: / HASH ANY* EOL /
 
-instead of:
+相当于:
 
     comment: /#.*\r?\n/
 
-Pegex would compile the former into the latter.
+Pegex 会给前面的编译成后面这个.
 
-Here are some atoms:
+这还有一些 atom:
 
     DASH    # -
     PLUS    # +
@@ -161,27 +149,22 @@ Here are some atoms:
     WORD    # \w
     WS      # \s
 
-The full list can be found in the [Atoms source
-code|L<https://metacpan.org/source/Pegex::Grammar::Atoms].>
+完整的列表，请看 [Atoms source code|L<https://metacpan.org/source/Pegex::Grammar::Atoms].
 
 =head2 Regexes
 
-In Pegex we call the syntax for a regular expression a "regex". ie When the
-term "regex" is used, it is referring to Pegex syntax, and when the term
-"regular expression" is used it refers to the actual regular expression that
-the regex is compiled into.
+在 Pegex 中调用一个正则表达式 "regex" 时，这个术语的 "regex" 是指的 Pegex 语法的引用，在实际使用的时候会编译成真实的正则.
 
-A regex is a string inside forward slashes.
+一个正则表达式是一个放在斜杠内的字符串.
 
     /regex/
 
-The regex syntax mostly follows Perl, with the following exceptions:
+正则表达式的语法大多是 Perl, 但下列情况除外:
 
-    # Any rules in angle brackets are referenced in the regex
+    # 规则通过尖括号引用到正则当中
     / ( <rule1> | 'non_rule' ) /  # "non_rule" is interpreted literally
 
-    # The syntax implies a /x modifier, so whitespace and comments are
-    # ignored.
+    # 这个语法使用了 /x 的正则修饰符, 所以空格和注释是忽略的.
     / (
         rule1+   # Match rule1 one or more times
         |
@@ -189,6 +172,7 @@ The regex syntax mostly follows Perl, with the following exceptions:
     ) /
 
     # Whitespace is declared with dash and plus.
+
     / - rule3 + /  # - = \s*, + = \s+, etc.
 
     # Any (?XX ) syntax can have the question mark removed
@@ -196,79 +180,70 @@ The regex syntax mostly follows Perl, with the following exceptions:
 
 =head2 Error Message
 
-An error message is a string inside backticks. If the parser gets to an error
-message in the grammar, it throws a parse error with that message.
+错误消息字符串是放在反引号内. 如果分析器获取语法错误，就会从中取出消息，它会抛出一个与该消息相差的解析错误。
 
     `error message`
 
 =head2 Operators
 
-The Pegex operators in descending precedence order are: ALT, AND, and OR.
+Pegex 操作符的优先级是通过: ALT, AND, 和 OR.
 
-AND and OR are the most common operators. AND is represented by the absence of
-an operator. Like in these rules:
+AND 与 OR 是最常见的操作符. AND 是在没有操作符的时候生效. 像在这些规则中:
 
     r1: <a><b>
     r2: a b
 
-Those are both the same. They mean rule C<a> AND (followed immediately by)
-rule C<b>.
+上面这二个都是相同的. 它们的意思是规则 C<a> 并 (紧接着) C<b> 规则.
 
-OR means match one or the other.
+OR 意味着要匹配一个或者更多.
 
     r: a | b | c
 
-means match rule C<a> OR rule C<b> OR rule C<c>. The rules are checked in
-order and if one matches, the others are skipped.
+上面匹配指定规则必须 C<a> OR C<b> OR C<c> 规则. 当任何一个匹配时, 其它的都会跳过.
 
-ALT means alternation. It's a way to specify a separator in a list.
+ALT 这是一种在列表中指定分隔符的方法.
 
     r: a+ % b
 
-would match these:
+主样会被匹配成:
 
     a
     aba
     ababa
 
-C<%%> means that a trailing separator is optional.
+
+C<%%> 是指定一个可选择的分隔符. 
 
     r: a+ %% b
 
-would match these:
+这样会.
 
     a
     ab
     aba
     abab
 
-ANY operators take precedence over everything else, similar to other parsers.
-These rules have the same binding precedence:
+ANY 运算符的优先级高于一切，类似于其他分析器。这些规则具有相同的结合优先性:
 
     r1: a b | c % d
     r2: (a b) | (c % d)
 
-Parens are not only used for indicating binding precedence; they also can
-create quantifiable groups:
+括号不仅用于指示绑定优先; 他们也可以创建可量化的组:
 
     r1: (a b)+ c
 
-would match:
+这会匹配: 
 
     abababac
 
 =head1 Return Values
 
-All return values are based on the capture groups (C<$1/$2/$3/etc.> type
-variables) of parsed RE statements. The exact structure of the result tree
-depends on the type of Receiver used. For example, L<Pegex::Tree> will return:
+所有的返回值都是基于捕获组 C<$1/$2/$3/etc.> 的变量来解析正则的声明。 这导出的是一个深度树型结果给 Receiver 使用. 例如， L<Pegex::Tree>:   
 
     $1              # single capture group
     [ @+[1..$#+] ]  # multiple capture groups
 
-This would be a match directly from the RE rule. As rules go further
-back, things are put into arrays, but only if there is more than one
-result. For example:
+当正则匹配到各种规则, 会给结果一步步存进数组，所以无论是多少个结果，只会返回一个内容. 例如:
 
     r: (a b)+ % +
     a: /( ALPHA+ )/
@@ -287,11 +262,8 @@ result. For example:
 
 =head2 Skipping
 
-Any rule can use the skip modifier (DOT) to completely skip the return from
-that rule (and any children below it). The rule is still processed, but
-nothing is put into the tree. (This is different from, say, putting C<undef>
-into the return.) This can also affect the number of values returned, and
-thus, whether a value comes as an array:
+任何规则都能使用跳过修饰符 (DOT) 来实现对于规则结果的跳过. 主个的结果还是会处理，但是不会给值存到树中.( 这有点不同，这可以讲是传上一个 C<undef> 到结果当中).
+这也会影响返回的值的数目, and thus, whether a value comes as an array:
 
     r: (a .b)+ % +
     a: /( ALPHA+ )/
@@ -303,8 +275,7 @@ thus, whether a value comes as an array:
     #     'boofar',
     # ]
 
-The skip modifier can also be used with groups. (This is the only group
-modifier allowed so far.)
+这个跳过的修饰符也可以用于组. (这是迄今为止唯一的组修饰符)
 
     r: .(a b)+ % +
     a: /( ALPHA+ )/
@@ -314,21 +285,17 @@ modifier allowed so far.)
 
 =head2 Wrapping
 
-You can also turn on "wrapping" with the L<Pegex::Tree::Wrap> receiver. This
-will wrap all match values in a hash with the rule name, like so:
+对于找到的结果，可以通过 L<Pegex::Tree::Wrap> 的 receiver 来打开. 这个东西会给将所有的匹配值包在一个和规则名一样的哈希中:
 
     { rule_A => $match }
     { rule_B => [ @matches ] }
 
-Note that this behavior can be "hard set" with the C<+/-> rule modifiers:
+注意这个可能会被  C<+/-> 的规则修饰符所硬性设置:
 
     -rule  # Flatten array captures
     +rule  # Always wrap (even if using Pegex::Tree)
 
-This is simply a check in the C<gotrule> for the receiver. So, any specific
-C<got_*> receiver methods will override even these settings, and choose to
-pass the match as-is. In this case, the C<got_*> sub return value dictates
-what ultimately gets put into the tree object:
+这样在你的 receiver 对象中只需要简单的检查  C<gotrule>。 所以指定 C<got_*> 的接收的方法，就会重写这些设置， 在这个例子中 C<got_*>  会返回这个最终匹配的树的对象:
 
     +rule_A   # in this case, the + is useless here
 
@@ -338,7 +305,7 @@ what ultimately gets put into the tree object:
         # will be received as [ @matches ]
     }
 
-You can "correct" this behavior by passing it back to C<gotrule>:
+你可以通过调用 C<gotrule> 方法来正确的处理这些参数:
 
     +rule_A   # now + is honored
 
