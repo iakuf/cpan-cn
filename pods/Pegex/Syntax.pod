@@ -149,7 +149,7 @@ Pegex 会给前面的编译成后面这个.
     WORD    # \w
     WS      # \s
 
-完整的列表，请看 [Atoms source code|L<https://metacpan.org/source/Pegex::Grammar::Atoms].
+完整的列表，请看 [Atoms source code|L<https://metacpan.org/source/Pegex::Grammar::Atoms>].
 
 =head2 Regexes
 
