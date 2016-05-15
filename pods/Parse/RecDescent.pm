@@ -5396,23 +5396,15 @@ causes an arglist to match a perl code block whose outermost delimiters
 are C<(...)> (rather than the default C<{...}>).
 
 
-=item Constructing tokens
+=item 构造标记 Constructing tokens
 
-Eventually, Parse::RecDescent will be able to parse tokenized input, as
-well as ordinary strings. In preparation for this joyous day, the
-C<E<lt>token:...E<gt>> directive has been provided.
-This directive creates a token which will be suitable for
-input to a Parse::RecDescent parser (when it eventually supports
-tokenized input).
+最后, Parse::RecDescent 可以解析标记的输入或者普通的字符。这是非常高兴的一天， 这 C<E<lt>token:...E<gt>> 指命直接被提供出来了。
+这个直接由 Parse::RecDescent 解析输入的内容来创建标记 token 。
+(when it eventually supports tokenized input).
 
-The text of the token is the value of the
-immediately preceding item in the production. A
-C<E<lt>token:...E<gt>> directive always succeeds with a return
-value which is the hash reference that is the new token. It also
-sets the return value for the production to that hash ref.
+这的 token 的值是直接前面找到的值。 这个 C<E<lt>token:...E<gt>> 指令正常时会返回哈希的引用来存放新的 token. 
 
-The C<E<lt>token:...E<gt>> directive makes it easy to build
-a Parse::RecDescent-compatible lexer in Parse::RecDescent:
+例如， 可以使用 Parse::RecDescent 很简单的编译生成的一个词法解析器。
 
     my $lexer = new Parse::RecDescent q
     {
@@ -5426,8 +5418,7 @@ a Parse::RecDescent-compatible lexer in Parse::RecDescent:
 
     };
 
-which will eventually be able to be used with a regular Parse::RecDescent
-grammar:
+这将最终能够使用的一个规则 Parse::RecDescent 的语法解析：
 
     my $parser = new Parse::RecDescent q
     {
@@ -5986,68 +5977,53 @@ be far more efficient:
     type_name: /$thisparser->{local}{type_name}/
 
 
-=head2 Precompiling parsers
+=head2 预编译解析 Precompiling parsers
 
-Normally Parse::RecDescent builds a parser from a grammar at run-time.
-That approach simplifies the design and implementation of parsing code,
-but has the disadvantage that it slows the parsing process down - you
-have to wait for Parse::RecDescent to build the parser every time the
-program runs. Long or complex grammars can be particularly slow to
-build, leading to unacceptable delays at start-up.
+正常的情况下， Parse::RecDescent 是在运行时才从 grammar 中创建解析。
+这简化了解析代码的设计和实现，但比较不好的地方是它会解析的时候比较慢 - 你要等
+Parse::RecDescen 在每次程序运行时都要解析。长或复杂的 grammar 会在创建的时候
+非常的慢，所以会在启动的时候非常的慢.
 
-To overcome this, the module provides a way of "pre-building" a parser
-object and saving it in a separate module. That module can then be used
-to create clones of the original parser.
+为了解决这个问题，这个模块提供了预创建 "pre-building" 解析对象并存成单个模块的功能。
+该模块可用于创建原始分析器的克隆。
 
-A grammar may be precompiled using the C<Precompile> class method.
-For example, to precompile a grammar stored in the scalar $grammar,
-and produce a class named PreGrammar in a module file named PreGrammar.pm,
-you could use:
+一个 grammar 可以预编译使用 C<Precompile> 这个类的方法. 例如， 通过预编译 grammar 存储在标量 $grammar 中
+生成一个叫 PreGrammar 的类名的 PreGrammar.pm 的模块文件. 
+
 
     use Parse::RecDescent;
 
     Parse::RecDescent->Precompile([$options_hashref], $grammar, "PreGrammar", ["RuntimeClass"]);
 
-The first required argument is the grammar string, the second is the
-name of the class to be built. The name of the module file is
-generated automatically by appending ".pm" to the last element of the
-class name. Thus
+第一个参数是 grammar 的字符， 第二个参数是要创建的类名， 这个模块的名字会根据类名自动的加上 ".pm".
 
     Parse::RecDescent->Precompile($grammar, "My::New::Parser");
 
-would produce a module file named Parser.pm.
+象上面这样会生成 Parser.pm 的模块名.
 
-After the class name, you may specify the name of the runtime_class
-called by the Precompiled parser.  See L</"Precompiled runtimes"> for
-more details.
+然后这个类名，你可以指定这个运行时的类的名字来调用这个解析 See L</"Precompiled runtimes"> for more details.
 
-An optional hash reference may be supplied as the first argument to
-C<Precompile>.  This argument is currently EXPERIMENTAL, and may change
-in a future release of Parse::RecDescent.  The only supported option
-is currently C<-standalone>, see L</"Standalone precompiled parsers">.
+有个可选择的 hash 引用的参数，可以用于 C<Precompile> 的第一个参数。 这个参数是实验性的，
+也许在以后 Parse::RecDescent 正式发布时会这些特性会变化。
+目前只支持的选项是 C<-standalone> ，可以看看 see L</"Standalone precompiled parsers">.
 
-It is somewhat tedious to have to write a small Perl program just to
-generate a precompiled grammar class, so Parse::RecDescent has some special
-magic that allows you to do the job directly from the command-line.
+写相同的 Perl 程序生成预编译的 grammar 类是很远程的事情， 所以 Parse::RecDescent 加入了可以
+让你在命令行中直接调用这个的功能.
 
-If your grammar is specified in a file named F<grammar>, you can generate
-a class named Yet::Another::Grammar like so:
+如果你的 grammar 是指定的 F<grammar> 的文件名， 你可以生成 Yet::Another::Grammar 的类。 如下:
 
     > perl -MParse::RecDescent - grammar Yet::Another::Grammar [Runtime::Class]
 
-This would produce a file named F<Grammar.pm> containing the full
-definition of a class called Yet::Another::Grammar. Of course, to use
-that class, you would need to put the F<Grammar.pm> file in a
-directory named F<Yet/Another>, somewhere in your Perl include path.
+这会生成一个 F<Grammar.pm> 的文件名， 包含全部的定义的 Yet::Another::Grammar 类的调用.
+当然你使用这个 F<Grammar.pm> 类时，需要给文件放到 F<Yet/Another> 的目录下， 然后让你的 Perl 包含这个路径.
 
-Having created the new class, it's very easy to use it to build
-a parser. You simply C<use> the new module, and then call its
-C<new> method to create a parser object. For example:
+创建的新的类，非常容易用它来创建解析， 你只要简单的使用 C<use> 包进你的新模块中，然后调用
+C<new> 方法创建解析的对象， 例如:
 
     use Yet::Another::Grammar;
     my $parser = Yet::Another::Grammar->new();
 
-The effect of these two lines is exactly the same as:
+这二行等同于如下:
 
     use Parse::RecDescent;
 
@@ -6057,12 +6033,9 @@ The effect of these two lines is exactly the same as:
 
     my $parser = Parse::RecDescent->new($grammar);
 
-only considerably faster.
-
-Note however that the parsers produced by either approach are exactly
-the same, so whilst precompilation has an effect on I<set-up> speed,
-it has no effect on I<parsing> speed. RecDescent 2.0 will address that
-problem.
+只是第一个更加快.
+注意， 在这个地方，解析生成时这二个基本是相同的， 所以预编译只是让你的程序启动更加快，但解析时
+还是一样的速度。 这个问题会在 RecDescent 2.0 的时候解决.
 
 =head3 Standalone precompiled parsers
 
@@ -6089,7 +6062,7 @@ Precompiled parsers remain dependent on Parse::RecDescent by default,
 as this feature is still considered experimental.  In the future,
 standalone parsers will become the default.
 
-=head3 Precompiled runtimes
+=head3 预编译运行时 
 
 Standalone precompiled parsers each include a copy of
 Parse::RecDescent.  For users who have a family of related precompiled
@@ -6216,14 +6189,12 @@ variable:
            /\s+/
 
 
-=head2 2. Setting C<$Parse::RecDescent::skip> at parse time
+=head2 2. 在解析时设置 C<$Parse::RecDescent::skip>
 
-If you want to change the default skipping behaviour (see
-L<Terminal Separators> and the C<E<lt>skip:...E<gt>> directive) by setting
-C<$Parse::RecDescent::skip> you have to remember to set this variable
-I<before> creating the grammar object.
+如果你想设置默认的跳过的一些行为 (如  L<Terminal Separators> 和 C<E<lt>skip:...E<gt>> 指令), 
+记得在你创建 grammar 对象前来设置 C<$Parse::RecDescent::skip> .
 
-For example, you might want to skip all Perl-like comments with this
+如下例子， 你也许想使用跳过全部的 Perl 的注释的正则:
 regular expression:
 
    my $skip_spaces_and_comments = qr/
@@ -6233,7 +6204,7 @@ regular expression:
          )*             # repeated at will (in whatever order)
       /;
 
-And then:
+然后:
 
    my $parser1 = Parse::RecDescent->new($grammar);
 
@@ -6241,13 +6212,11 @@ And then:
 
    my $parser2 = Parse::RecDescent->new($grammar);
 
-   $parser1->parse($text); # this does not cope with comments
-   $parser2->parse($text); # this skips comments correctly
+   $parser1->parse($text); # 这并不处理注释 
+   $parser2->parse($text); # 这正确的跳过所有的注释 
 
-The two parsers behave differently, because any skipping behaviour
-specified via C<$Parse::RecDescent::skip> is hard-coded when the
-grammar object is built, not at parse time.
-
+这二个解析的行为不同， 因为任何跳过的行为通过 C<$Parse::RecDescent::skip> 的硬编码
+在创建 grammar 对象时来硬编码, 并不是解析的时候.
 
 =head1 DIAGNOSTICS
 
