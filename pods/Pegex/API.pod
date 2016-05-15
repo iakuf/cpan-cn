@@ -14,9 +14,9 @@ Pegex 这样工作:
 
     $result = $parser->new($grammar, $receiver)->parse($input);
 
-在这个地方， 有一个 Pegex 解析器， 接着一个 Pegex grammar 的语法指示, 解析输的流，当找到结果会给结果报告给 Pegex receiver.
+在这个地方， 有一个 Pegex 解析器对象， 接着一个 Pegex grammar 的语法指示变量 $grammar, 当解析输的流时找到结果会给结果报告给 $receiver.
 
-在这个 parser, grammar, receiver 和输入， 老师是 Pegex 对象，这四个对象的调用与参与完成 Pegex 的解析操作. 让我们来看看这些东西.
+在这个 $parser, $grammar, $receiver 和输入，在 Pegex 对象中，由这四个对象的调用与参与完成 Pegex 的解析操作. 让我们来看看这些东西.
 
 =over
 
@@ -71,17 +71,16 @@ achieve a task.
     - num: 2
 
 让我们看看，这做些什么， 我们使用 L<Pegex> 的模块导出 C<pegex> 的功能函数.
-这个函数会取得 Pegex grammar 语法做为输入. 在这个除数的内部编译 grammar 字符成 grammar 对象.
-这个所创建的对象，包含 grammar 的对象，并会给这个做为返回.
+这个函数会取得 $grammar 变量中的语法做为输入. 在这个内部编译 grammar 字符成 grammar 对象.
+这个所创建的对象，包含 grammar 的对象，并会给这个对象做为返回.
 
 在这 parse 的方法在调用的时候，输入的是 C<'2+2'> 的字符. 如果这个字符相符能匹配上就会返回相应合适的数据结构.
 
-所以，在这这个数据结构是怎么创建的? 这当然是由默认的 receiver 对象创建. 我们不一定要指定，这样就会使用默认的
-L<Pegex::Tree::Wrap>. 这相当于:
+所以，在这这个数据结构是怎么创建的? 这当然是由默认的 receiver 对象创建. 我们不一定要指定，这样就会使用默认的 L<Pegex::Tree::Wrap>. 这相当于:
 
     print Dump pegex($grammar, 'Pegex::Tree::Wrap')->parse('2+2');
 
-这个 receiver 主要是生成一个映射, 当 rule 名字匹配到 keys 和支叶上的值由正则捕获.
+这个 receiver 主要是生成一个数据映射, 当规则 (rule) 名字匹配到 keys 和支叶上的值由正则捕获.
 
 这个基本的 receiver 可以调用 L<Pegex::Tree> 来生成顺序的包含数据的树(通过 rule name). 这代码是.
 
@@ -133,7 +132,7 @@ L<Pegex::Tree::Wrap>. 这相当于:
     );
     $input = Pegex::Input->new(string => '2+2');
 
-    print Dump parser->parse($input);
+    print Dump $parser->parse($input);
 
 这个代码很象第一个例子，但在这，我们是自己手工的使用所有的对象.
 

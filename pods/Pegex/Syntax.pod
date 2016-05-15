@@ -12,19 +12,18 @@ See http://github.com/ingydotnet/swim-pm#readme
 
 这个文档详细的讲了 Pegex Syntax.
 
-Pegex 是 self-hosting 语言. 这意味着 Pegex Language 语言是通过自己 Pegex Language 来定义和生成自己.
+Pegex 是自描述语言 (self-hosting). 这意味着 Pegex Language 语言是通过自己 Pegex Language 来定义和生成自己.
 你可以看看: L<https://github.com/ingydotnet/pegex-pgx/blob/master/pegex.pgx>.
 
-我鼓励你快速的看看这个. 一个 Pegex grammar 主要是由二部分组成:  meta section 和 rule section.
+我鼓励你快速的看看这个. 一个 Pegex grammar 主要是由二部分组成: 元数据区 (meta section) 和规则区 (rule section).
 
-这个 meta section 只是包含 keyword/value 的元属性的 grammar. 
-这用于显示 grammar 的名字和版本.
+这个元数据区只是包含 grammar 语法的 keyword/value 的元属性.  这用于显示 grammar 的名字和版本.
 
-这实际的 Pegex grammar 的元数据是 rule. 这 grammar 首先的 rule 规则是如下:
+这实际的 Pegex grammar 的元数据区是规则 (rule). 这 grammar 首先的规则是如下:
 
     grammar: meta_section rule_section
 
-在这，我们可以讲 B<grammar> 是一个 B<meta_section> 跟着一个 B<rule_section>.
+在这，我们可以讲语法 B<grammar> 是一个元数据区 B<meta_section> 跟着一个规则区 B<rule_section>.
 
 =head1 Meta Section
 
@@ -47,15 +46,11 @@ Pegex 是 self-hosting 语言. 这意味着 Pegex Language 语言是通过自己
 
 =head1 Rule Section
 
-Pegex grammar  剩余的是用于设置 rule 名字, 每个 rule 是一个 rule 名字紧接着一个 ':',
-在接着定义我们的 rule, 在接着一个 ';' 或者定义新行.
-The remainder of a Pegex grammar is a set of named rules. Each rule is a rule
-name, followed by a ':', followed by the definition of the rule, followed by a
-';' or a newline.
+Pegex grammar  剩余的是用于设置规则的名字, 每个规则是由规则名紧接着一个 ':',
+在接着定义我们的规则, 在接着一个 ';' 或者定义新行.
 
 这是在 pegex.pgx grammar 语法的一对规则.
-Here are a couple rules from the pegex.pgx grammar. (These are the rules that
-start to define a rule!).
+Here are a couple rules from the pegex.pgx grammar. (These are the rules that start to define a rule!).
 
     rule_definition:
         rule_start
@@ -72,24 +67,27 @@ Rule definitions are infix expressions. They consist of tokens separated by
 operators, with parentheses to disambiguate binding precedence. There are 3
 distinct tokens and 3 operators.
 
-这有 3 种 token 类型: rule-reference, regex and error-message.  和 3 种操作
-AND (' '), OR ('|') 和  ALT ('%', '%%').
+这有 3 种 token 类型: rule-reference, regex and error-message.  
+和 3 种操作 AND (' '), OR ('|') 和  ALT ('%', '%%').
 
 这有个 Pegex grammar 解析 json：
 
     json: hash | array
-    array: / LSQUARE / ( node* % / COMMA / ) ( / RSQUARE / | `missing ']'` )
+    array: 
+		/ LSQUARE / 
+		( node* % / COMMA / ) 
+	    ( / RSQUARE / | `missing ']'` )
 
 这可以理解成: "json 是可以 hash 或者数组, 数组是 '[' 零或者多个节点由逗号分割, 或者一个 ']'， 如果没有 ']' 就是错误".
 
-C<hash>, C<array> 和 C<node> 是规则的引用, 意味着这是引用到相同名字的在 grammar 中的 rule 名, 这种是必须匹配到的定. 
-文本被 '/' 字符环绕成一个正则.
-C<hash>, C<array> and C<node> are rule references, meaning that they refer to
-named rules within the grammar that must match at that point. Text surrounded
-by a pair of '/' chars forms a regex. Text surrounding by backticks is an
-error message.
+C<hash>, C<array> 和 C<node> 是规则的引用, 意味着这是引用我们在 grammar 对象中相同的规则名中相应的规则上, 这个内容是必须匹配到的. 
+文本如果调边是由 '/' 环绕就会成一个正则.
 
-C<LSQUARE>, C<RSQUARE> and C<COMMA> are also rule references. Rules may be
+
+Text surrounded by a pair of '/' chars forms a regex. 
+Text surrounding by backticks is an error message.
+
+C<LSQUARE>, C<RSQUARE> 和 C<COMMA> 也同样是规则的引用. are also rule references. Rules may be
 referred to inside of regexes, as long as they refer to regexes themselves. In
 this way big regexes can be assembled from smaller ones, thus leading to reuse
 and readability. Finally, the '*' after C<node> is called a "quntifier". More
@@ -100,7 +98,7 @@ about those later.
 规则引用是一个规则的名称, 通常放在括号内. 但这个括号是可选的. 一个正则表达式如果没有　C<< <> >>　时，规则的引用必须前面有空格.
 
     <sub_rule_name>
-    sub_rule_name
+      sub_rule_name
 
 When used outside a regex, a reference can have a number of prefix modifiers.  Note the the angle brackets are not required here, but add to readability.
 
@@ -189,7 +187,7 @@ The regex syntax mostly follows Perl, with the following exceptions:
     ) /
 
     # Whitespace is declared with dash and plus.
-    / - rule3 + /  # - = \s*, + = \s+, etc.
+    / - rule3 + /  # - 相当于 \s*, + 相当于 \s+, etc.
 
     # Any (?XX ) syntax can have the question mark removed
     / (: a | b ) /  # same as / (?: a | b ) /
